@@ -3,7 +3,7 @@ package basic
 import (
     "net/http"
 )
-
+/********************** 请求体相关 **********************/
 //请求体（为了避免零值填充和实例复制，结构体成员尽量用指针）
 type Request struct {
     httpReq *http.Request   //HTTP请求的指针
@@ -27,3 +27,45 @@ func (req *Request) HttpReq() *http.Request {
 func (req *Request) Depth() uint32 {
     return req.depth
 }
+
+/**************** 响应体相关 *********************/
+//响应体
+type Response struct {
+    httpResp *http.Request  //HTTP响应的指针
+    depth    uint32         //深度
+}
+
+//惯例New函数，创建响应
+func NewResponse(httpResp *http.Response, depth uint32) *Response {
+    return &Response{
+        httpResp: httpResp,
+        depth: depth,
+    }
+}
+
+//获取响应体指针
+func (resp *Response)HttpResp() *http.Response {
+    return resp.httpResp
+}
+
+//获取响应的深度
+func (resp *Response)Depth() unit32 {
+    return resp.depth
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
