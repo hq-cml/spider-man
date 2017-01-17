@@ -1,8 +1,16 @@
 package basic
-
+/*
+ * 基本数据类型的定义
+ */
 import (
     "net/http"
 )
+
+/********************** 数据类型接口 *********************/
+type DataIntfs interface {
+    Valid() bool //数据是否有效
+}
+
 /********************** 请求体相关 **********************/
 //请求体（为了避免零值填充和实例复制，结构体成员尽量用指针）
 type Request struct {
@@ -26,6 +34,11 @@ func (req *Request) HttpReq() *http.Request {
 //获取深度值
 func (req *Request) Depth() uint32 {
     return req.depth
+}
+
+//实现DataIntfs接口
+func (req *Request) Valid() bool {
+    return req.httpReq != nil && req.httpReq.URL != nil
 }
 
 /**************** 响应体相关 *********************/
@@ -53,8 +66,18 @@ func (resp *Response)Depth() unit32 {
     return resp.depth
 }
 
+//实现DataIntfs接口
+func (resp *Response) Valid() bool {
+    return resp.httpResp != nil && resp.httpResp.Body != nil
+}
 
+/********************** 条目相关 **********************/
+type Item map[string]interface{}
 
+//实现DataIntfs接口
+func (item Item) Valid() bool {
+    return item != nil
+}
 
 
 
