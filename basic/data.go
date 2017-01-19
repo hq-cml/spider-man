@@ -1,6 +1,7 @@
 package basic
 /*
  * 基本数据类型的定义
+ * Request, Response, Item都是DataIntfs的实现
  */
 import (
     "net/http"
@@ -41,7 +42,7 @@ func (req *Request) Valid() bool {
     return req.httpReq != nil && req.httpReq.URL != nil
 }
 
-/**************** 响应体相关 *********************/
+/*********************** 响应体相关 ***********************/
 //响应体
 type Response struct {
     httpResp *http.Request  //HTTP响应的指针
@@ -62,7 +63,7 @@ func (resp *Response)HttpResp() *http.Response {
 }
 
 //获取响应的深度
-func (resp *Response)Depth() unit32 {
+func (resp *Response)Depth() uint32 {
     return resp.depth
 }
 
@@ -71,24 +72,11 @@ func (resp *Response) Valid() bool {
     return resp.httpResp != nil && resp.httpResp.Body != nil
 }
 
-/********************** 条目相关 **********************/
+/************************ 条目相关 ************************/
 type Item map[string]interface{}
 
 //实现DataIntfs接口
 func (item Item) Valid() bool {
     return item != nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
