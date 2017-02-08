@@ -88,12 +88,57 @@ func (pool *Pool) Get() (Entity, error) {
     return entity, nil
 }
 
+func (pool *Pool) Put(entity Entity) error {
+    //入参check：entiy不能为空
+    if entity == nil {
+        return errors.New("The returning entity is invalid!")
+    }
+    //入参check：类型需要一直
+    if pool.etype != reflect.TypeOf(entity) {
+        return errors.New(mt.Sprintf("The type of returning entity is NOT %s!\n", pool.etype))
+    }
 
+    entityId := entity.Id()
+    tmp := pool.compareAndSetIdContainer(entityId, false, true)
+    if tmp == 1 {
+        //获得操作权
+        pool.container <- entity //归还实体
+        return nil
+    } else if tmp == 0 {
+        //操作权被其他goroutine得到
+        return errors.New(fmt.Sprintf("The entity (id=%d) is already in the pool!\n", entityId))
+    } else {
+        return errors.New(fmt.Sprintf("The entity (id=%d) is illegal!\n", entityId))
+    }
+}
 
+//自己实现CAS乐观锁，保护IdContainer
+// 结果值：
+//       -1：表示键值对不存在。
+//        0：表示操作失败。其他的goroutine可能已经操作过了
+//        1：表示操作成功。
+func (pool *Pool) compareAndSetIdContainer(entityId uint32, oldValue bool, newValue bool) int8 {
+    pool.mutex.Lock()
+    pool.mutex.Unlock()
 
+    v, ok := pool.idContainer[entityId]
+    if !ok {
+        return -1
+    }
+    if v != oldValue {
+        return 0 //其他的goroutine可能已经操作过了
+    }
+    pool.idContainer[entityId] = newValue
+    return 1 //成功获得了操作权
+}
 
+func (pool *Pool) Total() uint32 {
+    return pool.total
+}
 
-
+func (pool *Pool) Used() uint32 {
+    return pool.total - uint32(len(pool.container))
+}
 
 
 
