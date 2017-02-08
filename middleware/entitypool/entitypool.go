@@ -16,3 +16,4 @@ type PoolIntfs interface {
     Total() uint32        //池子容量
     Used() uint32         //池子中已使用的数量
 }
+
