@@ -72,6 +72,21 @@ func NewPool(
     return pool, nil
 }
 
+//*Pool实现PoolIntfs接口
+func (pool *Pool) Get() (Entity, error) {
+    //channel是并发安全的，无需也不能用锁保护
+    entity, ok := <-pool.container
+    if !ok {
+        return nil, errors.New("The inner container is invalid")
+    }
+
+    //上锁保护map，这个锁不能放到上面，有造成死锁的风险，因为channel的读取本身就可能阻塞
+    pool.mutex.Lock()
+    defer pool.mutex.Unlock()
+    pool.idContainer[entity.Id()] = false
+
+    return entity, nil
+}
 
 
 
