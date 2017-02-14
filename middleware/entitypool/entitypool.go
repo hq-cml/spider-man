@@ -5,7 +5,6 @@ import (
     "fmt"
     "errors"
     "sync"
-    "debug/dwarf"
 )
 
 /*
