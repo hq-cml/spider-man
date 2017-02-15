@@ -4,7 +4,8 @@ import (
     "net/http"
     "github.com/hq-cml/spider-go/helper/id"
     "github.com/hq-cml/spider-go/basic"
-
+    "github.com/hq-cml/spider-go/middleware/entitypool"
+    "reflect"
 )
 
 /*
@@ -52,3 +53,61 @@ func (dl *PageDownloader) Download(req basic.Request) (*basic.Response, error) {
     }
     return basic.NewResponse(httpResp, req.Depth()), nil
 }
+
+//下载器池
+//生成网页下载器的函数的类型
+type GenPageDownloader func() PageDownloaderIntfs
+
+//下载器接口类型
+type PageDownloaderPoolIntfs interface {
+    Get() (PageDownloaderIntfs, error)
+    Put(dl PageDownloaderIntfs) error
+    Total() uint32
+    Used() uint32
+}
+
+//网页下载器池的实现
+type DownloaderPool struct {
+    pool entitypool.Pool
+    etype reflect.Type
+}
+
+//创建网页下载器
+func NewPageDownloaderPool(total uint32, gen GenPageDownloader) (PageDownloaderPoolIntfs, error) {
+    etype := reflect.TypeOf(gen())
+    genEntity := func() entitypool.Entity {
+        return gen()
+    }
+    pool, err := entitypool.NewPool(total, etype, genEntity())
+    if err != nil {
+        return nil, err
+    }
+
+    return &DownloaderPool{
+        pool : pool,
+        etype: etype,
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
