@@ -6,6 +6,8 @@ import (
     "github.com/hq-cml/spider-go/basic"
     "github.com/hq-cml/spider-go/middleware/entitypool"
     "reflect"
+    "fmt"
+    "errors"
 )
 
 /*
@@ -67,15 +69,15 @@ type PageDownloaderPoolIntfs interface {
 }
 
 //网页下载器池的实现
-type DownloaderPool struct {
-    pool entitypool.Pool
+type PageDownloaderPool struct {
+    pool entitypool.Pool    //结构体的嵌套
     etype reflect.Type
 }
 
 //创建网页下载器
 func NewPageDownloaderPool(total uint32, gen GenPageDownloader) (PageDownloaderPoolIntfs, error) {
     etype := reflect.TypeOf(gen())
-    genEntity := func() entitypool.Entity {
+    genEntity := func() entitypool.EntityIntfs { //函数作为一个类型的变量赋值给一个变量
         return gen()
     }
     pool, err := entitypool.NewPool(total, etype, genEntity())
@@ -83,13 +85,38 @@ func NewPageDownloaderPool(total uint32, gen GenPageDownloader) (PageDownloaderP
         return nil, err
     }
 
-    return &DownloaderPool{
+    return &PageDownloaderPool{
         pool : pool,
         etype: etype,
     }
 }
 
+//*PageDownloaderPool实现PageDownloaderPoolIntfs
+func (dlpool *PageDownloaderPool) Get() (PageDownloaderIntfs, error) {
+    entity, err := dlpool.pool.Get()
+    if err != nil {
+        return nil, err
+    }
+    dl, ok := entity.(PageDownloaderIntfs)
+    if !ok {
+        msg := fmt.Sprintf("The type of entity is not %s!\n", dlpool.etype)
+        panic(errors.New(msg))
+    }
 
+    return dl, nil
+}
+
+func (dlpool *PageDownloaderPool) Put(dl PageDownloaderIntfs) error {
+    return dlpool.pool.Put(dl)
+}
+
+func (dlpool *PageDownloaderPool) Total() uint32 {
+    return dlpool.pool.Total()
+}
+
+func (dlpool *PageDownloaderPool) Used() uint32 {
+    return dlpool.pool.Used()
+}
 
 
 

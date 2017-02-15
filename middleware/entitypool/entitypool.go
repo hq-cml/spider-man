@@ -12,33 +12,33 @@ import (
  */
 
 //实体接口类型
-type Entity interface {
+type EntityIntfs interface {
     Id() uint32 // ID获取方法
 }
 
 //实体池的接口类型
 type PoolIntfs interface {
-    Get() (Entity, error) //获取
-    Put(e Entity) error   //归还
+    Get() (EntityIntfs, error) //获取
+    Put(e EntityIntfs) error   //归还
     Total() uint32        //池子容量
     Used() uint32         //池子中已使用的数量
 }
 
 //实体池类型，实现PoolIntfs接口
 type Pool struct {
-    total     uint32        //池容量
-    etype     reflect.Type  //池子中实体的类型
-    genEntity func() Entity //池中实体的生成函数
-    container chan Entity   //实体容器，以channel为载体
-    idContainer map[uint32]bool //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
-    mutex sync.Mutex  //针对IDContainer的保护锁
+    total     uint32             //池容量
+    etype     reflect.Type       //池子中实体的类型
+    genEntity func() EntityIntfs //池中实体的生成函数
+    container chan EntityIntfs   //实体容器，以channel为载体
+    idContainer map[uint32]bool  //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
+    mutex sync.Mutex             //针对IDContainer的保护锁
 }
 
 //惯例New函数，创建实体池
 func NewPool(
     total uint32,
     entityType reflect.Type,
-    genEntity func() Entity) (PoolIntfs, error) {
+    genEntity func() EntityIntfs) (PoolIntfs, error) {
 
     //参数校验
     if total == 0 {
@@ -48,7 +48,7 @@ func NewPool(
 
     //初始化容器载体channel
     size := int(total)
-    container := make(chan Entity, size)
+    container := make(chan EntityIntfs, size)
     idContainer := make(map[uint32]bool)
     for i:=0; i<size; i++ {
         newEntity := genEntity()
@@ -72,7 +72,7 @@ func NewPool(
 }
 
 //*Pool实现PoolIntfs接口
-func (pool *Pool) Get() (Entity, error) {
+func (pool *Pool) Get() (EntityIntfs, error) {
     //channel是并发安全的，无需也不能用锁保护
     entity, ok := <-pool.container
     if !ok {
@@ -87,7 +87,7 @@ func (pool *Pool) Get() (Entity, error) {
     return entity, nil
 }
 
-func (pool *Pool) Put(entity Entity) error {
+func (pool *Pool) Put(entity EntityIntfs) error {
     //入参check：entiy不能为空
     if entity == nil {
         return errors.New("The returning entity is invalid!")
