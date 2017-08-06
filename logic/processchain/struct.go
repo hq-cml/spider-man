@@ -8,7 +8,7 @@ import "github.com/hq-cml/spider-go/basic"
  */
 
 // 被用来处理Item的函数的类型
-type ProcessItem func(item basic.Item) (result basic.Item, err error)
+type ProcessItemFunc func(item basic.Item) (result basic.Item, err error)
 
 type ProcessChainIntfs interface {
     //向处理链发送Item

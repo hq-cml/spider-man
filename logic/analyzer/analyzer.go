@@ -24,7 +24,7 @@ func (analyzer *Analyzer) Id() uint64 {
 }
 
 //把响应结果一次传递给parser函数，然后将解析的结果汇总返回
-func (analyzer *Analyzer) Analyze(respParsers []ParseResponse, resp basic.Response) ([]basic.DataIntfs, []error) {
+func (analyzer *Analyzer) Analyze(respParsers []ParseResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
     //参数校验
     if respParsers == nil {
         return nil, []error{errors.New("The response parser list is invalid!")}
