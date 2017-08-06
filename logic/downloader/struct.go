@@ -3,7 +3,7 @@ package downloader
 import (
     "net/http"
     "github.com/hq-cml/spider-go/basic"
-    "github.com/hq-cml/spider-go/middleware/entitypool"
+    "github.com/hq-cml/spider-go/middleware/pool"
     "reflect"
 )
 
@@ -37,6 +37,6 @@ type DownloaderPoolIntfs interface {
 
 //网页下载器池的实现，*DownloaderPool实现DownloaderPoolIntfs
 type DownloaderPool struct {
-    pool entitypool.Pool    //结构体的嵌套
+    pool  pool.Pool //结构体的嵌套
     etype reflect.Type
 }
