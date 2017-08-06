@@ -14,19 +14,20 @@ import (
 //被用于解析Http响应的函数的类型，这个函数类型的变量将作为参数传入Analyze，这么做
 //主要是为了框架的通用性，分析规则及产出规则均可以交由用户进行自定制
 //返回值是一个slice，每个成员是DataIntfs的实现，因为他们可能是上述两种情况
-type ParseResponseFunc func(httpResp *http.Response, respDepth uint32) ([]basic.DataIntfs, []error)
+type AnalyzeResponseFunc func(httpResp *http.Response, respDepth uint32) ([]basic.DataIntfs, []error)
 
 // 分析器接口类型
 type AnalyzerIntfs interface {
     // 获得分析器自身Id
-    Id() uint64
+    Id() uint32
     //根据规则分析响应并返回请求和条目
-    Analyze(respParsers []ParseResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
+    //respParsers是一个分析器的链，每个response都会被链上的每一个分析器分析
+    Analyze(respParsers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
 }
 
 // 分析器接口的实现类型
 type Analyzer struct {
-    id uint64 // ID
+    id uint32 // ID
 }
 
 //分析器池类型接口

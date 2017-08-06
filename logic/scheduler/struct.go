@@ -26,7 +26,7 @@ type SchedulerIntfs interface{
     // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
     Start(channelLen uint, poolSize uint32, grabDepth uint32,
         httpClientGenerator GenHttpClientFunc,
-        respParsers []analyzer.ParseResponseFunc,
+        respParsers []analyzer.AnalyzeResponseFunc,
         itemProcessors []processchain.ProcessItemFunc,
         firstHttpReq *http.Request) (err error)
 

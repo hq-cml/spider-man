@@ -24,7 +24,7 @@ func NewDownloader(client *http.Client) DownloaderIntfs {
     }
 
     return &Downloader{
-        id: id,
+        id: uint32(id),
         httpClient:*client,
     }
 }
