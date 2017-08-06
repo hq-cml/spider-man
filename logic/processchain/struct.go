@@ -1,20 +1,20 @@
-package itempipeline
+package processchain
+
+import "github.com/hq-cml/spider-go/basic"
 
 /*
- * Item处理管道
- *
+ * Item处理处理链，每一个节点都是一个处理函数
+ * 所有被分析出的item，需要经过处理链的逐个处理
  */
-import "github.com/hq-cml/spider-go/basic"
 
 // 被用来处理Item的函数的类型
 type ProcessItem func(item basic.Item) (result basic.Item, err error)
 
-type ItemPipeline interface {
-    //发送Item
+type ProcessChainIntfs interface {
+    //向处理链发送Item
     Send(item basic.Item) []error
-    // 该值表示当前的条目处理管道是否是快速失败的。
-    // 这里的快速失败是指：只要对某个条目的处理流程在某一个步骤上出错，
-    // 那么条目处理管道就会忽略掉后续的所有处理步骤并报告错误。
+    // 该值表示当前的条目处理链是否是快速失败的。即只要对某个条目的处理流程在某一个步骤上出错，
+    // 那么处理链就会忽略掉后续的所有处理步骤并报告错误。
     FailFast() bool
     // 设置是否快速失败。
     SetFailFast(failFast bool)

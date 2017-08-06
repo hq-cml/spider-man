@@ -3,7 +3,7 @@ package scheduler
 import (
     "net/http"
     "github.com/hq-cml/spider-go/logic/analyzer"
-    "github.com/hq-cml/spider-go/logic/itempipeline"
+    "github.com/hq-cml/spider-go/logic/processchain"
 )
 
 /*
@@ -29,7 +29,7 @@ type SchedulerIntfs interface{
         grabDepth uint32,
         httpClientGenerator GenHttpClient,
         respParsers []analyzer.ParseResponse,
-        itemProcessors []itempipeline.ProcessItem,
+        itemProcessors []processchain.ProcessItem,
         firstHttpReq *http.Request) (err error)
     //调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止。
     Stop() bool
