@@ -1,8 +1,10 @@
 package analyzer
 
 import (
+    "github.com/hq-cml/spider-go/middleware/pool"
     "net/http"
     "github.com/hq-cml/spider-go/basic"
+    "reflect"
 )
 
 /*
@@ -36,4 +38,13 @@ type AnalyzerPoolIntfs interface {
     Put(analyzer AnalyzerIntfs) error // 归还一个分析器到池子中
     Total() uint32                    //获得池子总容量
     Used() uint32                     //获得正在被使用的分析器数量
+}
+
+// 生成分析器的函数类型。
+type GenAnalyzerFunc func() AnalyzerIntfs
+
+//分析器池子
+type AnalyzerPool struct {
+    pool  pool.Pool     // 实体池。
+    etype reflect.Type // 池内实体的类型。
 }

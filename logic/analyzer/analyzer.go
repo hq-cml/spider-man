@@ -6,7 +6,7 @@ import (
     "errors"
     "fmt"
     "net/url"
-    "github.com/donnie4w/go-logger/logger"
+    "github.com/hq-cml/spider-go/helper/log"
 )
 
 //下载器专用的id生成器
@@ -38,9 +38,9 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []AnalyzeResponseFunc, resp basi
         return nil, []error{errors.New("The http response is invalid!")}
     }
 
-    //TODO 日志记录处理了哪些url
-    //var reqUrl *url.URL = httpResp.Request.URL
-    //logger.Infof("Parse the response (reqUrl=%s)... \n", reqUrl)
+    //日志记录
+    var reqUrl *url.URL = httpResp.Request.URL
+    log.Infof("Parse the response (reqUrl=%s)... \n", reqUrl)
 
     respDepth := resp.Depth()
 
@@ -54,8 +54,22 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []AnalyzeResponseFunc, resp basi
         }
 
         pDataList, pErrorList := respAnalyzer(httpResp, respDepth)
+
+        if pDataList != nil {
+            for _, pData := range pDataList {
+                dataList = appendDataList(dataList, pData, respDepth)
+            }
+        }
+
+        if pErrorList != nil {
+            for _, pError := range pErrorList {
+                errorList = appendErrorList(errorList, pError)
+            }
+        }
+
     }
 
+    return dataList, errorList
 }
 
 //将处理完毕的值附加到列之后
@@ -66,13 +80,24 @@ func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth 
     }
 
     //断言检查data的类型
-    req, ok := data.(*basic.Request)
+    request, ok := data.(*basic.Request)
     if ok {
         //data是请求
-
+        newDepth := respDepth+1
+        if request.Depth() != newDepth {
+            request = basic.NewRequest(request.HttpReq(), newDepth)
+        }
+        return append(dataList, request)
     } else {
         //data是条目，则
-
+        return append(dataList, data)
     }
 }
 
+// 添加错误值到列表。
+func appendErrorList(errorList []error, err error) []error {
+    if err == nil {
+        return errorList
+    }
+    return append(errorList, err)
+}
