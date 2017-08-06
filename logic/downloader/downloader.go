@@ -10,11 +10,13 @@ import (
     "errors"
 )
 
+/********************************下载器********************************/
+
 //下载器专用的id生成器
 var downloaderIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 
 //New
-func NewPageDownloader(client *http.Client) DownloaderIntfs {
+func NewDownloader(client *http.Client) DownloaderIntfs {
     id := downloaderIdGenerator.GetId()
 
     if client == nil {
@@ -27,8 +29,8 @@ func NewPageDownloader(client *http.Client) DownloaderIntfs {
     }
 }
 
-//*Downloader实现PageDownloaderIntfs接口
-func (dl *Downloader) Id() int64 {
+//*Downloader实现DownloaderIntfs接口
+func (dl *Downloader) Id() uint32 {
     return dl.id
 }
 
@@ -42,11 +44,15 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 }
 
 
-
+/********************************下载器池********************************/
 //New,创建网页下载器
-func NewDownloaderPool(total uint32, gen GenDownloader) (DownloaderPoolIntfs, error) {
+func NewDownloaderPool(total uint32, gen GenDownloaderFunc) (DownloaderPoolIntfs, error) {
+    //直接调用gen()，利用反射获取期类型
     etype := reflect.TypeOf(gen())
-    genEntity := func() pool.EntityIntfs { //函数作为一个类型的变量赋值给一个变量
+
+    //gen()的返回值是DownloaderIntfs，但是它包含了pool.EntityIntfs所有声明方法
+    //所以可以认为DownloaderIntfs是pool.EntityIntfs
+    genEntity := func() pool.EntityIntfs {
         return gen()
     }
     pool, err := pool.NewPool(total, etype, genEntity())
