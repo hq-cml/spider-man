@@ -2,7 +2,7 @@ package downloader
 
 import (
     "net/http"
-    "github.com/hq-cml/spider-go/helper/id"
+    "github.com/hq-cml/spider-go/helper/idgen"
     "github.com/hq-cml/spider-go/basic"
     "github.com/hq-cml/spider-go/middleware/pool"
     "reflect"
@@ -11,7 +11,7 @@ import (
 )
 
 //下载器专用的id生成器
-var downloaderIdGenerator id.IdGeneratorIntfs = id.NewIdGenerator()
+var downloaderIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 
 //New
 func NewPageDownloader(client *http.Client) DownloaderIntfs {

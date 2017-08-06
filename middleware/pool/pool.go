@@ -7,11 +7,7 @@ import (
 )
 
 //惯例New函数，创建实体池
-func NewPool(
-total uint32,
-entityType reflect.Type,
-genEntity func() EntityIntfs) (PoolIntfs, error) {
-
+func NewPool(total uint32, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
     //参数校验
     if total == 0 {
         errMsg := fmt.Sprintf("NewPool failed.(total=%d)\n", total)
@@ -35,7 +31,7 @@ genEntity func() EntityIntfs) (PoolIntfs, error) {
     pool := &Pool{
         total: total,
         etype: entityType,
-        genEntity: genEntity(),
+        genEntity: genEntity,
         container: container,
         idContainer: idContainer,
     }

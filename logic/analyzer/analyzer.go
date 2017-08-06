@@ -3,13 +3,13 @@ package analyzer
 import (
     "net/http"
     "github.com/hq-cml/spider-go/basic"
-    "github.com/hq-cml/spider-go/helper/id"
+    "github.com/hq-cml/spider-go/helper/idgen"
     "errors"
     "fmt"
 )
 
 //下载器专用的id生成器
-var analyzerIdGenerator id.IdGeneratorIntfs = id.NewIdGenerator()
+var analyzerIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 
 //创建分析器
 func NewAnalyzer() AnalyzerIntfs {
