@@ -37,6 +37,6 @@ type DownloaderPoolIntfs interface {
 
 //网页下载器池的实现，*DownloaderPool实现DownloaderPoolIntfs
 type DownloaderPool struct {
-    pool  pool.Pool //结构体的嵌套
+    pool  pool.PoolIntfs
     etype reflect.Type
 }

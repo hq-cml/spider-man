@@ -22,12 +22,12 @@ func NewAnalyzerPool(total uint32, gen GenAnalyzerFunc) (AnalyzerPoolIntfs, erro
 }
 
 
-func (alpool *AnalyzerPool) Get() (Analyzer, error) {
+func (alpool *AnalyzerPool) Get() (AnalyzerIntfs, error) {
     entity, err := alpool.pool.Get()
     if err != nil {
         return nil, err
     }
-    analyzer, ok := entity.(Analyzer)
+    analyzer, ok := entity.(AnalyzerIntfs)
     if !ok {
         errMsg := fmt.Sprintf("The type of entity is NOT %s!\n", alpool.etype)
         panic(errors.New(errMsg))
@@ -35,7 +35,7 @@ func (alpool *AnalyzerPool) Get() (Analyzer, error) {
     return analyzer, nil
 }
 
-func (alpool *AnalyzerPool) Put(analyzer Analyzer) error {
+func (alpool *AnalyzerPool) Put(analyzer AnalyzerIntfs) error {
     return alpool.pool.Put(analyzer)
 }
 

@@ -45,6 +45,6 @@ type GenAnalyzerFunc func() AnalyzerIntfs
 
 //分析器池子
 type AnalyzerPool struct {
-    pool  pool.Pool     // 实体池。
-    etype reflect.Type // 池内实体的类型。
+    pool  pool.PoolIntfs   // 实体池。
+    etype reflect.Type     // 池内实体的类型。
 }

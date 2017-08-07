@@ -62,7 +62,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
     }
     //入参check：类型需要一直
     if pool.etype != reflect.TypeOf(entity) {
-        return errors.New(mt.Sprintf("The type of returning entity is NOT %s!\n", pool.etype))
+        return errors.New(fmt.Sprintf("The type of returning entity is NOT %s!\n", pool.etype))
     }
 
     entityId := entity.Id()

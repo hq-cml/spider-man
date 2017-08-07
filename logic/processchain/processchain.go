@@ -22,7 +22,7 @@ func NewProcessChain(itemProcessors []ProcessItemFunc) ProcessChainIntfs {
 
     for k, v := range itemProcessors {
         if v == nil {
-            panic(errors.New("Invalid item processor:"+ k))
+            panic(errors.New(fmt.Sprint("Invalid item processor:", k)))
         }
         pc = append(pc, v)
     }
@@ -36,7 +36,7 @@ func NewProcessChain(itemProcessors []ProcessItemFunc) ProcessChainIntfs {
 //向处理链发送Item
 func (pc *ProcessChain)Send(item basic.Item) []error {
     atomic.AddUint64(&pc.processingNumber, 1) //原子加1
-    defer atomic.AddUint64(&pc.processingNumber, fmt.Println(i)) //原子减1
+    defer atomic.AddUint64(&pc.processingNumber, ^uint64(0)) //原子减1
     atomic.AddUint64(&pc.sent, 1)
 
     errs := []error{}

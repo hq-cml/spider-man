@@ -73,51 +73,51 @@ func (chm *ChannelManager) Close() bool {
 }
 
 //获取request通道
-func (chanman *ChannelManager) ReqChan() (chan basic.Request, error) {
+func (chm *ChannelManager) ReqChan() (chan basic.Request, error) {
     //读锁保护
-    chanman.rwmutex.RLock()
-    defer chanman.rwmutex.RUnlock()
-    if err := chanman.checkStatus(); err != nil {
+    chm.rwmutex.RLock()
+    defer chm.rwmutex.RUnlock()
+    if err := chm.checkStatus(); err != nil {
         return nil, err
     }
-    return chanman.reqCh, nil
+    return chm.reqCh, nil
 }
 
 //获取response通道
-func (chanman *ChannelManager) RespChan() (chan basic.Response, error) {
+func (chm *ChannelManager) RespChan() (chan basic.Response, error) {
     //读锁保护
-    chanman.rwmutex.RLock()
-    defer chanman.rwmutex.RUnlock()
-    if err := chanman.checkStatus(); err != nil {
+    chm.rwmutex.RLock()
+    defer chm.rwmutex.RUnlock()
+    if err := chm.checkStatus(); err != nil {
         return nil, err
     }
-    return chanman.respCh, nil
+    return chm.respCh, nil
 }
 
 //获取item通道
-func (chanman *ChannelManager) ItemChan() (chan basic.Item, error) {
+func (chm *ChannelManager) ItemChan() (chan basic.Item, error) {
     //读锁保护
-    chanman.rwmutex.RLock()
-    defer chanman.rwmutex.RUnlock()
-    if err := chanman.checkStatus(); err != nil {
+    chm.rwmutex.RLock()
+    defer chm.rwmutex.RUnlock()
+    if err := chm.checkStatus(); err != nil {
         return nil, err
     }
-    return chanman.itemCh, nil
+    return chm.itemCh, nil
 }
 
 //获取error通道
-func (chanman *ChannelManager) ErrorChan() (chan error, error) {
+func (chm *ChannelManager) ErrorChan() (chan error, error) {
     //读锁保护
-    chanman.rwmutex.RLock()
-    defer chanman.rwmutex.RUnlock()
-    if err := chanman.checkStatus(); err != nil {
+    chm.rwmutex.RLock()
+    defer chm.rwmutex.RUnlock()
+    if err := chm.checkStatus(); err != nil {
         return nil, err
     }
-    return chanman.errorCh, nil
+    return chm.errorCh, nil
 }
 
 //摘要方法
-func (chanman *ChannelManager) Summary() string {
+func (chm *ChannelManager) Summary() string {
     //模板
     chanmanSummaryTemplate := "status: %s, " +
     "requestChannel: %d/%d, " +
@@ -126,14 +126,17 @@ func (chanman *ChannelManager) Summary() string {
     "errorChannel: %d/%d"
 
     summary := fmt.Sprintf(chanmanSummaryTemplate,
-        statusNameMap[chanman.status],
-        len(chanman.reqCh), cap(chanman.reqCh),
-        len(chanman.respCh), cap(chanman.respCh),
-        len(chanman.itemCh), cap(chanman.itemCh),
-        len(chanman.errorCh), cap(chanman.errorCh))
+        statusNameMap[chm.status],
+        len(chm.reqCh), cap(chm.reqCh),
+        len(chm.respCh), cap(chm.respCh),
+        len(chm.itemCh), cap(chm.itemCh),
+        len(chm.errorCh), cap(chm.errorCh))
     return summary
 }
 
+func (chm *ChannelManager) Status() ChannelManagerStatus {
+    return chm.status
+}
 
 
 

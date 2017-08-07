@@ -22,8 +22,8 @@ type Request struct {
 /*********************** 响应体相关 ***********************/
 //响应体结构
 type Response struct {
-    httpResp *http.Request  //HTTP响应的指针
-    depth    uint32         //深度
+    httpResp *http.Response  //HTTP响应的指针
+    depth    uint32          //深度
 }
 
 /************************ 条目相关 ************************/
