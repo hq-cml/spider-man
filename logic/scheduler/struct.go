@@ -4,6 +4,9 @@ import (
     "net/http"
     "github.com/hq-cml/spider-go/logic/analyzer"
     "github.com/hq-cml/spider-go/logic/processchain"
+    "github.com/hq-cml/spider-go/middleware/stopsign"
+    "github.com/hq-cml/spider-go/middleware/channelmanager"
+    "github.com/hq-cml/spider-go/logic/downloader"
 )
 
 /*
@@ -48,4 +51,22 @@ type SchedSummaryIntfs interface {
     String() string    //获得摘要信息的一般表示
     Detail() string    //获取摘要信息的详细表示
     Same(other SchedSummary) bool //判断是否与另一份摘要信息相同
+}
+
+// 调度器的实现类型。
+type Scheduler struct {
+                                                      // channelArgs   basic.ChannelArgs   // 通道参数的容器。
+                                                      //poolBaseArgs  base.PoolBaseArgs   // 池基本参数的容器。
+    poolSize       uint32
+    channelLen     uint
+    grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
+    primaryDomain  string                             // 主域名。
+    channelManager channelmanager.ChannelManagerIntfs // 通道管理器。
+    stopSign       stopsign.StopSignIntfs             // 停止信号。
+    downloaderPool downloader.DownloaderPoolIntfs     // 网页下载器池。
+    analyzerPool   analyzer.AnalyzerPoolIntfs         // 分析器池。
+    processChain   processchain.ProcessChainIntfs     // 条目处理管道。
+    reqCache       requestCache                       // 请求缓存。
+    urlMap         map[string]bool                    // 已请求的URL的字典。
+    running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }
