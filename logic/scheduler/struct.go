@@ -6,6 +6,7 @@ import (
     "github.com/hq-cml/spider-go/logic/processchain"
     "github.com/hq-cml/spider-go/middleware/stopsign"
     "github.com/hq-cml/spider-go/middleware/channelmanager"
+    "github.com/hq-cml/spider-go/middleware/requestcache"
     "github.com/hq-cml/spider-go/logic/downloader"
 )
 
@@ -66,7 +67,7 @@ type Scheduler struct {
     downloaderPool downloader.DownloaderPoolIntfs     // 网页下载器池。
     analyzerPool   analyzer.AnalyzerPoolIntfs         // 分析器池。
     processChain   processchain.ProcessChainIntfs     // 条目处理管道。
-    reqCache       requestCache                       // 请求缓存。
+    requestCache   requestcache.RequestCacheIntfs     // 请求缓存。
     urlMap         map[string]bool                    // 已请求的URL的字典。
     running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }

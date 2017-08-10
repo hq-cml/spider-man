@@ -14,6 +14,7 @@ import (
     "time"
     "github.com/hq-cml/spider-go/helper/util"
     "github.com/hq-cml/spider-go/basic"
+    "github.com/hq-cml/spider-go/middleware/requestcache"
 )
 
 
@@ -96,7 +97,7 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
         schdl.stopSign.Reset()
     }
 
-    schdl.reqCache = newRequestChache()
+    schdl.requestCache = requestcache.NewRequestCache()
     schdl.urlMap = make(map[string]bool)
 
     schdl.startDownloading()
@@ -112,7 +113,7 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     }
 
     firstReq := basic.NewRequest(firstHttpReq, 0) //深度0
-    schdl.reqCache.put(firstReq)
+    schdl.requestCache.Put(firstReq)
 
     return nil
 
