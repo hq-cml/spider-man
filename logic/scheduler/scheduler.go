@@ -100,7 +100,7 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     schdl.requestCache = requestcache.NewRequestCache()
     schdl.urlMap = make(map[string]bool)
 
-    schdl.startDownloading()
+    schdl.startDownload()
     schdl.activateAnalyzers(respParsers)
     schdl.openItemPipeline()
     schdl.schedule(10 * time.Millisecond)
@@ -119,3 +119,15 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 
 }
 
+/*
+ * 开始下载，下载工作由异步的goroutine进行负责
+ * 无限循环，从请求通道中获取请求，完成下载任务
+ */
+func (schdl *Scheduler) startDownload() {
+    go func() {
+        //
+        for {
+            request, ok := <- schdl.
+        }
+    }()
+}
