@@ -23,7 +23,8 @@ type AnalyzerIntfs interface {
     // 获得分析器自身Id
     Id() uint32
     //根据规则分析响应并返回请求和条目
-    //respParsers是一个分析器的链，每个response都会被链上的每一个分析器分析
+    //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
+    //返回值是一个列表，其中元素可能是两种类型：请求 or 条目
     Analyze(respParsers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
 }
 

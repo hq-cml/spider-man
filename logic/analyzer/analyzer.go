@@ -82,7 +82,7 @@ func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth 
     //断言检查data的类型
     request, ok := data.(*basic.Request)
     if ok {
-        //data是请求
+        //data是请求，则封装出一个新的请求
         newDepth := respDepth+1
         if request.Depth() != newDepth {
             request = basic.NewRequest(request.HttpReq(), newDepth)

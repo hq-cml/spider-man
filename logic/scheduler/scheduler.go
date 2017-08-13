@@ -138,6 +138,58 @@ func (schdl *Scheduler) activateAnalyzers(respAnalyzers []analyzer.AnalyzeRespon
     }()
 }
 
+//实际分析工作
+func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, response basic.Response) {
+    defer func() {
+       if p := recover(); p!=nil{
+           msg := fmt.Sprintf("Fatal Analysis Error: %s\n", p)
+           log.Warn(msg)
+       }
+    }()
+
+    analyzer, err := schdl.analyzerPool.Get()
+    if err != nil {
+        msg := fmt.Sprintf("Analyzer pool error: %s", err)
+        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        return
+    }
+    defer func(){ //注册延时归还
+        err = schdl.analyzerPool.Put(analyzer)
+        if err != nil {
+            msg := fmt.Sprintf("Analyzer pool error: %s", err)
+            schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        }
+    }()
+
+    moudleCode := generateModuleCode(ANALYZER_CODE, analyzer.Id())
+    dataList, errs := analyzer.Analyze(respAnalyzers, response)
+    if errs != nil {
+        for _, err := range errs {
+            schdl.sendError(err, moudleCode)
+        }
+
+    }
+    //Analyze返回值是一个列表，其中元素可能是两种类型：请求 or 条目
+    if dataList != nil {
+        for _, data := range dataList {
+            if data == nil {
+                continue
+            }
+
+            switch  d:= data.(type) {
+            case *basic.Request:
+                schdl.saveReqToCache(*d, moudleCode)
+            case *basic.Item:
+                schdl.sendItem(*d, moudleCode)
+            default:
+                msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)
+                schdl.sendError(errors.New(msg), moudleCode)
+            }
+        }
+        schdl.sendResponse(*response, moudleCode)
+    }
+}
+
 /*
  * 激活下载器，开始下载，下载工作由异步的goroutine进行负责
  * 无限循环，从请求通道中获取请求，完成下载任务
