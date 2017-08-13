@@ -71,3 +71,11 @@ type Scheduler struct {
     urlMap         map[string]bool                    // 已请求的URL的字典。
     running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }
+
+// 组件的统一代号。
+const (
+    DOWNLOADER_CODE   = "downloader"
+    ANALYZER_CODE     = "analyzer"
+    PROCESS_CHAIN_CODE = "process_chain"
+    SCHEDULER_CODE    = "scheduler"
+)

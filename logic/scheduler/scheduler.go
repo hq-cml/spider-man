@@ -27,6 +27,7 @@ func NewScheduler() SchedulerIntfs {
  * Scheduler实现SchedulerIntfs接口
  */
 //Start开始
+//TODO 重构
 func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
     respParsers []analyzer.AnalyzeResponseFunc,
@@ -125,9 +126,33 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
  */
 func (schdl *Scheduler) startDownload() {
     go func() {
-        //
+        //无限循环，从请求通道中获取请求
         for {
-            request, ok := <- schdl.
+            request, ok := <- schdl.getReqestChan()
+            if !ok {
+                break
+            }
+            //每个请求都交给一个独立的goroutine来处理
+            go schdl.download(request)
         }
     }()
+}
+
+//实际下载
+func (schdl *Scheduler) download(request basic.Request) {
+    defer func() {
+       if p := recover(); p != nil {
+           msg := fmt.Sprintf("Fatal Download Error: %s\n", p)
+           log.Warn(msg)
+       }
+    }()
+
+    downloader, err := schdl.downloaderPool.Get()
+    if err != nil {
+        msg := fmt.Sprintf("Downloader pool error: %s", err)
+        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+    }
+
+
+
 }

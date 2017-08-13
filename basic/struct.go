@@ -55,3 +55,5 @@ type SpiderError struct {
     errMsg     string     //错误信息
     fullErrMsg string     //完整错误信息
 }
+
+
