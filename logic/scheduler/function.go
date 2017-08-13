@@ -168,3 +168,13 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
 
     return true
 }
+
+// 发送条目到通道管理器中的条目通道
+func (schdl *Scheduler) sendItem(item basic.Item, moduleCode string) bool {
+    if schdl.stopSign.Signed() {
+        schdl.stopSign.Deal(moduleCode)
+        return false
+    }
+    schdl.getItemChan() <- item
+    return true
+}
