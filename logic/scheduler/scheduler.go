@@ -30,7 +30,7 @@ func NewScheduler() SchedulerIntfs {
 //TODO 重构
 func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
-    respParsers []analyzer.AnalyzeResponseFunc,
+    respAnalyzers []analyzer.AnalyzeResponseFunc,
     itemProcessors []processchain.ProcessItemFunc,
     firstHttpReq *http.Request) (err error) {
 
@@ -101,8 +101,8 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     schdl.requestCache = requestcache.NewRequestCache()
     schdl.urlMap = make(map[string]bool)
 
-    schdl.startDownload()
-    schdl.activateAnalyzers(respParsers)
+    schdl.activeDownloaders()
+    schdl.activateAnalyzers(respAnalyzers)
     schdl.openItemPipeline()
     schdl.schedule(10 * time.Millisecond)
 
@@ -121,10 +121,28 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 }
 
 /*
- * 开始下载，下载工作由异步的goroutine进行负责
+ * 激活分析器，开始分析，分析工作由异步的goroutine进行负责
+ * 无限循环，从响应通道中获取响应，完成分析工作
+ */
+func (schdl *Scheduler) activateAnalyzers(respAnalyzers []analyzer.AnalyzeResponseFunc) {
+    go func() {
+       for { //无限循环
+           response, ok := <- schdl.getResponseChan()
+           if !ok {
+               //通道已关闭
+               break
+           }
+           //启动异步分析
+           go schdl.analyze(respAnalyzers, response)
+       }
+    }()
+}
+
+/*
+ * 激活下载器，开始下载，下载工作由异步的goroutine进行负责
  * 无限循环，从请求通道中获取请求，完成下载任务
  */
-func (schdl *Scheduler) startDownload() {
+func (schdl *Scheduler) activeDownloaders() {
     go func() {
         //无限循环，从请求通道中获取请求
         for {
@@ -138,6 +156,7 @@ func (schdl *Scheduler) startDownload() {
         }
     }()
 }
+
 
 //实际下载
 func (schdl *Scheduler) download(request basic.Request) {
