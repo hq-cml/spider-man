@@ -9,6 +9,10 @@ import (
     "fmt"
     "strings"
     "errors"
+    "github.com/hq-cml/spider-go/helper/log"
+    "github.com/hq-cml/spider-go/helper/util"
+    "github.com/donnie4w/go-logger/logger"
+    "github.com/hq-cml/spider-go/middleware/requestcache"
 )
 
 // 获取通道管理器持有的请求通道。
@@ -105,13 +109,62 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 }
 
 // 发送响应到通道管理器中的错响应通道
-func (schdl *Scheduler) sendResponse(resp basic.Response, code string) bool {
+func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bool {
     if schdl.stopSign.Signed() {
-        schdl.stopSign.Deal(code)
+        schdl.stopSign.Deal(mouduleCode)
         //如果stop标记已经生效，则通道管理器可能已经关闭，此时不应该再进行通道写入
         return false
     }
 
     schdl.getResponseChan() <- resp
+    return true
+}
+
+func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
+    httpRequest := request.HttpReq()
+    if httpRequest == nil {
+        log.Warnln("Ignore the request! It's HTTP request is invalid!")
+        return false
+    }
+    requestUrl := httpRequest.URL
+    if requestUrl == nil {
+        log.Warnln("Ignore the request! It's url is is invalid!")
+        return false
+    }
+
+    if strings.ToLower(requestUrl.Scheme) != "http" {
+        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
+        return false
+    }
+
+    if pd, _:= util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
+        log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
+            httpRequest.Host, schdl.primaryDomain, requestUrl)
+        return false
+    }
+
+    if request.Depth() > schdl.grabDepth {
+        log.Warnf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
+            request.Depth(), schdl.grabDepth, requestUrl)
+        return false
+    }
+    return true
+}
+
+// 把请求存放到请求缓存。
+func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode string) bool {
+
+    if schdl.checkRequest(&request) == false {
+        return false
+    }
+
+    if schdl.stopSign.Signed() {
+        schdl.stopSign.Deal(mouduleCode)
+        return false
+    }
+
+    schdl.requestCache.Put(&request)
+    schdl.urlMap[request.HttpReq().URL.String()] = true
+
     return true
 }

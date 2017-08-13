@@ -178,7 +178,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, re
 
             switch  d:= data.(type) {
             case *basic.Request:
-                schdl.saveReqToCache(*d, moudleCode)
+                schdl.sendRequestToCache(*d, moudleCode)
             case *basic.Item:
                 schdl.sendItem(*d, moudleCode)
             default:
