@@ -130,6 +130,7 @@ func (schdl *Scheduler) startDownload() {
         for {
             request, ok := <- schdl.getReqestChan()
             if !ok {
+                //通道已关闭
                 break
             }
             //每个请求都交给一个独立的goroutine来处理
@@ -151,8 +152,22 @@ func (schdl *Scheduler) download(request basic.Request) {
     if err != nil {
         msg := fmt.Sprintf("Downloader pool error: %s", err)
         schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        return
     }
+    defer func(){ //注册延时归还
+        err = schdl.downloaderPool.Put(downloader)
+        if err != nil {
+            msg := fmt.Sprintf("Downloader pool error: %s", err)
+            schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        }
+    }()
 
-
-
+    moudleCode := generateModuleCode(DOWNLOADER_CODE, downloader.Id())
+    response, err := downloader.Download(request)
+    if err != nil {
+        schdl.sendError(err, moudleCode)
+    }
+    if response != nil {
+        schdl.sendResponse(*response, moudleCode)
+    }
 }
