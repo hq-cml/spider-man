@@ -13,7 +13,6 @@ import (
 /*
  * 调度控制器
  */
-
 //用来生成Http客户端的函数的类型
 type GenHttpClientFunc func() *http.Client
 
@@ -54,10 +53,17 @@ type SchedSummaryIntfs interface {
     Same(other SchedSummary) bool //判断是否与另一份摘要信息相同
 }
 
-// 调度器的实现类型。
+// 调度器摘要信息的接口类型。
+type SchedSummaryIntfs interface {
+    String() string               // 获得摘要信息的一般表示。
+    Detail() string               // 获取摘要信息的详细表示。
+    Same(other SchedSummaryIntfs) bool // 判断是否与另一份摘要信息相同。
+}
+
+// *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-                                                      // channelArgs   basic.ChannelArgs   // 通道参数的容器。
-                                                      //poolBaseArgs  base.PoolBaseArgs   // 池基本参数的容器。
+    // channelArgs   basic.ChannelArgs   // 通道参数的容器。
+    //poolBaseArgs  base.PoolBaseArgs   // 池基本参数的容器。
     poolSize       uint32
     channelLen     uint
     grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
@@ -70,6 +76,27 @@ type Scheduler struct {
     requestCache   requestcache.RequestCacheIntfs     // 请求缓存。
     urlMap         map[string]bool                    // 已请求的URL的字典。
     running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
+}
+
+// 调度器摘要信息的实现类型。
+type SchedSummary struct {
+    prefix              string            // 前缀。
+    running             uint32            // 运行标记。
+    //channelArgs         base.ChannelArgs  // 通道参数的容器。
+    //poolBaseArgs        base.PoolBaseArgs // 池基本参数的容器。
+    poolSize       uint32
+    channelLen     uint
+    grabDepth          uint32            // 爬取的最大深度。
+    chanmanSummary      string            // 通道管理器的摘要信息。
+    reqCacheSummary     string            // 请求缓存的摘要信息。
+    dlPoolLen           uint32            // 网页下载器池的长度。
+    dlPoolCap           uint32            // 网页下载器池的容量。
+    analyzerPoolLen     uint32            // 分析器池的长度。
+    analyzerPoolCap     uint32            // 分析器池的容量。
+    processChainSummary string            // 条目处理管道的摘要信息。
+    urlCount            int               // 已请求的URL的计数。
+    urlDetail           string            // 已请求的URL的详细信息。
+    stopSignSummary     string            // 停止信号的摘要信息。
 }
 
 // 组件的统一代号。
