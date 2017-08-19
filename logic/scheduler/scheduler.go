@@ -45,11 +45,11 @@ func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
     }()
 
     //running状态设置！
-    if atomic.LoadUint32(&schdl.running) == 1{
+    if atomic.LoadUint32(&schdl.running) == RUNNING_STATUS_RUNNING{
         err = errors.New("The scheduler has been started!\n") //已经开启，则退出，单例
         return
     }
-    atomic.StoreUint32(&schdl.running, 1)
+    atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
     //TODO 参数校验 & 赋值
     if err := channelParams.Check(); err != nil {
@@ -129,19 +129,19 @@ func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
 
 //实现Stop方法，调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止
 func (schdl *Scheduler)Stop() {
-    if atomic.LoadUint32(&schdl.running) != 1 {
+    if atomic.LoadUint32(&schdl.running) != RUNNING_STATUS_RUNNING {
         return false
     }
     schdl.stopSign.Sign()
     schdl.channelManager.Close()
     schdl.requestCache.Close()
-    atomic.StoreUint32(&schdl.running, 2)
+    atomic.StoreUint32(&schdl.running, RUNNING_STATUS_STOP)
     return true
 }
 
 //实现Running方法，判断调度器是否正在运行。
 func (schdl *Scheduler) Running() bool {
-    return atomic.LoadUint32(&schdl.running) == 1
+    return atomic.LoadUint32(&schdl.running) == RUNNING_STATUS_RUNNING
 }
 
 //实现ErrorChan方法

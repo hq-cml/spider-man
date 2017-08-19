@@ -75,7 +75,7 @@ type Scheduler struct {
     processChain   processchain.ProcessChainIntfs     // 条目处理管道。
     requestCache   requestcache.RequestCacheIntfs     // 请求缓存。
     urlMap         map[string]bool                    // 已请求的URL的字典。
-    running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
+    running        SchedStatus                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }
 
 // 调度器摘要信息的实现类型。
@@ -103,4 +103,11 @@ const (
     ANALYZER_CODE     = "analyzer"
     PROCESS_CHAIN_CODE = "process_chain"
     SCHEDULER_CODE    = "scheduler"
+)
+
+type SchedStatus uint32
+const (
+    RUNNING_STATUS_INIT SchedStatus = 0
+    RUNNING_STATUS_RUNNING  = 1
+    RUNNING_STATUS_STOP     = 2
 )
