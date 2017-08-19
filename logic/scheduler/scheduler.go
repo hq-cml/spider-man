@@ -26,16 +26,9 @@ func NewScheduler() SchedulerIntfs {
  * Scheduler实现SchedulerIntfs接口
  */
 //实现Start方法
-// 调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
-// 参数channelArgs代表通道参数的容器。
-// 参数poolBaseArgs代表池基本参数的容器。
-// 参数crawlDepth代表了需要被爬取的网页的最大深度值。深度大于此值的网页会被忽略。
-// 参数httpClientGenerator代表的是被用来生成HTTP客户端的函数。
-// 参数respParsers的值应为分析器所需的被用来解析HTTP响应的函数的序列。
-// 参数itemProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
-// 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
 //TODO 重构
-func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
+func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
+    poolParams basic.PoolParams, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
     respAnalyzers []analyzer.AnalyzeResponseFunc,
     itemProcessors []processchain.ProcessItemFunc,
@@ -59,19 +52,26 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     atomic.StoreUint32(&schdl.running, 1)
 
     //TODO 参数校验 & 赋值
-    schdl.channelLen = channelLen
-    schdl.poolSize = poolSize
+    if err := channelParams.Check(); err != nil {
+        return err
+    }
+    schdl.channelParams = channelParams
+
+    if err := poolParams.Check(); err != nil {
+        return err
+    }
+    schdl.poolParams = poolParams
     schdl.grabDepth = grabDepth
 
     //middleware生成
-    schdl.channelManager = channelmanager.NewChannelManager(channelLen)
+    schdl.channelManager = channelmanager.NewChannelManager(channelParams)
 
     if httpClientGenerator == nil {
         err = errors.New("The HTTP client generator list is invalid!\n") //已经开启，则退出，单例
         return
     }
 
-    if schdl.downloaderPool, err = downloader.NewDownloaderPool(poolSize,
+    if schdl.downloaderPool, err = downloader.NewDownloaderPool(poolParams.AnalyzerPoolSize(),
         func() downloader.DownloaderIntfs{
             return downloader.NewDownloader(httpClientGenerator())
         },
@@ -80,7 +80,7 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
         return
     }
 
-    if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(poolSize,
+    if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(poolParams.AnalyzerPoolSize(),
         func() analyzer.AnalyzerIntfs{
             return analyzer.NewAnalyzer()
         },

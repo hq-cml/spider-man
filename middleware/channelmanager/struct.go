@@ -31,7 +31,7 @@ type ChannelManagerIntfs interface {
     // 初始化通道管理器。
     // 参数channelArgs代表通道参数的容器。
     // 参数reset指明是否重新初始化通道管理器。
-    Init(channelLen uint, reset bool) bool
+    Init(channelParams basic.ChannelParams, reset bool) bool
     // 关闭通道管理器
     Close() bool
     // 获取请求传输通道。
@@ -50,7 +50,7 @@ type ChannelManagerIntfs interface {
 
 //channel管理器实现类型
 type ChannelManager struct {
-    channelLen uint                 //通道长度
+    channelParams basic.ChannelParams                 //通道长度
     reqCh chan basic.Request        //请求通道
     respCh chan basic.Response      //响应通道
     itemCh chan basic.Item          //item通道

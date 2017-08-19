@@ -7,12 +7,9 @@ import (
 )
 
 //New
-func NewChannelManager(channelLen uint) ChannelManagerIntfs {
-    if channelLen == 0 {
-        channelLen = 1024
-    }
+func NewChannelManager(chp basic.ChannelParams) ChannelManagerIntfs {
     chm := &ChannelManager{}
-    chm.Init(channelLen, true)
+    chm.Init(chp, true)
     return chm
 }
 
@@ -31,8 +28,8 @@ func (chm *ChannelManager) checkStatus() error {
 
 //*ChannelManager实现ChannelManagerIntfs接口
 //Init方法
-func (chm *ChannelManager) Init(channelLen uint, reset bool) bool {
-    if channelLen == 0 {
+func (chm *ChannelManager) Init(chp basic.ChannelParams, reset bool) bool {
+    if chp.Check() == 0 {
         panic(errors.New("The channel length is invalid!"))
     }
     //写锁保护
@@ -43,11 +40,11 @@ func (chm *ChannelManager) Init(channelLen uint, reset bool) bool {
     if chm.status == CHANNEL_MANAGER_STATUS_INITIALIZED && reset != true {
         return false
     }
-    chm.channelLen = channelLen
-    chm.reqCh = make(chan basic.Request, channelLen)
-    chm.respCh = make(chan basic.Response, channelLen)
-    chm.itemCh = make(chan basic.Item, channelLen)
-    chm.errorCh = make(chan error, channelLen)
+    chm.channelParams = chp
+    chm.reqCh = make(chan basic.Request, chp.ReqChanLen())
+    chm.respCh = make(chan basic.Response, chp.RespChanLen())
+    chm.itemCh = make(chan basic.Item, chp.EntryChanLen())
+    chm.errorCh = make(chan error, chp.ErrorChanLen())
     chm.status = CHANNEL_MANAGER_STATUS_INITIALIZED
 
     return true

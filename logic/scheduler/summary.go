@@ -3,7 +3,6 @@ package scheduler
 import (
     "fmt"
     "bytes"
-    "strconv"
 )
 
 // 创建调度器摘要信息。
@@ -27,12 +26,8 @@ func NewSchedSummary(schdl *Scheduler, prefix string) SchedSummaryIntfs {
         urlDetail = "\n"
     }
     return &SchedSummary{
-        prefix:              prefix,
-        running:             schdl.running,
-        //channelArgs:         sched.channelArgs,
-        //poolBaseArgs:        sched.poolBaseArgs,
-        poolSize:schdl.poolSize,
-        channelLen:schdl.channelLen,
+        channelParams:         schdl.channelParams,
+        poolParams:        schdl.poolParams,
         grabDepth:          schdl.grabDepth,
         chanmanSummary:      schdl.channelManager.Summary(),
         reqCacheSummary:     schdl.requestCache.Summary(),
@@ -73,8 +68,8 @@ func (ss *SchedSummary) Same(other SchedSummary) bool {
     ss.urlCount != otherSs.urlCount ||
     ss.stopSignSummary != otherSs.stopSignSummary ||
     ss.reqCacheSummary != otherSs.reqCacheSummary ||
-    //ss.poolBaseArgs.String() != otherSs.poolBaseArgs.String() ||
-    //ss.channelArgs.String() != otherSs.channelArgs.String() ||
+    ss.poolParams.String() != otherSs.poolParams.String() ||
+    ss.channelParams.String() != otherSs.channelParams.String() ||
     ss.processChainSummary != otherSs.processChainSummary ||
     ss.chanmanSummary != otherSs.chanmanSummary {
         return false
@@ -101,10 +96,8 @@ func (ss *SchedSummary) getSummary(detail bool) string {
         func() bool {
             return ss.running == 1
         }(),
-        //ss.channelArgs.String(),
-        //ss.poolBaseArgs.String(),
-        strconv.Itoa(ss.channelLen),
-        strconv.Itoa(ss.poolSize),
+        ss.channelParams.String(),
+        ss.poolParams.String(),
         ss.grabDepth,
         ss.chanmanSummary,
         ss.reqCacheSummary,

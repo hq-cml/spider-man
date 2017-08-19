@@ -8,6 +8,7 @@ import (
     "github.com/hq-cml/spider-go/middleware/channelmanager"
     "github.com/hq-cml/spider-go/middleware/requestcache"
     "github.com/hq-cml/spider-go/logic/downloader"
+    "github.com/hq-cml/spider-go/basic"
 )
 
 /*
@@ -20,14 +21,15 @@ type GenHttpClientFunc func() *http.Client
 type SchedulerIntfs interface{
     // 开启调度器。
     // 调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
-    // 参数channelArgs代表通道参数的容器。
-    // 参数poolBaseArgs代表池基本参数的容器。
+    // 参数channelParams代表通道参数的容器。
+    // 参数poolParams代表池基本参数的容器。
     // 参数crawlDepth代表了需要被爬取的网页的最大深度值。深度大于此值的网页会被忽略。
     // 参数httpClientGenerator代表的是被用来生成HTTP客户端的函数。
     // 参数respParsers的值应为分析器所需的被用来解析HTTP响应的函数的序列。
     // 参数itemProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
     // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
-    Start(channelLen uint, poolSize uint32, grabDepth uint32,
+    Start(channelParams basic.ChannelParams, poolParams basic.PoolParams,
+        grabDepth uint32,
         httpClientGenerator GenHttpClientFunc,
         respParsers []analyzer.AnalyzeResponseFunc,
         itemProcessors []processchain.ProcessItemFunc,
@@ -62,10 +64,8 @@ type SchedSummaryIntfs interface {
 
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-    // channelArgs   basic.ChannelArgs   // 通道参数的容器。
-    //poolBaseArgs  base.PoolBaseArgs   // 池基本参数的容器。
-    poolSize       uint32
-    channelLen     uint
+    channelParams   basic.ChannelParams   // 通道参数的容器。
+    poolParams      basic.PoolParams   // 池基本参数的容器。
     grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
     primaryDomain  string                             // 主域名。
     channelManager channelmanager.ChannelManagerIntfs // 通道管理器。
@@ -82,10 +82,8 @@ type Scheduler struct {
 type SchedSummary struct {
     prefix              string            // 前缀。
     running             uint32            // 运行标记。
-    //channelArgs         base.ChannelArgs  // 通道参数的容器。
-    //poolBaseArgs        base.PoolBaseArgs // 池基本参数的容器。
-    poolSize       uint32
-    channelLen     uint
+    channelParams   basic.ChannelParams   // 通道参数的容器。
+    poolParams      basic.PoolParams   // 池基本参数的容器。
     grabDepth          uint32            // 爬取的最大深度。
     chanmanSummary      string            // 通道管理器的摘要信息。
     reqCacheSummary     string            // 请求缓存的摘要信息。
