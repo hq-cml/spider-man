@@ -31,7 +31,7 @@ func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
     poolParams basic.PoolParams, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
     respAnalyzers []analyzer.AnalyzeResponseFunc,
-    itemProcessors []processchain.ProcessItemFunc,
+    entryProcessors []processchain.ProcessEntryFunc,
     firstHttpReq *http.Request) (err error) {
 
     //错误兜底
@@ -89,15 +89,15 @@ func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
         return
     }
 
-    if itemProcessors == nil {
-        return errors.New("The item processor list is invalid!")
+    if entryProcessors == nil {
+        return errors.New("The entry processor list is invalid!")
     }
-    for i, ip := range itemProcessors {
+    for i, ip := range entryProcessors {
         if ip == nil {
-            return errors.New(fmt.Sprintf("The %dth item processor is invalid!", i))
+            return errors.New(fmt.Sprintf("The %dth entry processor is invalid!", i))
         }
     }
-    schdl.processChain = processchain.NewProcessChain(itemProcessors)
+    schdl.processChain = processchain.NewProcessChain(entryProcessors)
 
     if schdl.stopSign == nil {
         schdl.stopSign = stopsign.NewStopSign()
@@ -158,8 +158,8 @@ func (schdl *Scheduler) ErrorChan() <-chan error {
 func (schdl *Scheduler) Idle() bool {
     idleDlPool := schdl.downloaderPool.Used() == 0
     idleAnalyzerPool := schdl.analyzerPool.Used() == 0
-    idleItemPipeline := schdl.processChain.ProcessingNumber() == 0
-    if idleDlPool && idleAnalyzerPool && idleItemPipeline {
+    idleEntryPipeline := schdl.processChain.ProcessingNumber() == 0
+    if idleDlPool && idleAnalyzerPool && idleEntryPipeline {
         return true
     }
     return false
@@ -212,24 +212,24 @@ func (schdl *Scheduler) activateProcessChain() {
         schdl.processChain.SetFailFast(true)
         moudleCode := PROCESS_CHAIN_CODE
         //对一个channel进行range操作，就是循环<-操作，并且在channel关闭之后能够自动结束
-        for item := range schdl.getItemChan() {
-            //每次从item通道中取出一个Item，然后扔给一个独立的gorouting处理
-            go func(item basic.Item) {
+        for entry := range schdl.getEntryChan() {
+            //每次从entry通道中取出一个entry，然后扔给一个独立的gorouting处理
+            go func(e basic.Entry) {
                 defer func() {
                     if p := recover(); p!= nil {
-                        msg := fmt.Sprintf("Fatal Item Processing Error: %s\n", p)
+                        msg := fmt.Sprintf("Fatal entry Processing Error: %s\n", p)
                         log.Warn(msg)
                     }
                 }()
 
                 //放入处理链，处理链上的节点自动处理，处理完毕就不必在理会了
-                errs := schdl.processChain.Send(item)
+                errs := schdl.processChain.Send(e)
                 if errs != nil {
                     for _, err := range errs {
                         schdl.sendError(err, moudleCode)
                     }
                 }
-            }(item)
+            }(entry)
 
         }
     }()
@@ -294,8 +294,8 @@ func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, re
             switch  d:= data.(type) {
             case *basic.Request:
                 schdl.sendRequestToCache(*d, moudleCode)
-            case *basic.Item:
-                schdl.sendItem(*d, moudleCode)
+            case *basic.Entry:
+                schdl.sendEntry(*d, moudleCode)
             default:
                 //%T打印实际类型
                 msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)

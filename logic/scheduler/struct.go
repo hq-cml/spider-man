@@ -26,13 +26,13 @@ type SchedulerIntfs interface{
     // 参数crawlDepth代表了需要被爬取的网页的最大深度值。深度大于此值的网页会被忽略。
     // 参数httpClientGenerator代表的是被用来生成HTTP客户端的函数。
     // 参数respParsers的值应为分析器所需的被用来解析HTTP响应的函数的序列。
-    // 参数itemProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
+    // 参数entryProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
     // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
     Start(channelParams basic.ChannelParams, poolParams basic.PoolParams,
         grabDepth uint32,
         httpClientGenerator GenHttpClientFunc,
         respParsers []analyzer.AnalyzeResponseFunc,
-        itemProcessors []processchain.ProcessItemFunc,
+        entryProcessors []processchain.ProcessEntryFunc,
         firstHttpReq *http.Request) (err error)
 
     //调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止。

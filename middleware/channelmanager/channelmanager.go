@@ -43,7 +43,7 @@ func (chm *ChannelManager) Init(chp basic.ChannelParams, reset bool) bool {
     chm.channelParams = chp
     chm.reqCh = make(chan basic.Request, chp.ReqChanLen())
     chm.respCh = make(chan basic.Response, chp.RespChanLen())
-    chm.itemCh = make(chan basic.Item, chp.EntryChanLen())
+    chm.entryCh = make(chan basic.Entry, chp.EntryChanLen())
     chm.errorCh = make(chan error, chp.ErrorChanLen())
     chm.status = CHANNEL_MANAGER_STATUS_INITIALIZED
 
@@ -62,7 +62,7 @@ func (chm *ChannelManager) Close() bool {
 
     close(chm.reqCh)
     close(chm.respCh)
-    close(chm.itemCh)
+    close(chm.entryCh)
     close(chm.errorCh)
     chm.status = CHANNEL_MANAGER_STATUS_CLOSED
 
@@ -91,15 +91,15 @@ func (chm *ChannelManager) RespChan() (chan basic.Response, error) {
     return chm.respCh, nil
 }
 
-//获取item通道
-func (chm *ChannelManager) ItemChan() (chan basic.Item, error) {
+//获取entry通道
+func (chm *ChannelManager) EntryChan() (chan basic.Entry, error) {
     //读锁保护
     chm.rwmutex.RLock()
     defer chm.rwmutex.RUnlock()
     if err := chm.checkStatus(); err != nil {
         return nil, err
     }
-    return chm.itemCh, nil
+    return chm.entryCh, nil
 }
 
 //获取error通道
@@ -119,14 +119,14 @@ func (chm *ChannelManager) Summary() string {
     chanmanSummaryTemplate := "status: %s, " +
     "requestChannel: %d/%d, " +
     "responseChannel: %d/%d, " +
-    "itemChannel: %d/%d, " +
+    "entryChannel: %d/%d, " +
     "errorChannel: %d/%d"
 
     summary := fmt.Sprintf(chanmanSummaryTemplate,
         statusNameMap[chm.status],
         len(chm.reqCh), cap(chm.reqCh),
         len(chm.respCh), cap(chm.respCh),
-        len(chm.itemCh), cap(chm.itemCh),
+        len(chm.entryCh), cap(chm.entryCh),
         len(chm.errorCh), cap(chm.errorCh))
     return summary
 }

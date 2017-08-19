@@ -11,8 +11,6 @@ import (
     "errors"
     "github.com/hq-cml/spider-go/helper/log"
     "github.com/hq-cml/spider-go/helper/util"
-    "github.com/donnie4w/go-logger/logger"
-    "github.com/hq-cml/spider-go/middleware/requestcache"
 )
 
 // 获取通道管理器持有的请求通道。
@@ -34,12 +32,12 @@ func (schdl *Scheduler) getResponseChan() chan basic.Response {
 }
 
 // 获取通道管理器持有的条目通道。
-func (schdl *Scheduler) getItemChan() chan basic.Item {
-    itemChan, err := schdl.channelManager.ItemChan()
+func (schdl *Scheduler) getEntryChan() chan basic.Entry {
+    entryChan, err := schdl.channelManager.EntryChan()
     if err != nil {
         panic(err)
     }
-    return itemChan
+    return entryChan
 }
 
 // 获取通道管理器持有的错误通道。
@@ -88,7 +86,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
     case ANALYZER_CODE:
         errorType = base.ANALYZER_ERROR
     case PROCESS_CHAIN_CODE:
-        errorType = base.ITEM_PROCESSOR_ERROR
+        errorType = base.ENTRY_PROCESSOR_ERROR
     }
 
     cError := basic.NewSpiderErr(errorType, err.Error())
@@ -182,11 +180,11 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
 }
 
 // 发送条目到通道管理器中的条目通道
-func (schdl *Scheduler) sendItem(item basic.Item, moduleCode string) bool {
+func (schdl *Scheduler) sendEntry(entry basic.Entry, moduleCode string) bool {
     if schdl.stopSign.Signed() {
         schdl.stopSign.Deal(moduleCode)
         return false
     }
-    schdl.getItemChan() <- item
+    schdl.getEntryChan() <- entry
     return true
 }

@@ -6,7 +6,7 @@ import (
 )
 
 //通道参数的容器的描述模板。
-var channelParamsTemplate string = "{ reqChanLen: %d, respChanLen: %d, itemChanLen: %d, errorChanLen: %d }"
+var channelParamsTemplate string = "{ reqChanLen: %d, respChanLen: %d, entryChanLen: %d, errorChanLen: %d }"
 
 //池基本参数容器的描述模板。
 var poolParamsTemplate string = "{ pageDownloaderPoolSize: %d, analyzerPoolSize: %d }"
@@ -29,7 +29,7 @@ func (p *ChannelParams) Check() error {
         return errors.New("The response channel max length (capacity) can not be 0!\n")
     }
     if p.entryChanLen == 0 {
-        return errors.New("The item channel max length (capacity) can not be 0!\n")
+        return errors.New("The entry channel max length (capacity) can not be 0!\n")
     }
     if p.errorChanLen == 0 {
         return errors.New("The error channel max length (capacity) can not be 0!\n")

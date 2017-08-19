@@ -54,6 +54,6 @@ func (resp *Response) Valid() bool {
 
 /************************ 条目相关 ************************/
 //实现DataIntfs接口
-func (item Item) Valid() bool {
-    return item != nil
+func (e Entry) Valid() bool {
+    return e != nil
 }

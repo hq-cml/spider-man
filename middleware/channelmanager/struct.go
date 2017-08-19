@@ -38,8 +38,8 @@ type ChannelManagerIntfs interface {
     ReqChan() (chan basic.Request, error)
     // 获取响应传输通道。
     RespChan() (chan basic.Response, error)
-    // 获取Item传输通道。
-    ItemChan() (chan basic.Item, error)
+    // 获取Entry传输通道。
+    EntryChan() (chan basic.Entry, error)
     // 获取错误传输通道。
     ErrorChan() (chan error, error)
     // 获取通道管理器的状态。
@@ -50,11 +50,11 @@ type ChannelManagerIntfs interface {
 
 //channel管理器实现类型
 type ChannelManager struct {
-    channelParams basic.ChannelParams                 //通道长度
-    reqCh chan basic.Request        //请求通道
-    respCh chan basic.Response      //响应通道
-    itemCh chan basic.Item          //item通道
-    errorCh chan error              //错误通道
-    status ChannelManagerStatus     //channel管理器状态
-    rwmutex sync.RWMutex            //读写锁
+    channelParams basic.ChannelParams  //通道长度
+    reqCh         chan basic.Request   //请求通道
+    respCh        chan basic.Response  //响应通道
+    entryCh       chan basic.Entry     //entry通道
+    errorCh       chan error           //错误通道
+    status        ChannelManagerStatus //channel管理器状态
+    rwmutex       sync.RWMutex         //读写锁
 }
