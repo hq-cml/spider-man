@@ -56,4 +56,27 @@ type SpiderError struct {
     fullErrMsg string     //完整错误信息
 }
 
+/*************************** 参数类型相关 ****************************/
+// 参数容器的接口。
+type ParamsContainerIntfs interface {
+    //自检参数的有效性，并在必要时返回可以说明问题的错误值。
+    Check() error
+    //获得参数容器的字符串表现形式。
+    String() string
+}
 
+//通道参数的容器。
+type ChannelParams struct {
+    reqChanLen   uint   // 请求通道的长度。
+    respChanLen  uint   // 响应通道的长度。
+    entryChanLen  uint   // 条目通道的长度。
+    errorChanLen uint   // 错误通道的长度。
+    description  string // 描述。
+}
+
+//Pool基本参数的容器。
+type PoolParams struct {
+    downloaderPoolSize     uint32 // 网页下载器池的尺寸。
+    analyzerPoolSize       uint32 // 分析器池的尺寸。
+    description            string // 描述。
+}
