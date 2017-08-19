@@ -120,6 +120,38 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 
 }
 
+// 调度。适当的搬运请求缓存中的请求到请求通道。
+func (schdl *Scheduler) schedule(interval time.Duration) {
+    go func() {
+        for {
+            if schdl.stopSign.Signed() {
+                schdl.stopSign.Deal(SCHEDULER_CODE)
+                return
+            }
+
+            //请求通道的容量-长度=请求通道的空闲数量
+            remainder := cap(schdl.getReqestChan()) - len(schdl.getReqestChan())
+            var temp *basic.Request
+            for remainder > 0 {
+                temp = schdl.requestCache.Get()
+                if temp == nil {
+                    break
+                }
+
+                if schdl.stopSign.Signed() {
+                    schdl.stopSign.Deal(SCHEDULER_CODE)
+                    return
+                }
+
+                schdl.getReqestChan() <- *temp
+                remainder --
+            }
+
+            time.Sleep(interval)
+        }
+    }()
+}
+
 /*
  * 激活处理链
  * 一个独立的goroutine，循环从Entry通道中取出Entry
@@ -129,7 +161,7 @@ func (schdl *Scheduler) activateProcessChain() {
     go func() {
         schdl.processChain.SetFailFast(true)
         moudleCode := PROCESS_CHAIN_CODE
-        //对一个channel进行range操作，就是循环<-操作
+        //对一个channel进行range操作，就是循环<-操作，并且在channel关闭之后能够自动结束
         for item := range schdl.getItemChan() {
             //每次从item通道中取出一个Item，然后扔给一个独立的gorouting处理
             go func(item basic.Item) {
@@ -140,6 +172,7 @@ func (schdl *Scheduler) activateProcessChain() {
                     }
                 }()
 
+                //放入处理链，处理链上的节点自动处理，处理完毕就不必在理会了
                 errs := schdl.processChain.Send(item)
                 if errs != nil {
                     for _, err := range errs {
