@@ -26,6 +26,14 @@ func NewScheduler() SchedulerIntfs {
  * Scheduler实现SchedulerIntfs接口
  */
 //实现Start方法
+// 调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
+// 参数channelArgs代表通道参数的容器。
+// 参数poolBaseArgs代表池基本参数的容器。
+// 参数crawlDepth代表了需要被爬取的网页的最大深度值。深度大于此值的网页会被忽略。
+// 参数httpClientGenerator代表的是被用来生成HTTP客户端的函数。
+// 参数respParsers的值应为分析器所需的被用来解析HTTP响应的函数的序列。
+// 参数itemProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
+// 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
 //TODO 重构
 func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
@@ -119,7 +127,7 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 
 }
 
-//实现Stop方法
+//实现Stop方法，调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止
 func (schdl *Scheduler)Stop() {
     if atomic.LoadUint32(&schdl.running) != 1 {
         return false
@@ -129,6 +137,37 @@ func (schdl *Scheduler)Stop() {
     schdl.requestCache.Close()
     atomic.StoreUint32(&schdl.running, 2)
     return true
+}
+
+//实现Running方法，判断调度器是否正在运行。
+func (schdl *Scheduler) Running() bool {
+    return atomic.LoadUint32(&schdl.running) == 1
+}
+
+//实现ErrorChan方法
+//若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
+func (schdl *Scheduler) ErrorChan() <-chan error {
+    if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED {
+        return nil
+    }
+    return schdl.getErrorChan()
+}
+
+//实现Idle方法
+//判断所有处理模块是否都处于空闲状态。
+func (schdl *Scheduler) Idle() bool {
+    idleDlPool := schdl.downloaderPool.Used() == 0
+    idleAnalyzerPool := schdl.analyzerPool.Used() == 0
+    idleItemPipeline := schdl.processChain.ProcessingNumber() == 0
+    if idleDlPool && idleAnalyzerPool && idleItemPipeline {
+        return true
+    }
+    return false
+}
+
+//实现Summary方法
+func (sched *Scheduler) Summary(prefix string) SchedSummary {
+    return NewSchedSummary(sched, prefix)
 }
 
 // 调度。适当的搬运请求缓存中的请求到请求通道。
