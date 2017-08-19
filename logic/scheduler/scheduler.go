@@ -182,6 +182,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, re
             case *basic.Item:
                 schdl.sendItem(*d, moudleCode)
             default:
+                //%T打印实际类型
                 msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)
                 schdl.sendError(errors.New(msg), moudleCode)
             }

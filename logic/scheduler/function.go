@@ -120,8 +120,10 @@ func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bo
     return true
 }
 
-func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
+//对分析出来的请求做合法性校验
+func (schdl *Scheduler) filterRequest(request *basic.Request) bool {
     httpRequest := request.HttpReq()
+    //校验请求体本身
     if httpRequest == nil {
         log.Warnln("Ignore the request! It's HTTP request is invalid!")
         return false
@@ -137,12 +139,20 @@ func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
         return false
     }
 
+    //已经处理过的URL不再处理
+    if _, ok := schdl.urlMap[requestUrl.String()]; ok {
+        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", reqUrl)
+        return false
+    }
+
+    //只有主域名相同的URL才是合法的
     if pd, _:= util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
         log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
             httpRequest.Host, schdl.primaryDomain, requestUrl)
         return false
     }
 
+    //请求深度不能超过阈值
     if request.Depth() > schdl.grabDepth {
         log.Warnf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
             request.Depth(), schdl.grabDepth, requestUrl)
@@ -154,10 +164,12 @@ func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
 // 把请求存放到请求缓存。
 func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode string) bool {
 
-    if schdl.checkRequest(&request) == false {
+    //过滤掉非法的请求
+    if schdl.filterRequest(&request) == false {
         return false
     }
 
+    //check停止信号
     if schdl.stopSign.Signed() {
         schdl.stopSign.Deal(mouduleCode)
         return false
