@@ -101,9 +101,9 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     schdl.requestCache = requestcache.NewRequestCache()
     schdl.urlMap = make(map[string]bool)
 
-    schdl.activeDownloaders()
+    schdl.activateDownloaders()
     schdl.activateAnalyzers(respAnalyzers)
-    schdl.openItemPipeline()
+    schdl.activateProcessChain()
     schdl.schedule(10 * time.Millisecond)
 
     if firstHttpReq == nil {
@@ -118,6 +118,38 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 
     return nil
 
+}
+
+/*
+ * 激活处理链
+ * 一个独立的goroutine，循环从Entry通道中取出Entry
+ * 然后交给独立的goroutine利用process chain去处理
+ */
+func (schdl *Scheduler) activateProcessChain() {
+    go func() {
+        schdl.processChain.SetFailFast(true)
+        moudleCode := PROCESS_CHAIN_CODE
+        //对一个channel进行range操作，就是循环<-操作
+        for item := range schdl.getItemChan() {
+            //每次从item通道中取出一个Item，然后扔给一个独立的gorouting处理
+            go func(item basic.Item) {
+                defer func() {
+                    if p := recover(); p!= nil {
+                        msg := fmt.Sprintf("Fatal Item Processing Error: %s\n", p)
+                        log.Warn(msg)
+                    }
+                }()
+
+                errs := schdl.processChain.Send(item)
+                if errs != nil {
+                    for _, err := range errs {
+                        schdl.sendError(err, moudleCode)
+                    }
+                }
+            }(item)
+
+        }
+    }()
 }
 
 /*
@@ -195,7 +227,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, re
  * 激活下载器，开始下载，下载工作由异步的goroutine进行负责
  * 无限循环，从请求通道中获取请求，完成下载任务
  */
-func (schdl *Scheduler) activeDownloaders() {
+func (schdl *Scheduler) activateDownloaders() {
     go func() {
         //无限循环，从请求通道中获取请求
         for {
