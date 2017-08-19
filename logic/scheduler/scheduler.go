@@ -17,7 +17,6 @@ import (
     "github.com/hq-cml/spider-go/middleware/requestcache"
 )
 
-
 //New
 func NewScheduler() SchedulerIntfs {
     return &Scheduler{}
@@ -26,7 +25,7 @@ func NewScheduler() SchedulerIntfs {
 /*
  * Scheduler实现SchedulerIntfs接口
  */
-//Start开始
+//实现Start方法
 //TODO 重构
 func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
     httpClientGenerator GenHttpClientFunc,
@@ -118,6 +117,18 @@ func (schdl *Scheduler)Start(channelLen uint, poolSize uint32, grabDepth uint32,
 
     return nil
 
+}
+
+//实现Stop方法
+func (schdl *Scheduler)Stop() {
+    if atomic.LoadUint32(&schdl.running) != 1 {
+        return false
+    }
+    schdl.stopSign.Sign()
+    schdl.channelManager.Close()
+    schdl.requestCache.Close()
+    atomic.StoreUint32(&schdl.running, 2)
+    return true
 }
 
 // 调度。适当的搬运请求缓存中的请求到请求通道。
