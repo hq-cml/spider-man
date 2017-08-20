@@ -48,13 +48,6 @@ type SchedulerIntfs interface{
     Summary(prefix string) SchedSummaryIntfs
 }
 
-// 调度器摘要信息的接口类型
-type SchedSummaryIntfs interface {
-    String() string    //获得摘要信息的一般表示
-    Detail() string    //获取摘要信息的详细表示
-    Same(other SchedSummary) bool //判断是否与另一份摘要信息相同
-}
-
 // 调度器摘要信息的接口类型。
 type SchedSummaryIntfs interface {
     String() string               // 获得摘要信息的一般表示。
@@ -75,7 +68,7 @@ type Scheduler struct {
     processChain   processchain.ProcessChainIntfs     // 条目处理管道。
     requestCache   requestcache.RequestCacheIntfs     // 请求缓存。
     urlMap         map[string]bool                    // 已请求的URL的字典。
-    running        SchedStatus                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
+    running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }
 
 // 调度器摘要信息的实现类型。
@@ -105,9 +98,8 @@ const (
     SCHEDULER_CODE    = "scheduler"
 )
 
-type SchedStatus uint32
 const (
-    RUNNING_STATUS_INIT SchedStatus = 0
+    RUNNING_STATUS_INIT uint32 = 0
     RUNNING_STATUS_RUNNING  = 1
     RUNNING_STATUS_STOP     = 2
 )

@@ -131,7 +131,7 @@ func main() {
     channelParams := basic.NewChannelParams(10, 10, 10, 10)
     poolParams := basic.NewPoolParams(3, 3)
     grabDepth := uint32(1)
-    httpClientGenerator := genHttpClient()
+    //httpClientGenerator := genHttpClient
     responseAnalysers := getResponseAnalysers()
     entryProcessors := getEntryProcessors()
 
@@ -144,7 +144,7 @@ func main() {
 
     // 创建调度器
     scheduler := scheduler.NewScheduler()
-    scheduler.Start(channelParams, poolParams, grabDepth, httpClientGenerator,
+    scheduler.Start(channelParams, poolParams, grabDepth, genHttpClient,
         responseAnalysers, entryProcessors, firstHttpReq)
 
 

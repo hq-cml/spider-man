@@ -51,7 +51,7 @@ func (ss *SchedSummary) Detail() string {
     return ss.getSummary(true)
 }
 
-func (ss *SchedSummary) Same(other SchedSummary) bool {
+func (ss *SchedSummary) Same(other SchedSummaryIntfs) bool {
     if other == nil {
         return false
     }

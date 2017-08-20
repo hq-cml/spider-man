@@ -128,7 +128,7 @@ func (schdl *Scheduler)Start(channelParams basic.ChannelParams,
 }
 
 //实现Stop方法，调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止
-func (schdl *Scheduler)Stop() {
+func (schdl *Scheduler)Stop() bool{
     if atomic.LoadUint32(&schdl.running) != RUNNING_STATUS_RUNNING {
         return false
     }
@@ -166,7 +166,7 @@ func (schdl *Scheduler) Idle() bool {
 }
 
 //实现Summary方法
-func (sched *Scheduler) Summary(prefix string) SchedSummary {
+func (sched *Scheduler) Summary(prefix string) SchedSummaryIntfs {
     return NewSchedSummary(sched, prefix)
 }
 
@@ -302,7 +302,6 @@ func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, re
                 schdl.sendError(errors.New(msg), moudleCode)
             }
         }
-        schdl.sendResponse(*response, moudleCode)
     }
 }
 

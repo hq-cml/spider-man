@@ -38,7 +38,7 @@ type ErrorType string
 const (
     DOWNLOADER_ERROR     ErrorType = "Downloader Error"
     ANALYZER_ERROR       ErrorType = "Analyzer Error"
-    ITEM_PROCESSOR_ERROR ErrorType = "Item Processor Error"
+    ENTRY_PROCESSOR_ERROR ErrorType = "Entry Processor Error"
 )
 
 //Spider错误接口

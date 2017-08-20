@@ -29,7 +29,7 @@ func (chm *ChannelManager) checkStatus() error {
 //*ChannelManager实现ChannelManagerIntfs接口
 //Init方法
 func (chm *ChannelManager) Init(chp basic.ChannelParams, reset bool) bool {
-    if chp.Check() == 0 {
+    if chp.Check() != nil {
         panic(errors.New("The channel length is invalid!"))
     }
     //写锁保护

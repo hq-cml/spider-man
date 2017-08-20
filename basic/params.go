@@ -12,8 +12,8 @@ var channelParamsTemplate string = "{ reqChanLen: %d, respChanLen: %d, entryChan
 var poolParamsTemplate string = "{ pageDownloaderPoolSize: %d, analyzerPoolSize: %d }"
 
 //创建通道参数的容器。
-func NewChannelParams(reqChanLen uint, respChanLen uint, entryChanLen uint, errorChanLen uint) ParamsContainerIntfs {
-    return &ChannelParams{
+func NewChannelParams(reqChanLen uint, respChanLen uint, entryChanLen uint, errorChanLen uint) ChannelParams {
+    return ChannelParams{
         reqChanLen:   reqChanLen,
         respChanLen:  respChanLen,
         entryChanLen:  entryChanLen,
@@ -67,7 +67,7 @@ func (p *ChannelParams) ErrorChanLen() uint {
 
 // 创建池基本参数的容器。
 func NewPoolParams(dlSize uint32, anlSize uint32) PoolParams {
-    return &PoolParams{
+    return PoolParams{
         downloaderPoolSize: dlSize,
         analyzerPoolSize:       anlSize,
     }

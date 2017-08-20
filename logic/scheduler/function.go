@@ -5,7 +5,6 @@ package scheduler
  */
 import (
     "github.com/hq-cml/spider-go/basic"
-    "webcrawler/base"
     "fmt"
     "strings"
     "errors"
@@ -82,11 +81,11 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
     var errorType basic.ErrorType
     switch module {
     case DOWNLOADER_CODE:
-        errorType = base.DOWNLOADER_ERROR
+        errorType = basic.DOWNLOADER_ERROR
     case ANALYZER_CODE:
-        errorType = base.ANALYZER_ERROR
+        errorType = basic.ANALYZER_ERROR
     case PROCESS_CHAIN_CODE:
-        errorType = base.ENTRY_PROCESSOR_ERROR
+        errorType = basic.ENTRY_PROCESSOR_ERROR
     }
 
     cError := basic.NewSpiderErr(errorType, err.Error())
@@ -139,7 +138,7 @@ func (schdl *Scheduler) filterRequest(request *basic.Request) bool {
 
     //已经处理过的URL不再处理
     if _, ok := schdl.urlMap[requestUrl.String()]; ok {
-        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", reqUrl)
+        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
         return false
     }
 
