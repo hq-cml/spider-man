@@ -1,23 +1,17 @@
 package scheduler
 
+/*
+ * 监视器实现：主要功能是对Scheduler的监视和控制：
+ * 1. 在适当的时候停止自身和Scheduler
+ * 2. 实时监控Scheduler及其各个组件的运行状况
+ * 3. 一旦Scheduler及其各组件发生错误能够及时报告
+ */
 import (
     "errors"
     "fmt"
     "runtime"
     "time"
 )
-
-// 摘要信息的模板。
-var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
-                            "  Goroutine number: %d\n" +
-                            "  Scheduler:\n%s" +
-                            "  Escaped time: %s\n"
-
-// 已达到最大空闲计数的消息模板。
-var msgReachMaxIdleCount = "The scheduler has been idle for a period of time (about %s). Now consider what stop it."
-
-// 停止调度器的消息模板。
-var msgStopScheduler = "Stop scheduler...%s."
 
 // 日志记录函数的类型。
 // 参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
@@ -78,6 +72,12 @@ func checkStatus(
     stopNotifier chan<- byte) {
 
     var checkCount uint64
+    // 已达到最大空闲计数的消息模板。
+    var msgReachMaxIdleCount = "The scheduler has been idle for a period of time (about %s). \n"+
+                                "Now consider what stop it."
+    // 停止调度器的消息模板。
+    var msgStopScheduler = "Stop scheduler...%s."
+
     go func() {
         defer func() {
             stopNotifier <- 1
@@ -136,6 +136,12 @@ func recordSummary(
     record Record,
     stopNotifier <-chan byte) {
 
+    // 摘要信息的模板。
+    var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
+    "  Goroutine number: %d\n" +
+    "  Scheduler:\n%s" +
+    "  Escaped time: %s\n"
+
     go func() {
         //阻塞等待调度器开启
         waitForSchedulerStart(scheduler)
@@ -156,9 +162,8 @@ func recordSummary(
             // 获取摘要信息的各组成部分
             currNumGoroutine := runtime.NumGoroutine()
             currSchedSummary := scheduler.Summary("    ")
-            // 比对前后两份摘要信息的一致性。只有不一致时才会予以记录。
-            if currNumGoroutine != prevNumGoroutine ||
-            !currSchedSummary.Same(prevSchedSummary) {
+            // 比对前后两份摘要信息的一致性。只有不一致时才会予以记录。主要为了防止日志的大量生产造成干扰
+            if currNumGoroutine != prevNumGoroutine || !currSchedSummary.Same(prevSchedSummary) {
                 schedSummaryStr := func() string {
                     if detailSummary {
                         return currSchedSummary.Detail()
@@ -171,7 +176,7 @@ func recordSummary(
                     recordCount,
                     currNumGoroutine,
                     schedSummaryStr,
-                    time.Since(startTime).String(),
+                    time.Since(startTime).String(),  //当前时间和startTime的时间间隔
                 )
                 record(0, info)
                 prevNumGoroutine = currNumGoroutine
@@ -204,10 +209,12 @@ func reportError(
                 return
             }
             err := <-errorChan
+            //如果errorChan关闭，则err可能是nil
             if err != nil {
                 errMsg := fmt.Sprintf("Error (received from error channel): %s", err)
                 record(2, errMsg)
             }
+            //让出时间片
             time.Sleep(time.Microsecond)
         }
     }()
