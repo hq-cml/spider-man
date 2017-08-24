@@ -126,8 +126,38 @@ func processEntry(entry basic.Entry) (result basic.Entry, err error) {
     return result, nil
 }
 
+//TODO 重构
+func record(level byte, content string) {
+    if content == "" {
+        return
+    }
+    switch level {
+    case 0:
+        log.Infoln(content)
+    case 1:
+        log.Warnln(content)
+    case 2:
+        log.Infoln(content)
+    }
+}
 
 func main() {
+    // 创建调度器
+    schdl := scheduler.NewScheduler()
+
+    //开启monitor
+    intervalNs := 10 * time.Millisecond
+    maxIdelCount := uint(1000)
+    checkCountChan := scheduler.Monitoring(
+        schdl,
+        intervalNs,
+        maxIdelCount,
+        true,
+        false,
+        record,
+    )
+
+    //准备启动参数
     channelParams := basic.NewChannelParams(10, 10, 10, 10)
     poolParams := basic.NewPoolParams(3, 3)
     grabDepth := uint32(1)
@@ -142,10 +172,10 @@ func main() {
         return
     }
 
-    // 创建调度器
-    scheduler := scheduler.NewScheduler()
-    scheduler.Start(channelParams, poolParams, grabDepth, genHttpClient,
+
+    schdl.Start(channelParams, poolParams, grabDepth, genHttpClient,
         responseAnalysers, entryProcessors, firstHttpReq)
 
-
+    //主协程同步等待
+    <-checkCountChan
 }
