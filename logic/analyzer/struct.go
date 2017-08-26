@@ -1,10 +1,10 @@
 package analyzer
 
 import (
-    "github.com/hq-cml/spider-go/middleware/pool"
-    "net/http"
-    "github.com/hq-cml/spider-go/basic"
-    "reflect"
+	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-go/middleware/pool"
+	"net/http"
+	"reflect"
 )
 
 /*
@@ -20,25 +20,25 @@ type AnalyzeResponseFunc func(httpResp *http.Response, respDepth uint32) ([]basi
 
 // 分析器接口类型
 type AnalyzerIntfs interface {
-    // 获得分析器自身Id
-    Id() uint32
-    //根据规则分析响应并返回请求和条目
-    //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
-    //返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-    Analyze(respParsers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
+	// 获得分析器自身Id
+	Id() uint32
+	//根据规则分析响应并返回请求和条目
+	//AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
+	//返回值是一个列表，其中元素可能是两种类型：请求 or 条目
+	Analyze(respParsers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
 }
 
 // 分析器接口的实现类型
 type Analyzer struct {
-    id uint32 // ID
+	id uint32 // ID
 }
 
 //分析器池类型接口
 type AnalyzerPoolIntfs interface {
-    Get() (AnalyzerIntfs, error)      // 从池中获取一个分析器
-    Put(analyzer AnalyzerIntfs) error // 归还一个分析器到池子中
-    Total() uint32                    //获得池子总容量
-    Used() uint32                     //获得正在被使用的分析器数量
+	Get() (AnalyzerIntfs, error)      // 从池中获取一个分析器
+	Put(analyzer AnalyzerIntfs) error // 归还一个分析器到池子中
+	Total() uint32                    //获得池子总容量
+	Used() uint32                     //获得正在被使用的分析器数量
 }
 
 // 生成分析器的函数类型。
@@ -46,6 +46,6 @@ type GenAnalyzerFunc func() AnalyzerIntfs
 
 //分析器池子
 type AnalyzerPool struct {
-    pool  pool.PoolIntfs   // 实体池。
-    etype reflect.Type     // 池内实体的类型。
+	pool  pool.PoolIntfs // 实体池。
+	etype reflect.Type   // 池内实体的类型。
 }
