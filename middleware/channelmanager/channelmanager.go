@@ -7,7 +7,7 @@ import (
 )
 
 //New
-func NewChannelManager(chp basic.ChannelParams) ChannelManagerIntfs {
+func NewChannelManager(chp ChannelParams) ChannelManager {
 	chm := &ChannelManager{}
 	chm.Init(chp, true)
 	return chm
@@ -26,9 +26,10 @@ func (chm *ChannelManager) checkStatus() error {
 	return errors.New(errMsg)
 }
 
-//*ChannelManager实现ChannelManagerIntfs接口
-//Init方法
-func (chm *ChannelManager) Init(chp basic.ChannelParams, reset bool) bool {
+// 初始化通道管理器。
+// 参数channelArgs代表通道参数的容器。
+// 参数reset指明是否重新初始化通道管理器。
+func (chm *ChannelManager) Init(chp ChannelParams, reset bool) bool {
 	if chp.Check() != nil {
 		panic(errors.New("The channel length is invalid!"))
 	}
@@ -50,7 +51,7 @@ func (chm *ChannelManager) Init(chp basic.ChannelParams, reset bool) bool {
 	return true
 }
 
-//close关闭
+// 关闭通道管理器
 func (chm *ChannelManager) Close() bool {
 	//写锁保护
 	chm.rwmutex.Lock()
@@ -133,4 +134,60 @@ func (chm *ChannelManager) Summary() string {
 
 func (chm *ChannelManager) Status() ChannelManagerStatus {
 	return chm.status
+}
+
+
+//创建通道参数的容器。
+func NewChannelParams(reqChanLen uint, respChanLen uint, entryChanLen uint, errorChanLen uint) ChannelParams {
+	return ChannelParams{
+		reqChanLen:   reqChanLen,
+		respChanLen:  respChanLen,
+		entryChanLen: entryChanLen,
+		errorChanLen: errorChanLen,
+	}
+}
+
+func (p *ChannelParams) Check() error {
+	if p.reqChanLen == 0 {
+		return errors.New("The request channel max length (capacity) can not be 0!\n")
+	}
+	if p.respChanLen == 0 {
+		return errors.New("The response channel max length (capacity) can not be 0!\n")
+	}
+	if p.entryChanLen == 0 {
+		return errors.New("The entry channel max length (capacity) can not be 0!\n")
+	}
+	if p.errorChanLen == 0 {
+		return errors.New("The error channel max length (capacity) can not be 0!\n")
+	}
+	return nil
+}
+
+//通道参数的容器的描述模板。
+func (args *ChannelParams) String() string {
+	if args.description == "" {
+		args.description = fmt.Sprintf("{ reqChanLen: %d, respChanLen: %d, entryChanLen: %d, errorChanLen: %d }", args.reqChanLen, args.respChanLen,
+			args.entryChanLen, args.errorChanLen)
+	}
+	return args.description
+}
+
+// 获得请求通道的长度。
+func (p *ChannelParams) ReqChanLen() uint {
+	return p.reqChanLen
+}
+
+// 获得响应通道的长度。
+func (p *ChannelParams) RespChanLen() uint {
+	return p.respChanLen
+}
+
+// 获得条目通道的长度。
+func (p *ChannelParams) EntryChanLen() uint {
+	return p.entryChanLen
+}
+
+// 获得错误通道的长度。
+func (p *ChannelParams) ErrorChanLen() uint {
+	return p.errorChanLen
 }

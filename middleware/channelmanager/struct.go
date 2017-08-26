@@ -3,6 +3,7 @@ package channelmanager
 import (
 	"github.com/hq-cml/spider-go/basic"
 	"sync"
+	"errors"
 )
 
 /*
@@ -26,35 +27,30 @@ var statusNameMap = map[ChannelManagerStatus]string{
 	CHANNEL_MANAGER_STATUS_CLOSED:        "closed",
 }
 
-//channel管理器接口
-type ChannelManagerIntfs interface {
-	// 初始化通道管理器。
-	// 参数channelArgs代表通道参数的容器。
-	// 参数reset指明是否重新初始化通道管理器。
-	Init(channelParams basic.ChannelParams, reset bool) bool
-	// 关闭通道管理器
-	Close() bool
-	// 获取请求传输通道。
-	ReqChan() (chan basic.Request, error)
-	// 获取响应传输通道。
-	RespChan() (chan basic.Response, error)
-	// 获取Entry传输通道。
-	EntryChan() (chan basic.Entry, error)
-	// 获取错误传输通道。
-	ErrorChan() (chan error, error)
-	// 获取通道管理器的状态。
-	Status() ChannelManagerStatus
-	// 获取摘要信息。
-	Summary() string
-}
 
 //channel管理器实现类型
 type ChannelManager struct {
-	channelParams basic.ChannelParams  //通道长度
+	channelParams ChannelParams  //通道长度
 	reqCh         chan basic.Request   //请求通道
 	respCh        chan basic.Response  //响应通道
 	entryCh       chan basic.Entry     //entry通道
 	errorCh       chan error           //错误通道
 	status        ChannelManagerStatus //channel管理器状态
 	rwmutex       sync.RWMutex         //读写锁
+}
+
+//通道管理器实现类型
+type NChannelManager struct {
+	channel       map[string]SpiderChannelIntfs
+	status        ChannelManagerStatus //channel管理器状态
+	rwmutex       sync.RWMutex         //读写锁
+}
+
+//通道参数的容器。
+type ChannelParams struct {
+	reqChanLen   uint   // 请求通道的长度。
+	respChanLen  uint   // 响应通道的长度。
+	entryChanLen uint   // 条目通道的长度。
+	errorChanLen uint   // 错误通道的长度。
+	description  string // 描述。
 }
