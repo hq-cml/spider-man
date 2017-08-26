@@ -5,12 +5,6 @@ import (
 	"fmt"
 )
 
-//通道参数的容器的描述模板。
-var channelParamsTemplate string = "{ reqChanLen: %d, respChanLen: %d, entryChanLen: %d, errorChanLen: %d }"
-
-//池基本参数容器的描述模板。
-var poolParamsTemplate string = "{ pageDownloaderPoolSize: %d, analyzerPoolSize: %d }"
-
 //创建通道参数的容器。
 func NewChannelParams(reqChanLen uint, respChanLen uint, entryChanLen uint, errorChanLen uint) ChannelParams {
 	return ChannelParams{
@@ -37,9 +31,10 @@ func (p *ChannelParams) Check() error {
 	return nil
 }
 
+//通道参数的容器的描述模板。
 func (args *ChannelParams) String() string {
 	if args.description == "" {
-		args.description = fmt.Sprintf(channelParamsTemplate, args.reqChanLen, args.respChanLen,
+		args.description = fmt.Sprintf("{ reqChanLen: %d, respChanLen: %d, entryChanLen: %d, errorChanLen: %d }", args.reqChanLen, args.respChanLen,
 			args.entryChanLen, args.errorChanLen)
 	}
 	return args.description
@@ -83,9 +78,10 @@ func (p *PoolParams) Check() error {
 	return nil
 }
 
+//池基本参数容器的描述
 func (p *PoolParams) String() string {
 	if p.description == "" {
-		p.description = fmt.Sprintf(poolParamsTemplate, p.downloaderPoolSize, p.analyzerPoolSize)
+		p.description = fmt.Sprintf("{ pageDownloaderPoolSize: %d, analyzerPoolSize: %d }", p.downloaderPoolSize, p.analyzerPoolSize)
 	}
 	return p.description
 }

@@ -2,7 +2,7 @@ package basic
 
 /*
  * 基本数据类型的定义
- * *Request, *Response, Item都是DataIntfs的实现
+ * *Request, *Response, Entry都是DataIntfs的实现
  */
 import (
 	"net/http"
@@ -32,7 +32,7 @@ type Response struct {
 //所以这个结构会尽量灵活以保证能够存储任意的分析结果
 type Entry map[string]interface{}
 
-/************************ 错误类型相关 ************************/
+/************************************** 错误类型相关 ************************************/
 //错误类型
 type ErrorType string
 
@@ -57,7 +57,7 @@ type SpiderError struct {
 	fullErrMsg string    //完整错误信息
 }
 
-/*************************** 参数类型相关 ****************************/
+/************************************** 参数类型相关 **********************************/
 // 参数容器的接口。
 type ParamsContainerIntfs interface {
 	//自检参数的有效性，并在必要时返回可以说明问题的错误值。
