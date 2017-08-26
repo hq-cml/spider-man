@@ -183,7 +183,8 @@ func recordSummary(
                 prevSchedSummary = currSchedSummary
                 recordCount++
             }
-            time.Sleep(time.Microsecond)
+            //time.Sleep(time.Microsecond)
+            time.Sleep(time.Second)
         }
     }()
 }

@@ -14,6 +14,7 @@ import (
     "errors"
     "github.com/PuerkitoBio/goquery"
     "time"
+    "encoding/json"
 )
 
 //生成HTTP客户端
@@ -121,8 +122,10 @@ func processEntry(entry basic.Entry) (result basic.Entry, err error) {
     if _, ok := result["number"]; !ok {
         result["number"] = len(result)
     }
-    //延时查看效果
+    //TODO 延时查看效果 ？？？
     time.Sleep(10 * time.Millisecond)
+    s, _ := json.Marshal(result)
+    fmt.Println("RRRRRRRRRRRRRRRRR", string(s))
     return result, nil
 }
 
@@ -158,7 +161,8 @@ func main() {
     )
 
     //准备启动参数
-    channelParams := basic.NewChannelParams(10, 10, 10, 10)
+    //channelParams := basic.NewChannelParams(10, 10, 10, 10)
+    channelParams := basic.NewChannelParams(1, 1, 1, 1)
     poolParams := basic.NewPoolParams(3, 3)
     grabDepth := uint32(1)
     //httpClientGenerator := genHttpClient
