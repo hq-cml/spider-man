@@ -26,7 +26,6 @@ func NewSchedSummary(schdl *Scheduler, prefix string) SchedSummaryIntfs {
 		urlDetail = "\n"
 	}
 	return &SchedSummary{
-		channelParams:       schdl.channelParams,
 		poolParams:          schdl.poolParams,
 		grabDepth:           schdl.grabDepth,
 		chanmanSummary:      schdl.channelManager.Summary(),
@@ -68,7 +67,6 @@ func (ss *SchedSummary) Same(other SchedSummaryIntfs) bool {
 		ss.stopSignSummary != otherSs.stopSignSummary ||
 		ss.reqCacheSummary != otherSs.reqCacheSummary ||
 		ss.poolParams.String() != otherSs.poolParams.String() ||
-		ss.channelParams.String() != otherSs.channelParams.String() ||
 		ss.processChainSummary != otherSs.processChainSummary ||
 		ss.chanmanSummary != otherSs.chanmanSummary {
 		return false
@@ -95,7 +93,6 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 		func() bool {
 			return ss.running == 1
 		}(),
-		ss.channelParams.String(),
 		ss.poolParams.String(),
 		ss.grabDepth,
 		ss.chanmanSummary,

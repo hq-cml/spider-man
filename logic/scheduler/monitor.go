@@ -205,11 +205,11 @@ func reportError(
 				return
 			default: //非阻塞
 			}
-			errorChan := scheduler.ErrorChan()
-			if errorChan == nil {
+
+			err, ok := scheduler.ErrorChan().Get()
+			if !ok {
 				return
 			}
-			err := <-errorChan
 			//如果errorChan关闭，则err可能是nil
 			if err != nil {
 				errMsg := fmt.Sprintf("Error (received from error channel): %s", err)

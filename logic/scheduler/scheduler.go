@@ -27,7 +27,7 @@ func NewScheduler() SchedulerIntfs {
  */
 //实现Start方法
 //TODO 重构
-func (schdl *Scheduler) Start(channelParams basic.ChannelParams,
+func (schdl *Scheduler) Start(
 	poolParams basic.PoolParams, grabDepth uint32,
 	httpClientGenerator GenHttpClientFunc,
 	respAnalyzers []analyzer.AnalyzeResponseFunc,
@@ -52,11 +52,6 @@ func (schdl *Scheduler) Start(channelParams basic.ChannelParams,
 	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
 	//TODO 参数校验 & 赋值
-	if err := channelParams.Check(); err != nil {
-		return err
-	}
-	schdl.channelParams = channelParams
-
 	if err := poolParams.Check(); err != nil {
 		return err
 	}
@@ -64,7 +59,12 @@ func (schdl *Scheduler) Start(channelParams basic.ChannelParams,
 	schdl.grabDepth = grabDepth
 
 	//middleware生成
-	schdl.channelManager = channelmanager.NewChannelManager(channelParams)
+	schdl.channelManager = channelmanager.NewChannelManager()
+	//TODO 配置参数
+	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(1))
+	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(1))
+	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(1))
+	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(1))
 
 	if httpClientGenerator == nil {
 		err = errors.New("The HTTP client generator list is invalid!\n") //已经开启，则退出，单例
@@ -146,7 +146,7 @@ func (schdl *Scheduler) Running() bool {
 
 //实现ErrorChan方法
 //若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
-func (schdl *Scheduler) ErrorChan() <-chan error {
+func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
 	if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED {
 		return nil
 	}
@@ -180,7 +180,7 @@ func (schdl *Scheduler) schedule(interval time.Duration) {
 			}
 
 			//请求通道的容量-长度=请求通道的空闲数量
-			remainder := cap(schdl.getReqestChan()) - len(schdl.getReqestChan())
+			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
 			var temp *basic.Request
 			for remainder > 0 {
 				temp = schdl.requestCache.Get()
@@ -193,7 +193,7 @@ func (schdl *Scheduler) schedule(interval time.Duration) {
 					return
 				}
 
-				schdl.getReqestChan() <- *temp
+				schdl.getReqestChan().Put(*temp)
 				remainder--
 			}
 
@@ -212,7 +212,12 @@ func (schdl *Scheduler) activateProcessChain() {
 		schdl.processChain.SetFailFast(true)
 		moudleCode := PROCESS_CHAIN_CODE
 		//对一个channel进行range操作，就是循环<-操作，并且在channel关闭之后能够自动结束
-		for entry := range schdl.getEntryChan() {
+		for {
+			entry, ok := schdl.getEntryChan().Get()
+			if !ok {
+				break
+			}
+			e, ok := entry.(basic.Entry)
 			//每次从entry通道中取出一个entry，然后扔给一个独立的gorouting处理
 			go func(e basic.Entry) {
 				defer func() {
@@ -229,7 +234,7 @@ func (schdl *Scheduler) activateProcessChain() {
 						schdl.sendError(err, moudleCode)
 					}
 				}
-			}(entry)
+			}(e)
 
 		}
 	}()
@@ -242,13 +247,14 @@ func (schdl *Scheduler) activateProcessChain() {
 func (schdl *Scheduler) activateAnalyzers(respAnalyzers []analyzer.AnalyzeResponseFunc) {
 	go func() {
 		for { //无限循环
-			response, ok := <-schdl.getResponseChan()
+			response, ok := schdl.getResponseChan().Get()
 			if !ok {
 				//通道已关闭
 				break
 			}
+			resp, ok := response.(basic.Response)
 			//启动异步分析
-			go schdl.analyze(respAnalyzers, response)
+			go schdl.analyze(respAnalyzers, resp)
 		}
 	}()
 }
@@ -313,13 +319,18 @@ func (schdl *Scheduler) activateDownloaders() {
 	go func() {
 		//无限循环，从请求通道中获取请求
 		for {
-			request, ok := <-schdl.getReqestChan()
+			request, ok := schdl.getReqestChan().Get()
 			if !ok {
 				//通道已关闭
 				break
 			}
+			//类型断言
+			req, ok := request.(basic.Request)
+			if !ok {
+				break
+			}
 			//每个请求都交给一个独立的goroutine来处理
-			go schdl.download(request)
+			go schdl.download(req)
 		}
 	}()
 }

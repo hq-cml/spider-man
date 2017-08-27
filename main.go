@@ -161,7 +161,7 @@ func main() {
 
 	//准备启动参数
 	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
-	channelParams := basic.NewChannelParams(1, 1, 1, 1)
+	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
 	poolParams := basic.NewPoolParams(3, 3)
 	grabDepth := uint32(1)
 	//httpClientGenerator := genHttpClient
@@ -175,7 +175,7 @@ func main() {
 		return
 	}
 
-	schdl.Start(channelParams, poolParams, grabDepth, genHttpClient,
+	schdl.Start( poolParams, grabDepth, genHttpClient,
 		responseAnalysers, entryProcessors, firstHttpReq)
 
 	//主协程同步等待

@@ -28,7 +28,7 @@ type SchedulerIntfs interface {
 	// 参数respParsers的值应为分析器所需的被用来解析HTTP响应的函数的序列。
 	// 参数entryProcessors的值应为需要被置入条目处理管道中的条目处理器的序列。
 	// 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
-	Start(channelParams basic.ChannelParams, poolParams basic.PoolParams,
+	Start(poolParams basic.PoolParams,
 		grabDepth uint32,
 		httpClientGenerator GenHttpClientFunc,
 		respParsers []analyzer.AnalyzeResponseFunc,
@@ -41,7 +41,7 @@ type SchedulerIntfs interface {
 	Running() bool
 	// 获得错误通道。调度器以及各个处理模块运行过程中出现的所有错误都会被发送到该通道。
 	// 若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
-	ErrorChan() <-chan error
+	ErrorChan() basic.SpiderChannelIntfs
 	// 判断所有处理模块是否都处于空闲状态。
 	Idle() bool
 	// 获取摘要信息。
@@ -57,11 +57,10 @@ type SchedSummaryIntfs interface {
 
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-	channelParams  basic.ChannelParams                // 通道参数的容器。
 	poolParams     basic.PoolParams                   // 池基本参数的容器。
 	grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                             // 主域名。
-	channelManager channelmanager.ChannelManager // 通道管理器。
+	channelManager *channelmanager.ChannelManager // 通道管理器。
 	stopSign       stopsign.StopSignIntfs             // 停止信号。
 	downloaderPool downloader.DownloaderPoolIntfs     // 网页下载器池。
 	analyzerPool   analyzer.AnalyzerPoolIntfs         // 分析器池。
@@ -75,7 +74,6 @@ type Scheduler struct {
 type SchedSummary struct {
 	prefix              string              // 前缀。
 	running             uint32              // 运行标记。
-	channelParams       basic.ChannelParams // 通道参数的容器。
 	poolParams          basic.PoolParams    // 池基本参数的容器。
 	grabDepth           uint32              // 爬取的最大深度。
 	chanmanSummary      string              // 通道管理器的摘要信息。

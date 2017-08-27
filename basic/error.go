@@ -34,7 +34,7 @@ func (e *SpiderError) genFullErrMsg() {
 }
 
 //惯例New函数
-func NewSpiderErr(errType ErrorType, errMsg string) SpiderError {
+func NewSpiderErr(errType ErrorType, errMsg string) *SpiderError {
 	return &SpiderError{
 		errType: errType,
 		errMsg:  errMsg,

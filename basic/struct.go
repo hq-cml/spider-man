@@ -64,6 +64,7 @@ type SpiderChannelIntfs interface{
 	Get()(interface{}, bool)
 	Len() int
 	Cap() int
+	Close()
 }
 
 type RequestChannel struct {

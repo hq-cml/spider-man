@@ -13,8 +13,8 @@ import (
 )
 
 // 获取通道管理器持有的请求通道。
-func (schdl *Scheduler) getReqestChan() chan basic.Request {
-	requestChan, err := schdl.channelManager.ReqChan()
+func (schdl *Scheduler) getReqestChan() basic.SpiderChannelIntfs {
+	requestChan, err := schdl.channelManager.GetOneChannel("request")
 	if err != nil {
 		panic(err)
 	}
@@ -22,8 +22,8 @@ func (schdl *Scheduler) getReqestChan() chan basic.Request {
 }
 
 // 获取通道管理器持有的响应通道。
-func (schdl *Scheduler) getResponseChan() chan basic.Response {
-	respChan, err := schdl.channelManager.RespChan()
+func (schdl *Scheduler) getResponseChan() basic.SpiderChannelIntfs {
+	respChan, err := schdl.channelManager.GetOneChannel("response")
 	if err != nil {
 		panic(err)
 	}
@@ -31,8 +31,8 @@ func (schdl *Scheduler) getResponseChan() chan basic.Response {
 }
 
 // 获取通道管理器持有的条目通道。
-func (schdl *Scheduler) getEntryChan() chan basic.Entry {
-	entryChan, err := schdl.channelManager.EntryChan()
+func (schdl *Scheduler) getEntryChan() basic.SpiderChannelIntfs {
+	entryChan, err := schdl.channelManager.GetOneChannel("entry")
 	if err != nil {
 		panic(err)
 	}
@@ -40,8 +40,8 @@ func (schdl *Scheduler) getEntryChan() chan basic.Entry {
 }
 
 // 获取通道管理器持有的错误通道。
-func (schdl *Scheduler) getErrorChan() chan error {
-	errorChan, err := schdl.channelManager.ErrorChan()
+func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
+	errorChan, err := schdl.channelManager.GetOneChannel("error")
 	if err != nil {
 		panic(err)
 	}
@@ -100,7 +100,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 	//略有不同，错误通道的内容依赖调度器的使用方来读取，而其他几种择时调度器本身读取
 	//所以此处需要防止由于调度器使用方不读取，不能因为这个问题阻塞了调度器本身
 	go func() {
-		schdl.getErrorChan() <- cError
+		schdl.getErrorChan().Put(cError)
 	}()
 	return true
 }
@@ -113,7 +113,7 @@ func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bo
 		return false
 	}
 
-	schdl.getResponseChan() <- resp
+	schdl.getResponseChan().Put(resp)
 	return true
 }
 
@@ -184,6 +184,6 @@ func (schdl *Scheduler) sendEntry(entry basic.Entry, moduleCode string) bool {
 		schdl.stopSign.Deal(moduleCode)
 		return false
 	}
-	schdl.getEntryChan() <- entry
+	schdl.getEntryChan().Put(entry)
 	return true
 }
