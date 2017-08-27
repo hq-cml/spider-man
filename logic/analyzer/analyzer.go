@@ -26,7 +26,7 @@ func (analyzer *Analyzer) Id() uint32 {
 }
 
 //把响应结果一次传递给parser函数，然后将解析的结果汇总返回
-func (analyzer *Analyzer) Analyze(respAnalyzers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
+func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
 	//参数校验
 	if respAnalyzers == nil {
 		return nil, []error{errors.New("The response parser list is invalid!")}

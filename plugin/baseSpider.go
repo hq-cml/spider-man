@@ -1,8 +1,7 @@
-package base
+package plugin
 
 import (
     "strings"
-    "github.com/hq-cml/spider-go/logic/processchain"
     "time"
     "encoding/json"
     "fmt"
@@ -11,9 +10,7 @@ import (
     "github.com/PuerkitoBio/goquery"
     "errors"
     "github.com/hq-cml/spider-go/basic"
-    "github.com/hq-cml/spider-go/logic/analyzer"
     "net/http"
-    "github.com/hq-cml/spider-go/plugin"
 )
 
 //*BaseSpider实现BaseSpiderIntfs接口
@@ -22,7 +19,7 @@ type BaseSpider struct {
 }
 
 //New
-func NewBaseSpider() plugin.SpiderIntfs {
+func NewBaseSpider() basic.SpiderPluginIntfs {
     return &BaseSpider{}
 }
 
@@ -32,16 +29,16 @@ func (b *BaseSpider)GenHttpClient() *http.Client {
 }
 
 //获得响应解析函数的序列
-func (b *BaseSpider)GenResponseAnalysers() []analyzer.AnalyzeResponseFunc {
-    analyzers := []analyzer.AnalyzeResponseFunc{
+func (b *BaseSpider)GenResponseAnalysers() []basic.AnalyzeResponseFunc {
+    analyzers := []basic.AnalyzeResponseFunc{
         parseForATag,
     }
     return analyzers
 }
 
 // 获得条目处理链的序列。
-func (b *BaseSpider)GenEntryProcessors() []processchain.ProcessEntryFunc {
-    entryProcessors := []processchain.ProcessEntryFunc{
+func (b *BaseSpider)GenEntryProcessors() []basic.ProcessEntryFunc {
+    entryProcessors := []basic.ProcessEntryFunc{
         processEntry,
     }
     return entryProcessors

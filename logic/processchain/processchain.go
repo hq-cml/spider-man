@@ -13,12 +13,12 @@ import (
  */
 
 //New, 创建处理链
-func NewProcessChain(entryProcessors []ProcessEntryFunc) ProcessChainIntfs {
+func NewProcessChain(entryProcessors []basic.ProcessEntryFunc) ProcessChainIntfs {
 	if entryProcessors == nil {
 		panic(errors.New("Invalid entry processor list!"))
 	}
 
-	pc := make([]ProcessEntryFunc, 0)
+	pc := make([]basic.ProcessEntryFunc, 0)
 
 	for k, v := range entryProcessors {
 		if v == nil {

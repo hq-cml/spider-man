@@ -3,7 +3,6 @@ package analyzer
 import (
 	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/middleware/pool"
-	"net/http"
 	"reflect"
 )
 
@@ -13,11 +12,6 @@ import (
  * 2. 一个新的请求，如果这样的话，框架应该能够自动继续进行探测
  */
 
-//被用于解析Http响应的函数的类型，这个函数类型的变量将作为参数传入Analyze，这么做
-//主要是为了框架的通用性，分析规则及产出规则均可以交由用户进行自定制
-//返回值是一个slice，每个成员是DataIntfs的实现，因为他们可能是上述两种情况
-type AnalyzeResponseFunc func(httpResp *http.Response, respDepth uint32) ([]basic.DataIntfs, []error)
-
 // 分析器接口类型
 type AnalyzerIntfs interface {
 	// 获得分析器自身Id
@@ -25,7 +19,7 @@ type AnalyzerIntfs interface {
 	//根据规则分析响应并返回请求和条目
 	//AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
 	//返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-	Analyze(respParsers []AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
+	Analyze(respParsers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error)
 }
 
 // 分析器接口的实现类型

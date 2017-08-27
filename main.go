@@ -4,10 +4,11 @@ import (
 	"github.com/hq-cml/spider-go/helper/log"
 	"net/http"
 	"time"
-	baseSpider "github.com/hq-cml/spider-go/plugin/base"
+	"github.com/hq-cml/spider-go/plugin"
 	"github.com/hq-cml/spider-go/logic/scheduler"
 	"fmt"
 	"runtime"
+	"github.com/hq-cml/spider-go/basic"
 )
 
 
@@ -15,6 +16,82 @@ import (
 // 参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
 type Record func(level byte, content string)
 
+var plugins = map[string]basic.SpiderPluginIntfs {
+	"base": plugin.NewBaseSpider(),
+	//....
+}
+
+/*
+ * 监视器实现：主要功能是对Scheduler的监视和控制：
+ * 1. 在适当的时候停止自身和Scheduler
+ * 2. 实时监控Scheduler及其各个组件的运行状况
+ * 3. 一旦Scheduler及其各组件发生错误能够及时报告
+ *
+ *
+// 参数intervalNs代表检查间隔时间，单位：纳秒。
+// 参数maxIdleCount代表最大空闲计数。
+// 参数autoStop被用来指示该方法是否在调度器空闲一段时间（即持续空闲时间，由intervalNs * maxIdleCount得出）之后自行停止调度器。
+// 参数detailSummary被用来表示是否需要详细的摘要信息。
+// 参数record代表日志记录函数。
+// 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
+ */
+func main() {
+	//TODO 参数处理
+	startUrl := "http://www.sogou.com"
+
+	//TODO 配置文件处理
+	intervalNs := 10 * time.Millisecond
+	maxIdleCount := uint(1000)
+	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
+	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
+	//poolParams := basic.NewPoolParams(3, 3)
+	grabDepth := uint32(1)
+	pluginKey := "base"
+
+	//TODO 创建日志
+
+	//TODO 参数校验
+	// 防止过小的参数值对爬取流程的影响
+	if intervalNs < time.Millisecond {
+		intervalNs = time.Millisecond
+	}
+	if maxIdleCount < 1000 {
+		maxIdleCount = 1000
+	}
+
+	// 创建调度器
+	schdl := scheduler.NewScheduler()
+
+	// 监控停止通知器
+	stopNotifier := make(chan byte, 1)
+
+	//异步得从错误通道中接收和报告错误。
+	AsyncReportError(schdl, record, stopNotifier)
+
+	//记录摘要信息
+	AsyncRecordSummary(schdl, false, record, stopNotifier)
+
+	//检查空闲状态
+	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, maxIdleCount, true, record, stopNotifier)
+
+	spider := plugins[pluginKey]
+
+	firstHttpReq, err := http.NewRequest("GET", startUrl, nil)
+	if err != nil {
+		log.Warnln(err.Error())
+		return
+	}
+
+	schdl.Start(grabDepth,
+		spider.GenHttpClient(),
+		spider.GenResponseAnalysers(),
+		spider.GenEntryProcessors(),
+		firstHttpReq)
+
+	//主协程同步等待
+	cnt := WaitExit(waitChan)
+	fmt.Println("Exit:", cnt)
+}
 
 // 检查状态，并在满足持续空闲时间的条件时采取必要措施。
 func AsyncLoopCheckStatus(
@@ -201,80 +278,4 @@ func record(level byte, content string) {
 
 func WaitExit(ch <-chan uint64) uint64{
 	return <-ch
-}
-
-/*
- * 监视器实现：主要功能是对Scheduler的监视和控制：
- * 1. 在适当的时候停止自身和Scheduler
- * 2. 实时监控Scheduler及其各个组件的运行状况
- * 3. 一旦Scheduler及其各组件发生错误能够及时报告
- *
- *
-// 参数intervalNs代表检查间隔时间，单位：纳秒。
-// 参数maxIdleCount代表最大空闲计数。
-// 参数autoStop被用来指示该方法是否在调度器空闲一段时间（即持续空闲时间，由intervalNs * maxIdleCount得出）之后自行停止调度器。
-// 参数detailSummary被用来表示是否需要详细的摘要信息。
-// 参数record代表日志记录函数。
-// 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
- */
-func main() {
-	//TODO 参数处理
-	startUrl := "http://www.sogou.com"
-
-	//TODO 配置文件处理
-	intervalNs := 10 * time.Millisecond
-	maxIdleCount := uint(1000)
-	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
-	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
-	//poolParams := basic.NewPoolParams(3, 3)
-	grabDepth := uint32(1)
-
-
-	//TODO 创建日志
-
-	//TODO 参数校验
-	// 防止过小的参数值对爬取流程的影响
-	if intervalNs < time.Millisecond {
-		intervalNs = time.Millisecond
-	}
-	if maxIdleCount < 1000 {
-		maxIdleCount = 1000
-	}
-
-	// 创建调度器
-	schdl := scheduler.NewScheduler()
-
-	// 监控停止通知器
-	stopNotifier := make(chan byte, 1)
-
-	//异步得从错误通道中接收和报告错误。
-	AsyncReportError(schdl, record, stopNotifier)
-
-	//记录摘要信息
-	AsyncRecordSummary(schdl, false, record, stopNotifier)
-
-	//检查空闲状态
-	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, maxIdleCount, true, record, stopNotifier)
-
-
-	//准备启动参数
-
-
-	spider := baseSpider.NewBaseSpider()
-
-	firstHttpReq, err := http.NewRequest("GET", startUrl, nil)
-	if err != nil {
-		log.Warnln(err.Error())
-		return
-	}
-
-	schdl.Start(grabDepth,
-		spider.GenHttpClient(),
-		spider.GenResponseAnalysers(),
-		spider.GenEntryProcessors(),
-		firstHttpReq)
-
-	//主协程同步等待
-	cnt := WaitExit(waitChan)
-	fmt.Println("Exit:", cnt)
 }

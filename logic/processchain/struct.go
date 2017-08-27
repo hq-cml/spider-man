@@ -1,14 +1,13 @@
 package processchain
 
-import "github.com/hq-cml/spider-go/basic"
+import (
+	"github.com/hq-cml/spider-go/basic"
+)
 
 /*
  * entry处理处理链，每一个节点都是一个处理函数
  * 所有被分析出的entry，需要经过处理链的逐个处理
  */
-
-// 被用来处理entry的函数的类型
-type ProcessEntryFunc func(entry basic.Entry) (result basic.Entry, err error)
 
 type ProcessChainIntfs interface {
 	//向处理链发送entry
@@ -29,7 +28,7 @@ type ProcessChainIntfs interface {
 
 // 条目处理管道的实现类型。
 type ProcessChain struct {
-	entryProcessors  []ProcessEntryFunc // 条目处理器的列表。
+	entryProcessors  []basic.ProcessEntryFunc // 条目处理器的列表。
 	failFast         bool               // 表示处理是否需要快速失败的标志位。
 	sent             uint64             // 已被发送的条目的数量。
 	accepted         uint64             // 已被接受的条目的数量。

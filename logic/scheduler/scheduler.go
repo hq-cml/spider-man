@@ -35,8 +35,8 @@ func NewScheduler() *Scheduler {
 func (schdl *Scheduler) Start(
 	grabDepth uint32,
 	httpClient *http.Client,
-	respAnalyzers []analyzer.AnalyzeResponseFunc,
-	entryProcessors []processchain.ProcessEntryFunc,
+	respAnalyzers []basic.AnalyzeResponseFunc,
+	entryProcessors []basic.ProcessEntryFunc,
 	firstHttpReq *http.Request) (err error) {
 
 	//错误兜底
@@ -152,6 +152,7 @@ func (schdl *Scheduler) Running() bool {
 // 获得错误通道。调度器以及各个处理模块运行过程中出现的所有错误都会被发送到该通道。
 // 若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
 func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
+	//TODO 曾经出过panic 地址为空的段错误
 	if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED {
 		return nil
 	}
@@ -249,7 +250,7 @@ func (schdl *Scheduler) activateProcessChain() {
  * 激活分析器，开始分析，分析工作由异步的goroutine进行负责
  * 无限循环，从响应通道中获取响应，完成分析工作
  */
-func (schdl *Scheduler) activateAnalyzers(respAnalyzers []analyzer.AnalyzeResponseFunc) {
+func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseFunc) {
 	go func() {
 		for { //无限循环
 			response, ok := schdl.getResponseChan().Get()
@@ -265,7 +266,7 @@ func (schdl *Scheduler) activateAnalyzers(respAnalyzers []analyzer.AnalyzeRespon
 }
 
 //实际分析工作
-func (schdl *Scheduler) analyze(respAnalyzers []analyzer.AnalyzeResponseFunc, response basic.Response) {
+func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, response basic.Response) {
 	defer func() {
 		if p := recover(); p != nil {
 			msg := fmt.Sprintf("Fatal Analysis Error: %s\n", p)
