@@ -50,14 +50,6 @@ type SpiderError struct {
 	fullErrMsg string    //完整错误信息
 }
 
-/************************************** 参数类型相关 **********************************/
-//Pool基本参数的容器。
-type PoolParams struct {
-	downloaderPoolSize uint32 // 网页下载器池的尺寸。
-	analyzerPoolSize   uint32 // 分析器池的尺寸。
-	description        string // 描述。
-}
-
 /************************************** 通道类型相关 **********************************/
 type SpiderChannelIntfs interface{
 	Put(data interface{}) error

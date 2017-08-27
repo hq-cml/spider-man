@@ -33,7 +33,7 @@ func NewScheduler() *Scheduler {
 // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
 //TODO 重构
 func (schdl *Scheduler) Start(
-	poolParams basic.PoolParams, grabDepth uint32,
+	grabDepth uint32,
 	httpClientGenerator GenHttpClientFunc,
 	respAnalyzers []analyzer.AnalyzeResponseFunc,
 	entryProcessors []processchain.ProcessEntryFunc,
@@ -57,15 +57,11 @@ func (schdl *Scheduler) Start(
 	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
 	//TODO 参数校验 & 赋值
-	if err := poolParams.Check(); err != nil {
-		return err
-	}
-	schdl.poolParams = poolParams
 	schdl.grabDepth = grabDepth
 
 	//middleware生成
 	schdl.channelManager = channelmanager.NewChannelManager()
-	//TODO 配置参数
+	//TODO 参数校验 &配置参数
 	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(1))
 	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(1))
 	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(1))
@@ -76,7 +72,8 @@ func (schdl *Scheduler) Start(
 		return
 	}
 
-	if schdl.downloaderPool, err = downloader.NewDownloaderPool(poolParams.AnalyzerPoolSize(),
+	//TODO 参数校验 & 赋值
+	if schdl.downloaderPool, err = downloader.NewDownloaderPool(3,
 		func() downloader.DownloaderIntfs {
 			return downloader.NewDownloader(httpClientGenerator())
 		},
@@ -85,7 +82,7 @@ func (schdl *Scheduler) Start(
 		return
 	}
 
-	if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(poolParams.AnalyzerPoolSize(),
+	if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(3,
 		func() analyzer.AnalyzerIntfs {
 			return analyzer.NewAnalyzer()
 		},

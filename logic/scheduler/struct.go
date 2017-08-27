@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/logic/analyzer"
 	"github.com/hq-cml/spider-go/logic/downloader"
 	"github.com/hq-cml/spider-go/logic/processchain"
@@ -19,7 +18,6 @@ type GenHttpClientFunc func() *http.Client
 
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-	poolParams     basic.PoolParams                   // 池基本参数的容器。
 	grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                             // 主域名。
 	channelManager *channelmanager.ChannelManager // 通道管理器。
@@ -27,7 +25,7 @@ type Scheduler struct {
 	downloaderPool downloader.DownloaderPoolIntfs     // 网页下载器池。
 	analyzerPool   analyzer.AnalyzerPoolIntfs         // 分析器池。
 	processChain   processchain.ProcessChainIntfs     // 条目处理管道。
-	requestCache   requestcache.RequestCacheIntfs     // 请求缓存。
+	requestCache   *requestcache.RequestCache     // 请求缓存。
 	urlMap         map[string]bool                    // 已请求的URL的字典。
 	running        uint32                             // 运行标记。0表示未运行，1表示已运行，2表示已停止。
 }
@@ -36,7 +34,6 @@ type Scheduler struct {
 type SchedSummary struct {
 	prefix              string              // 前缀。
 	running             uint32              // 运行标记。
-	poolParams          basic.PoolParams    // 池基本参数的容器。
 	grabDepth           uint32              // 爬取的最大深度。
 	chanmanSummary      string              // 通道管理器的摘要信息。
 	reqCacheSummary     string              // 请求缓存的摘要信息。

@@ -26,7 +26,6 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 		urlDetail = "\n"
 	}
 	return &SchedSummary{
-		poolParams:          schdl.poolParams,
 		grabDepth:           schdl.grabDepth,
 		chanmanSummary:      schdl.channelManager.Summary(),
 		reqCacheSummary:     schdl.requestCache.Summary(),
@@ -66,7 +65,6 @@ func (ss *SchedSummary) Same(other *SchedSummary) bool {
 		ss.urlCount != otherSs.urlCount ||
 		ss.stopSignSummary != otherSs.stopSignSummary ||
 		ss.reqCacheSummary != otherSs.reqCacheSummary ||
-		ss.poolParams.String() != otherSs.poolParams.String() ||
 		ss.processChainSummary != otherSs.processChainSummary ||
 		ss.chanmanSummary != otherSs.chanmanSummary {
 		return false
@@ -80,7 +78,6 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 	prefix := ss.prefix
 	template := prefix + "Running: %v \n" +
 		prefix + "Channel args: %s \n" +
-		prefix + "Pool base args: %s \n" +
 		prefix + "Crawl depth: %d \n" +
 		prefix + "Channels manager: %s \n" +
 		prefix + "Request cache: %s\n" +
@@ -93,7 +90,6 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 		func() bool {
 			return ss.running == 1
 		}(),
-		ss.poolParams.String(),
 		ss.grabDepth,
 		ss.chanmanSummary,
 		ss.reqCacheSummary,
