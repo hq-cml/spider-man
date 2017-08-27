@@ -26,18 +26,6 @@ var statusNameMap = map[ChannelManagerStatus]string{
 	CHANNEL_MANAGER_STATUS_CLOSED:        "closed",
 }
 
-
-//channel管理器实现类型
-//type ChannelManager struct {
-//	channelParams ChannelParams  //通道长度
-//	reqCh         chan basic.Request   //请求通道
-//	respCh        chan basic.Response  //响应通道
-//	entryCh       chan basic.Entry     //entry通道
-//	errorCh       chan error           //错误通道
-//	status        ChannelManagerStatus //channel管理器状态
-//	rwmutex       sync.RWMutex         //读写锁
-//}
-
 //通道管理器实现类型
 type ChannelManager struct {
 	channel       map[string]basic.SpiderChannelIntfs

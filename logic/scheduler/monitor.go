@@ -26,7 +26,7 @@ type Record func(level byte, content string)
 // 参数record代表日志记录函数。
 // 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
 func Monitoring(
-	scheduler SchedulerIntfs,
+	scheduler *Scheduler,
 	intervalNs time.Duration,
 	maxIdleCount uint,
 	autoStop bool,
@@ -63,7 +63,7 @@ func Monitoring(
 
 // 检查状态，并在满足持续空闲时间的条件时采取必要措施。
 func checkStatus(
-	scheduler SchedulerIntfs,
+	scheduler *Scheduler,
 	intervalNs time.Duration,
 	maxIdleCount uint,
 	autoStop bool,
@@ -131,7 +131,7 @@ func checkStatus(
 
 // 记录摘要信息。
 func recordSummary(
-	scheduler SchedulerIntfs,
+	scheduler *Scheduler,
 	detailSummary bool,
 	record Record,
 	stopNotifier <-chan byte) {
@@ -147,7 +147,7 @@ func recordSummary(
 		waitForSchedulerStart(scheduler)
 
 		// 准备
-		var prevSchedSummary SchedSummaryIntfs
+		var prevSchedSummary *SchedSummary
 		var prevNumGoroutine int
 		var recordCount uint64 = 1
 		startTime := time.Now()
@@ -191,7 +191,7 @@ func recordSummary(
 
 //从错误通道中接收和报告错误。
 func reportError(
-	scheduler SchedulerIntfs,
+	scheduler *Scheduler,
 	record Record,
 	stopNotifier <-chan byte) {
 
@@ -222,7 +222,7 @@ func reportError(
 }
 
 //阻塞等待调度器开启。
-func waitForSchedulerStart(scheduler SchedulerIntfs) {
+func waitForSchedulerStart(scheduler *Scheduler) {
 	for !scheduler.Running() {
 		time.Sleep(time.Microsecond)
 	}

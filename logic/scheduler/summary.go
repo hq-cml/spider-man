@@ -6,7 +6,7 @@ import (
 )
 
 // 创建调度器摘要信息。
-func NewSchedSummary(schdl *Scheduler, prefix string) SchedSummaryIntfs {
+func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	if schdl == nil {
 		return nil
 	}
@@ -49,7 +49,7 @@ func (ss *SchedSummary) Detail() string {
 	return ss.getSummary(true)
 }
 
-func (ss *SchedSummary) Same(other SchedSummaryIntfs) bool {
+func (ss *SchedSummary) Same(other *SchedSummary) bool {
 	if other == nil {
 		return false
 	}
