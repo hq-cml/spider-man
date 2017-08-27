@@ -34,7 +34,7 @@ func NewScheduler() *Scheduler {
 //TODO 重构
 func (schdl *Scheduler) Start(
 	grabDepth uint32,
-	httpClientGenerator GenHttpClientFunc,
+	httpClient *http.Client,
 	respAnalyzers []analyzer.AnalyzeResponseFunc,
 	entryProcessors []processchain.ProcessEntryFunc,
 	firstHttpReq *http.Request) (err error) {
@@ -67,7 +67,7 @@ func (schdl *Scheduler) Start(
 	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(1))
 	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(1))
 
-	if httpClientGenerator == nil {
+	if httpClient == nil {
 		err = errors.New("The HTTP client generator list is invalid!\n") //已经开启，则退出，单例
 		return
 	}
@@ -75,7 +75,7 @@ func (schdl *Scheduler) Start(
 	//TODO 参数校验 & 赋值
 	if schdl.downloaderPool, err = downloader.NewDownloaderPool(3,
 		func() downloader.DownloaderIntfs {
-			return downloader.NewDownloader(httpClientGenerator())
+			return downloader.NewDownloader(httpClient)
 		},
 	); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))

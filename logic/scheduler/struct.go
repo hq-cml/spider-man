@@ -7,15 +7,11 @@ import (
 	"github.com/hq-cml/spider-go/middleware/channelmanager"
 	"github.com/hq-cml/spider-go/middleware/requestcache"
 	"github.com/hq-cml/spider-go/middleware/stopsign"
-	"net/http"
 )
 
 /*
  * 调度控制器
  */
-//用来生成Http客户端的函数的类型
-type GenHttpClientFunc func() *http.Client
-
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
 	grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
