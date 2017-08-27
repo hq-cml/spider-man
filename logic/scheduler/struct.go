@@ -17,7 +17,7 @@ type Scheduler struct {
 	grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                             // 主域名。
 	channelManager *channelmanager.ChannelManager // 通道管理器。
-	stopSign       stopsign.StopSignIntfs             // 停止信号。
+	stopSign       *stopsign.StopSign             // 停止信号。
 	downloaderPool downloader.DownloaderPoolIntfs     // 网页下载器池。
 	analyzerPool   analyzer.AnalyzerPoolIntfs         // 分析器池。
 	processChain   processchain.ProcessChainIntfs     // 条目处理管道。
