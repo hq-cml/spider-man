@@ -50,17 +50,17 @@ func main() {
 	if err != nil {
 		panic("parse conf err:" + err.Error())
 	}
-	
+
+	context := basic.Context{
+		Conf:conf,
+	}
+
 	//TODO 配置文件处理
 	intervalNs := 10 * time.Millisecond
-	maxIdleCount := uint(1000)
 	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
 	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
 	//poolParams := basic.NewPoolParams(3, 3)
 	//grabDepth := uint32(1)
-
-	grabDepth := conf.GrabDepth
-	pluginKey := "base"
 
 	//TODO 创建日志
 
@@ -69,8 +69,8 @@ func main() {
 	if intervalNs < time.Millisecond {
 		intervalNs = time.Millisecond
 	}
-	if maxIdleCount < 1000 {
-		maxIdleCount = 1000
+	if conf.MaxIdleCount < 1000 {
+		conf.MaxIdleCount = 1000
 	}
 
 	// 创建调度器
@@ -86,9 +86,9 @@ func main() {
 	AsyncRecordSummary(schdl, false, record, stopNotifier)
 
 	//检查空闲状态
-	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, maxIdleCount, true, record, stopNotifier)
+	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, conf.MaxIdleCount, true, record, stopNotifier)
 
-	spider := plugins[pluginKey]
+	spider := plugins[conf.PluginKey]
 
 	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
 	if err != nil {
@@ -96,7 +96,7 @@ func main() {
 		return
 	}
 
-	schdl.Start(grabDepth,
+	schdl.Start(context,
 		spider.GenHttpClient(),
 		spider.GenResponseAnalysers(),
 		spider.GenEntryProcessors(),
@@ -109,12 +109,12 @@ func main() {
 
 // 检查状态，并在满足持续空闲时间的条件时采取必要措施。
 func AsyncLoopCheckStatus(
-schdl *scheduler.Scheduler,
-intervalNs time.Duration,
-maxIdleCount uint,
-autoStop bool,
-record Record,
-stopNotifier chan<- byte) (<-chan uint64){
+	schdl *scheduler.Scheduler,
+	intervalNs time.Duration,
+	maxIdleCount int,
+	autoStop bool,
+	record Record,
+	stopNotifier chan<- byte) (<-chan uint64){
 
 	//检查计数通道
 	checkCountChan := make(chan uint64, 1)
@@ -135,7 +135,7 @@ stopNotifier chan<- byte) (<-chan uint64){
 		// 等待调度器开启
 		waitForSchedulerStart(schdl)
 		// 准备
-		var idleCount uint
+		var idleCount int
 		var firstIdleTime time.Time
 		for {
 			// 检查调度器的空闲状态

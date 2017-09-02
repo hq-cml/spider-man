@@ -33,7 +33,7 @@ func NewScheduler() *Scheduler {
 // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
 //TODO 重构
 func (schdl *Scheduler) Start(
-	grabDepth int,
+	context basic.Context,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
 	entryProcessors []basic.ProcessEntryFunc,
@@ -57,15 +57,15 @@ func (schdl *Scheduler) Start(
 	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
 	//TODO 参数校验 & 赋值
-	schdl.grabDepth = grabDepth
+	schdl.grabDepth = context.Conf.GrabDepth
 
 	//middleware生成
 	schdl.channelManager = channelmanager.NewChannelManager()
 	//TODO 参数校验 &配置参数
-	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(1))
-	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(1))
-	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(1))
-	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(1))
+	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(context.Conf.RequestChanCapcity))
+	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(context.Conf.ResponseChanCapcity))
+	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(context.Conf.EntryChanCapcity))
+	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(context.Conf.ErrorChanCapcity))
 
 	if httpClient == nil {
 		err = errors.New("The HTTP client generator list is invalid!\n") //已经开启，则退出，单例

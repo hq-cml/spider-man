@@ -1,7 +1,6 @@
 package config
 
 import (
-    "strconv"
     "github.com/Unknwon/goconfig"
     "github.com/hq-cml/spider-go/basic"
 )
@@ -16,15 +15,46 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error){
     c := &basic.SpiderConf{
 
     }
-    v, err := cfg.GetValue("spider", "grabDepth")
+    c.GrabDepth, err = cfg.Int("spider", "grabDepth")
     if err != nil {
-        panic("Load conf ip failed!")
+        panic("Load conf grabDepth failed!")
     }
-    i, err := strconv.Atoi(v)
+
+    c.PluginKey, err = cfg.GetValue("spider", "pluginKey")
     if err != nil {
-        panic("strconv.Atoi failed!")
+        panic("Load conf pluginKey failed!")
     }
-    c.GrabDepth = i
+
+    c.RequestChanCapcity, err = cfg.Int("spider", "requestChanCapcity")
+    if err != nil {
+        panic("Load conf requestChanCapcity failed!")
+    }
+
+    c.ResponseChanCapcity, err = cfg.Int("spider", "responseChanCapcity")
+    if err != nil {
+        panic("Load conf responseChanCapcity failed!")
+    }
+
+    c.EntryChanCapcity, err = cfg.Int("spider", "entryChanCapcity")
+    if err != nil {
+        panic("Load conf entryChanCapcity failed!")
+    }
+
+    c.ErrorChanCapcity, err = cfg.Int("spider", "errorChanCapcity")
+    if err != nil {
+        panic("Load conf errorChanCapcity failed!")
+    }
+
+    c.MaxIdleCount, err = cfg.Int("spider", "maxIdleCount")
+    if err != nil {
+        panic("Load conf maxIdleCount failed!")
+    }
+
+    c.IntervalNs, err = cfg.Int("spider", "intervalNs")
+    if err != nil {
+        panic("Load conf intervalNs failed!")
+    }
+
 
     return c, nil
 }

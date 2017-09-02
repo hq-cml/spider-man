@@ -82,4 +82,19 @@ type ErrorChannel struct {
 /************************************** 配置 *************************************/
 type SpiderConf struct {
 	GrabDepth      int
+
+	PluginKey      string
+
+	RequestChanCapcity int
+	ResponseChanCapcity int
+	EntryChanCapcity int
+	ErrorChanCapcity int
+
+	MaxIdleCount 	int
+	IntervalNs 		int
+}
+
+/************************************ Context **********************************/
+type Context struct {
+	Conf *SpiderConf
 }
