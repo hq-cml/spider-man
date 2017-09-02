@@ -9,7 +9,7 @@ import (
 
 /********************************下载器池********************************/
 //New,创建网页下载器
-func NewDownloaderPool(total uint32, gen GenDownloaderFunc) (DownloaderPoolIntfs, error) {
+func NewDownloaderPool(total int, gen GenDownloaderFunc) (DownloaderPoolIntfs, error) {
 	//直接调用gen()，利用反射获取期类型
 	etype := reflect.TypeOf(gen())
 
@@ -50,10 +50,10 @@ func (dlpool *DownloaderPool) Put(dl DownloaderIntfs) error {
 	return dlpool.pool.Put(dl)
 }
 
-func (dlpool *DownloaderPool) Total() uint32 {
+func (dlpool *DownloaderPool) Total() int {
 	return dlpool.pool.Total()
 }
 
-func (dlpool *DownloaderPool) Used() uint32 {
+func (dlpool *DownloaderPool) Used() int {
 	return dlpool.pool.Used()
 }

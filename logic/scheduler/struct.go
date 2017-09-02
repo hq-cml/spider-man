@@ -14,7 +14,7 @@ import (
  */
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-	grabDepth      uint32                             // 爬取的最大深度。首次请求的深度为0。
+	grabDepth      int                             // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                             // 主域名。
 	channelManager *channelmanager.ChannelManager // 通道管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
@@ -29,14 +29,14 @@ type Scheduler struct {
 // 调度器摘要信息的实现类型。
 type SchedSummary struct {
 	prefix              string              // 前缀。
-	running             uint32              // 运行标记。
-	grabDepth           uint32              // 爬取的最大深度。
+	running             int              // 运行标记。
+	grabDepth           int              // 爬取的最大深度。
 	chanmanSummary      string              // 通道管理器的摘要信息。
 	reqCacheSummary     string              // 请求缓存的摘要信息。
-	dlPoolLen           uint32              // 网页下载器池的长度。
-	dlPoolCap           uint32              // 网页下载器池的容量。
-	analyzerPoolLen     uint32              // 分析器池的长度。
-	analyzerPoolCap     uint32              // 分析器池的容量。
+	dlPoolLen           int              // 网页下载器池的长度。
+	dlPoolCap           int              // 网页下载器池的容量。
+	analyzerPoolLen     int              // 分析器池的长度。
+	analyzerPoolCap     int              // 分析器池的容量。
 	processChainSummary string              // 条目处理管道的摘要信息。
 	urlCount            int                 // 已请求的URL的计数。
 	urlDetail           string              // 已请求的URL的详细信息。

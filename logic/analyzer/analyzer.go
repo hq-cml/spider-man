@@ -73,7 +73,7 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, res
 }
 
 //将处理完毕的值附加到列之后
-func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth uint32) []basic.DataIntfs {
+func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth int) []basic.DataIntfs {
 	//检查参数有效性
 	if data == nil {
 		return dataList

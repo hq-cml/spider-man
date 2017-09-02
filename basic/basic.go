@@ -7,7 +7,7 @@ import (
 
 /********************** Request 相关基本函数 **********************/
 //New，创建Request
-func NewRequest(httpReq *http.Request, depth uint32) *Request {
+func NewRequest(httpReq *http.Request, depth int) *Request {
 	return &Request{
 		httpReq: httpReq,
 		depth:   depth,
@@ -20,7 +20,7 @@ func (req *Request) HttpReq() *http.Request {
 }
 
 //获取深度值
-func (req *Request) Depth() uint32 {
+func (req *Request) Depth() int {
 	return req.depth
 }
 
@@ -31,7 +31,7 @@ func (req *Request) Valid() bool {
 
 /*********************** 响应体相关 ***********************/
 //New，创建响应
-func NewResponse(httpResp *http.Response, depth uint32) *Response {
+func NewResponse(httpResp *http.Response, depth int) *Response {
 	return &Response{
 		httpResp: httpResp,
 		depth:    depth,
@@ -44,7 +44,7 @@ func (resp *Response) HttpResp() *http.Response {
 }
 
 //获取响应的深度
-func (resp *Response) Depth() uint32 {
+func (resp *Response) Depth() int {
 	return resp.depth
 }
 

@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func NewAnalyzerPool(total uint32, gen GenAnalyzerFunc) (AnalyzerPoolIntfs, error) {
+func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (AnalyzerPoolIntfs, error) {
 	etype := reflect.TypeOf(gen())
 	genEntity := func() pool.EntityIntfs {
 		return gen()
@@ -38,9 +38,9 @@ func (alpool *AnalyzerPool) Put(analyzer AnalyzerIntfs) error {
 	return alpool.pool.Put(analyzer)
 }
 
-func (alpool *AnalyzerPool) Total() uint32 {
+func (alpool *AnalyzerPool) Total() int {
 	return alpool.pool.Total()
 }
-func (alpool *AnalyzerPool) Used() uint32 {
+func (alpool *AnalyzerPool) Used() int {
 	return alpool.pool.Used()
 }

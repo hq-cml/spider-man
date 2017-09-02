@@ -46,7 +46,7 @@ func (b *BaseSpider)GenEntryProcessors() []basic.ProcessEntryFunc {
 
 
 //响应解析函数。只解析“A”标签。
-func parseForATag(httpResp *http.Response, grabDepth uint32) ([]basic.DataIntfs, []error) {
+func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.DataIntfs, []error) {
     //仅支持返回码200的响应
     if httpResp.StatusCode != 200 {
         err := errors.New(fmt.Sprintf("Unsupported status code %d. (httpResponse=%v)", httpResp))

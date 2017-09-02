@@ -19,13 +19,13 @@ type EntityIntfs interface {
 type PoolIntfs interface {
 	Get() (EntityIntfs, error) //获取
 	Put(e EntityIntfs) error   //归还
-	Total() uint32             //池子容量
-	Used() uint32              //池子中已使用的数量
+	Total() int             //池子容量
+	Used() int              //池子中已使用的数量
 }
 
 //实体池类型，实现PoolIntfs接口
 type Pool struct {
-	total       uint32             //池容量
+	total       int             //池容量
 	etype       reflect.Type       //池子中实体的类型
 	genEntity   func() EntityIntfs //池中实体的生成函数
 	container   chan EntityIntfs   //实体容器，以channel为载体
@@ -35,7 +35,7 @@ type Pool struct {
 
 
 //惯例New函数，创建实体池
-func NewPool(total uint32, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
+func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
 	//参数校验
 	if total == 0 {
 		errMsg := fmt.Sprintf("NewPool failed.(total=%d)\n", total)
@@ -127,10 +127,10 @@ func (pool *Pool) compareAndSetIdContainer(entityId uint32, oldValue bool, newVa
 	return 1 //成功获得了操作权
 }
 
-func (pool *Pool) Total() uint32 {
+func (pool *Pool) Total() int {
 	return pool.total
 }
 
-func (pool *Pool) Used() uint32 {
-	return pool.total - uint32(len(pool.container))
+func (pool *Pool) Used() int {
+	return pool.total - len(pool.container)
 }

@@ -31,8 +31,8 @@ type GenDownloaderFunc func() DownloaderIntfs
 type DownloaderPoolIntfs interface {
 	Get() (DownloaderIntfs, error) // 从池中获取一个下载器
 	Put(dl DownloaderIntfs) error  // 归还一个下载器到池子中
-	Total() uint32                 // 获得池子总容量
-	Used() uint32                  // 获得正在被使用的下载器数量
+	Total() int                 // 获得池子总容量
+	Used() int                  // 获得正在被使用的下载器数量
 }
 
 //网页下载器池的实现，*DownloaderPool实现DownloaderPoolIntfs

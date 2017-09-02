@@ -33,7 +33,7 @@ func NewScheduler() *Scheduler {
 // 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
 //TODO 重构
 func (schdl *Scheduler) Start(
-	grabDepth uint32,
+	grabDepth int,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
 	entryProcessors []basic.ProcessEntryFunc,

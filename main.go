@@ -1,25 +1,31 @@
 package main
 
 import (
-	"github.com/hq-cml/spider-go/helper/log"
 	"net/http"
 	"time"
-	"github.com/hq-cml/spider-go/plugin"
-	"github.com/hq-cml/spider-go/logic/scheduler"
 	"fmt"
 	"runtime"
+	"flag"
 	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-go/plugin"
+	"github.com/hq-cml/spider-go/logic/scheduler"
+	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-go/helper/config"
 )
-
 
 // 日志记录函数的类型。
 // 参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
 type Record func(level byte, content string)
 
+//插件容器
 var plugins = map[string]basic.SpiderPluginIntfs {
 	"base": plugin.NewBaseSpider(),
 	//....
 }
+
+//全局配置
+var confPath *string = flag.String("c", "conf/spider.conf", "config file")
+var firstUrl *string = flag.String("u", "http://www.sogou.com", "first url")
 
 /*
  * 监视器实现：主要功能是对Scheduler的监视和控制：
@@ -36,16 +42,24 @@ var plugins = map[string]basic.SpiderPluginIntfs {
 // 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
  */
 func main() {
-	//TODO 参数处理
-	startUrl := "http://www.sogou.com"
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	//解析参数
+	flag.Parse()
 
+	conf, err := config.ParseConfig(*confPath)
+	if err != nil {
+		panic("parse conf err:" + err.Error())
+	}
+	
 	//TODO 配置文件处理
 	intervalNs := 10 * time.Millisecond
 	maxIdleCount := uint(1000)
 	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
 	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
 	//poolParams := basic.NewPoolParams(3, 3)
-	grabDepth := uint32(1)
+	//grabDepth := uint32(1)
+
+	grabDepth := conf.GrabDepth
 	pluginKey := "base"
 
 	//TODO 创建日志
@@ -76,7 +90,7 @@ func main() {
 
 	spider := plugins[pluginKey]
 
-	firstHttpReq, err := http.NewRequest("GET", startUrl, nil)
+	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
 	if err != nil {
 		log.Warnln(err.Error())
 		return
