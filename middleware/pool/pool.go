@@ -3,6 +3,7 @@ package pool
 /*
  * 实体池：池操作的抽象
  * 实体池中的实体的类型是任意的，只要这个实体类型实现了EntityIntfs接口
+ * 用一个channel和一个map搭配使用实现池子的抽象功能
  */
 import (
 	"errors"
@@ -18,19 +19,19 @@ type EntityIntfs interface {
 
 //实体池的接口类型
 type PoolIntfs interface {
-	Get() (EntityIntfs, error) //获取
-	Put(e EntityIntfs) error   //归还
-	Total() int                //池子容量
+	Get() (EntityIntfs, error) //从池子中获取实体
+	Put(e EntityIntfs) error   //归还实体到池子
+	Total() int                //池子总容量
 	Used() int                 //池子中已使用的数量
 }
 
-//实体池类型，实现PoolIntfs接口
+//实体池类型，*Pool实现PoolIntfs接口
 type Pool struct {
 	total       int                //池容量
 	etype       reflect.Type       //池子中实体的类型
 	genEntity   func() EntityIntfs //池中实体的生成函数
-	container   chan EntityIntfs   //实体容器，以channel为载体
-	idContainer map[uint64]bool    //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
+	container   chan EntityIntfs   //实体的容器，以channel为载体
+	idContainer map[uint64]bool    //实体id识别器，用于辨别一个实体有效性（是否从该池子取出）
 	mutex       sync.Mutex         //针对IDContainer的保护锁
 }
 
@@ -38,22 +39,20 @@ type Pool struct {
 func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
 	//参数校验
 	if total == 0 {
-		errMsg := fmt.Sprintf("NewPool failed.(total=%d)\n", total)
-		return nil, errors.New(errMsg)
+		return nil, errors.New(fmt.Sprintf("NewPool failed.(total=%d)\n", total))
 	}
 
 	//初始化容器载体channel
-	size := int(total)
-	container := make(chan EntityIntfs, size)
+	container := make(chan EntityIntfs, total)
 	idContainer := make(map[uint64]bool)
-	for i := 0; i < size; i++ {
+	for i := 0; i < total; i++ {
 		newEntity := genEntity()
 		if entityType != reflect.TypeOf(newEntity) {
 			errMsg := fmt.Sprintf("New Pool failed. genEntity() is not %s\n", entityType)
 			return nil, errors.New(errMsg)
 		}
-		container <- newEntity
-		idContainer[newEntity.Id()] = true
+		container <- newEntity 			   //实体入池
+		idContainer[newEntity.Id()] = true //占用标记
 	}
 
 	pool := &Pool{

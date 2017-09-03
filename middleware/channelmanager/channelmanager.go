@@ -2,7 +2,8 @@ package channelmanager
 
 /*
  * channel管理器
- * 框架中有四种类型的数据需要管道传递：请求、响应、条目、Error
+ * 框架用到四种类型的数据需要管道传递：请求、响应、条目、Error
+ * 他们均是SpiderChannelIntfs接口的实现类型，这里
  */
 import (
 	"bytes"
@@ -30,16 +31,16 @@ var statusNameMap = map[ChannelManagerStatus]string{
 
 //通道管理器实现类型
 type ChannelManager struct {
-	channel map[string]basic.SpiderChannelIntfs
-	status  ChannelManagerStatus //channel管理器状态
-	rwmutex sync.RWMutex         //读写锁
+	channels map[string]basic.SpiderChannelIntfs //通道容器
+	status   ChannelManagerStatus                //channel管理器状态
+	rwmutex  sync.RWMutex                        //读写锁
 }
 
 //New
 func NewChannelManager() *ChannelManager {
 	chm := &ChannelManager{
 		status:  CHANNEL_MANAGER_STATUS_INITIALIZED,
-		channel: make(map[string]basic.SpiderChannelIntfs),
+		channels: make(map[string]basic.SpiderChannelIntfs),
 	}
 	return chm
 }
@@ -55,7 +56,7 @@ func (chm *ChannelManager) Close() bool {
 	}
 
 	//逐个关闭
-	for _, c := range chm.channel {
+	for _, c := range chm.channels {
 		c.Close()
 	}
 	chm.status = CHANNEL_MANAGER_STATUS_CLOSED
@@ -69,10 +70,10 @@ func (chm *ChannelManager) RegisterOneChannel(name string, c basic.SpiderChannel
 	chm.rwmutex.Lock()
 	defer chm.rwmutex.Unlock()
 
-	if _, ok := chm.channel[name]; ok {
+	if _, ok := chm.channels[name]; ok {
 		return errors.New("Already Exist channel")
 	}
-	chm.channel[name] = c
+	chm.channels[name] = c
 
 	return nil
 }
@@ -83,7 +84,7 @@ func (chm *ChannelManager) GetOneChannel(name string) (basic.SpiderChannelIntfs,
 	chm.rwmutex.RLock()
 	defer chm.rwmutex.RUnlock()
 
-	c, ok := chm.channel[name]
+	c, ok := chm.channels[name]
 	if !ok {
 		return nil, errors.New("Not found")
 	}
@@ -99,7 +100,7 @@ func (chm *ChannelManager) Summary() string {
 
 	var buff bytes.Buffer
 	buff.WriteString("ChannelManager Status:" + statusNameMap[chm.status] + "\n")
-	for k, c := range chm.channel {
+	for k, c := range chm.channels {
 		buff.WriteString(fmt.Sprint("%s: Len:%d, Cap:/%d\n ", k, c.Len(), c.Cap()))
 	}
 

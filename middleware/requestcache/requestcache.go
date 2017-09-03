@@ -2,7 +2,8 @@ package requestcache
 
 /*
  * 请求缓冲
- * 用一个带锁保护的slice实现
+ * 用一个带锁保护的slice实现缓冲的效果
+ * 用slice的好处是不用担心满了导致阻塞的问题
  */
 
 import (
@@ -68,11 +69,15 @@ func (rc *RequestCache) Get() *basic.Request {
 
 // 获得请求缓存的容量。
 func (rc *RequestCache) Capacity() int {
+	rc.mutex.Lock()
+	defer rc.mutex.Unlock()
 	return cap(rc.cache)
 }
 
 // 获得请求缓存的实时长度，即：其中的请求的即时数量。
 func (rc *RequestCache) Length() int {
+	rc.mutex.Lock()
+	defer rc.mutex.Unlock()
 	return len(rc.cache)
 }
 
@@ -88,8 +93,7 @@ func (rc *RequestCache) Close() {
 
 // 摘要信息
 func (rc *RequestCache) Summary() string {
-	summaryTemplate := "status: %s, " + "length: %d, " + "capacity: %d"
-	summary := fmt.Sprintf(summaryTemplate,
+	summary := fmt.Sprintf("status: %s, " + "length: %d, " + "capacity: %d",
 		statusMap[rc.status],
 		rc.Length(),
 		rc.Capacity())
