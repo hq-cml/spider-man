@@ -3,6 +3,8 @@ package basic
 import (
 	"errors"
 	"net/http"
+	"fmt"
+	"bytes"
 )
 
 /********************** Request 相关基本函数 **********************/
@@ -12,6 +14,11 @@ func NewRequest(httpReq *http.Request, depth int) *Request {
 		httpReq: httpReq,
 		depth:   depth,
 	}
+}
+
+//*Request实现DataIntfs接口
+func (req *Request) Valid() bool {
+	return req.httpReq != nil && req.httpReq.URL != nil
 }
 
 //获取请求值指针
@@ -24,12 +31,7 @@ func (req *Request) Depth() int {
 	return req.depth
 }
 
-//*Request实现DataIntfs接口
-func (req *Request) Valid() bool {
-	return req.httpReq != nil && req.httpReq.URL != nil
-}
-
-/*********************** 响应体相关 ***********************/
+/************************** 响应体相关 **************************/
 //New，创建响应
 func NewResponse(httpResp *http.Response, depth int) *Response {
 	return &Response{
@@ -53,13 +55,45 @@ func (resp *Response) Valid() bool {
 	return resp.httpResp != nil && resp.httpResp.Body != nil
 }
 
-/************************ 条目相关 ************************/
+/*************************** 条目相关 ***************************/
 //实现EntryIntfs接口
 func (e Entry) Valid() bool {
 	return e != nil
 }
 
-/************************ 请求通道相关 ************************/
+/*************************** 错误相关 ***************************/
+func (e *SpiderError) Type() ErrorType {
+	return e.errType
+}
+
+//实现SpiderErrIntfs接口：获得错误信息
+func (e *SpiderError) Error() string {
+	if e.fullErrMsg == "" {
+		e.genFullErrMsg()
+	}
+	return e.fullErrMsg
+}
+
+//生成完整错误信息
+func (e *SpiderError) genFullErrMsg() {
+	var buffer bytes.Buffer
+	buffer.WriteString("Spider Error:")
+	if e.errType != "" {
+		buffer.WriteString(string(e.errType))
+		buffer.WriteString(": ")
+	}
+	buffer.WriteString(e.errMsg)
+	e.fullErrMsg = fmt.Sprintf("%s\n", buffer.String())
+}
+
+//惯例New函数
+func NewSpiderErr(errType ErrorType, errMsg string) *SpiderError {
+	return &SpiderError{
+		errType: errType,
+		errMsg:  errMsg,
+	}
+}
+/*************************** 请求通道相关 ***************************/
 func NewRequestChannel(capacity int) SpiderChannelIntfs {
 	return &RequestChannel{
 		capacity: capacity,
@@ -89,7 +123,7 @@ func (c *RequestChannel) Close() {
 	close(c.reqCh)
 }
 
-/************************ 响应通道相关 ************************/
+/*************************** 响应通道相关 ***************************/
 func NewResponseChannel(capacity int) SpiderChannelIntfs {
 	return &ResponseChannel{
 		capacity: capacity,
@@ -119,7 +153,7 @@ func (c *ResponseChannel) Close() {
 	close(c.respCh)
 }
 
-/************************ 结果通道相关 ************************/
+/*************************** 结果通道相关 ***************************/
 func NewEntryChannel(capacity int) SpiderChannelIntfs {
 	return &EntryChannel{
 		capacity: capacity,
@@ -149,7 +183,7 @@ func (c *EntryChannel) Close() {
 	close(c.entryCh)
 }
 
-/************************ 错误通道相关 ************************/
+/*************************** 错误通道相关 ***************************/
 func NewErrorChannel(capacity int) SpiderChannelIntfs {
 	return &ErrorChannel{
 		capacity: capacity,

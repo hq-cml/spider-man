@@ -28,8 +28,8 @@ type Response struct {
 }
 
 /*************************************** 条目 *****************************************/
-//条目：一条响应经过分析之后的结果，因为处理链是定制的
-//所以这个结构会尽量灵活以保证能够存储任意的分析结果
+//条目：一条Response经过分析之后的结果
+//因为处理链是定制的,所以这个结构会尽量灵活以保证能够存储任意的分析结果
 type Entry map[string]interface{}
 
 /************************************** 错误类型 ***************************************/
@@ -50,7 +50,7 @@ type SpiderError struct {
 	fullErrMsg string    //完整错误信息
 }
 
-/************************************** 通道类型 *************************************/
+/************************************** 通道相关 *************************************/
 type SpiderChannelIntfs interface {
 	Put(data interface{}) error
 	Get() (interface{}, bool)
@@ -59,27 +59,31 @@ type SpiderChannelIntfs interface {
 	Close()
 }
 
+//请求通道
 type RequestChannel struct {
 	capacity int
-	reqCh    chan Request //请求通道
+	reqCh    chan Request
 }
 
+//响应通道
 type ResponseChannel struct {
 	capacity int
-	respCh   chan Response //响应通道
+	respCh   chan Response
 }
 
+//结果通道
 type EntryChannel struct {
 	capacity int
-	entryCh  chan Entry //结果通道
+	entryCh  chan Entry
 }
 
+//错误通道
 type ErrorChannel struct {
 	capacity int
-	errorCh  chan SpiderError //错误通道
+	errorCh  chan SpiderError
 }
 
-/************************************** 配置 *************************************/
+/************************************** 配置相关 *************************************/
 type SpiderConf struct {
 	GrabDepth int
 
@@ -94,7 +98,7 @@ type SpiderConf struct {
 	IntervalNs   int
 }
 
-/************************************ Context **********************************/
+/************************************ Context相关 **********************************/
 type Context struct {
 	Conf *SpiderConf
 }
