@@ -31,8 +31,8 @@ type Analyzer struct {
 type AnalyzerPoolIntfs interface {
 	Get() (AnalyzerIntfs, error)      // 从池中获取一个分析器
 	Put(analyzer AnalyzerIntfs) error // 归还一个分析器到池子中
-	Total() int                    //获得池子总容量
-	Used() int                     //获得正在被使用的分析器数量
+	Total() int                       //获得池子总容量
+	Used() int                        //获得正在被使用的分析器数量
 }
 
 // 生成分析器的函数类型。

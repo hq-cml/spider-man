@@ -17,14 +17,14 @@ type DataIntfs interface {
 //请求体结构
 type Request struct {
 	httpReq *http.Request //HTTP请求的指针，为了避免零值填充和实例复制，成员用指针
-	depth   int        //请求深度，初始请求深度是0，然后逐渐递增
+	depth   int           //请求深度，初始请求深度是0，然后逐渐递增
 }
 
 /**************************************** 响应 ****************************************/
 //响应体结构
 type Response struct {
 	httpResp *http.Response //HTTP响应的指针
-	depth    int         //深度
+	depth    int            //深度
 }
 
 /*************************************** 条目 *****************************************/
@@ -51,47 +51,47 @@ type SpiderError struct {
 }
 
 /************************************** 通道类型 *************************************/
-type SpiderChannelIntfs interface{
+type SpiderChannelIntfs interface {
 	Put(data interface{}) error
-	Get()(interface{}, bool)
+	Get() (interface{}, bool)
 	Len() int
 	Cap() int
 	Close()
 }
 
 type RequestChannel struct {
-	capacity      int
-	reqCh         chan Request   //请求通道
+	capacity int
+	reqCh    chan Request //请求通道
 }
 
 type ResponseChannel struct {
-	capacity      int
-	respCh         chan Response   //响应通道
+	capacity int
+	respCh   chan Response //响应通道
 }
 
 type EntryChannel struct {
-	capacity      int
-	entryCh         chan Entry   //结果通道
+	capacity int
+	entryCh  chan Entry //结果通道
 }
 
 type ErrorChannel struct {
-	capacity      int
-	errorCh         chan SpiderError   //错误通道
+	capacity int
+	errorCh  chan SpiderError //错误通道
 }
 
 /************************************** 配置 *************************************/
 type SpiderConf struct {
-	GrabDepth      int
+	GrabDepth int
 
-	PluginKey      string
+	PluginKey string
 
-	RequestChanCapcity int
+	RequestChanCapcity  int
 	ResponseChanCapcity int
-	EntryChanCapcity int
-	ErrorChanCapcity int
+	EntryChanCapcity    int
+	ErrorChanCapcity    int
 
-	MaxIdleCount 	int
-	IntervalNs 		int
+	MaxIdleCount int
+	IntervalNs   int
 }
 
 /************************************ Context **********************************/

@@ -1,16 +1,16 @@
 package main
 
 import (
-	"net/http"
-	"time"
-	"fmt"
-	"runtime"
 	"flag"
+	"fmt"
 	"github.com/hq-cml/spider-go/basic"
-	"github.com/hq-cml/spider-go/plugin"
-	"github.com/hq-cml/spider-go/logic/scheduler"
-	"github.com/hq-cml/spider-go/helper/log"
 	"github.com/hq-cml/spider-go/helper/config"
+	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-go/logic/scheduler"
+	"github.com/hq-cml/spider-go/plugin"
+	"net/http"
+	"runtime"
+	"time"
 )
 
 // 日志记录函数的类型。
@@ -18,7 +18,7 @@ import (
 type Record func(level byte, content string)
 
 //插件容器
-var plugins = map[string]basic.SpiderPluginIntfs {
+var plugins = map[string]basic.SpiderPluginIntfs{
 	"base": plugin.NewBaseSpider(),
 	//....
 }
@@ -40,7 +40,7 @@ var firstUrl *string = flag.String("u", "http://www.sogou.com", "first url")
 // 参数detailSummary被用来表示是否需要详细的摘要信息。
 // 参数record代表日志记录函数。
 // 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
- */
+*/
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	//解析参数
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	context := basic.Context{
-		Conf:conf,
+		Conf: conf,
 	}
 
 	//TODO 配置文件处理
@@ -114,7 +114,7 @@ func AsyncLoopCheckStatus(
 	maxIdleCount int,
 	autoStop bool,
 	record Record,
-	stopNotifier chan<- byte) (<-chan uint64){
+	stopNotifier chan<- byte) <-chan uint64 {
 
 	//检查计数通道
 	checkCountChan := make(chan uint64, 1)
@@ -122,7 +122,7 @@ func AsyncLoopCheckStatus(
 	var checkCount uint64
 	// 已达到最大空闲计数的消息模板。
 	var msgReachMaxIdleCount = "The scheduler has been idle for a period of time (about %s). \n" +
-	"Now consider what stop it."
+		"Now consider what stop it."
 	// 停止调度器的消息模板。
 	var msgStopScheduler = "Stop scheduler...%s."
 
@@ -181,16 +181,16 @@ func AsyncLoopCheckStatus(
 
 // 记录摘要信息。
 func AsyncRecordSummary(
-schdl *scheduler.Scheduler,
-detailSummary bool,
-record Record,
-stopNotifier <-chan byte) {
+	schdl *scheduler.Scheduler,
+	detailSummary bool,
+	record Record,
+	stopNotifier <-chan byte) {
 
 	// 摘要信息的模板。
 	var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
-	"  Goroutine number: %d\n" +
-	"  Scheduler:\n%s" +
-	"  Escaped time: %s\n"
+		"  Goroutine number: %d\n" +
+		"  Scheduler:\n%s" +
+		"  Escaped time: %s\n"
 
 	go func() {
 		//阻塞等待调度器开启
@@ -290,6 +290,6 @@ func record(level byte, content string) {
 	}
 }
 
-func WaitExit(ch <-chan uint64) uint64{
+func WaitExit(ch <-chan uint64) uint64 {
 	return <-ch
 }

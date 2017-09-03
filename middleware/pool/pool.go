@@ -1,4 +1,5 @@
 package pool
+
 /*
  * 实体池：池操作的抽象
  * 实体池中的实体的类型是任意的，只要这个实体类型实现了EntityIntfs接口
@@ -19,20 +20,19 @@ type EntityIntfs interface {
 type PoolIntfs interface {
 	Get() (EntityIntfs, error) //获取
 	Put(e EntityIntfs) error   //归还
-	Total() int             //池子容量
-	Used() int              //池子中已使用的数量
+	Total() int                //池子容量
+	Used() int                 //池子中已使用的数量
 }
 
 //实体池类型，实现PoolIntfs接口
 type Pool struct {
-	total       int             //池容量
+	total       int                //池容量
 	etype       reflect.Type       //池子中实体的类型
 	genEntity   func() EntityIntfs //池中实体的生成函数
 	container   chan EntityIntfs   //实体容器，以channel为载体
 	idContainer map[uint32]bool    //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
 	mutex       sync.Mutex         //针对IDContainer的保护锁
 }
-
 
 //惯例New函数，创建实体池
 func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {

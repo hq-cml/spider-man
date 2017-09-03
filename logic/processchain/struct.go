@@ -29,9 +29,9 @@ type ProcessChainIntfs interface {
 // 条目处理管道的实现类型。
 type ProcessChain struct {
 	entryProcessors  []basic.ProcessEntryFunc // 条目处理器的列表。
-	failFast         bool               // 表示处理是否需要快速失败的标志位。
-	sent             uint64             // 已被发送的条目的数量。
-	accepted         uint64             // 已被接受的条目的数量。
-	processed        uint64             // 已被处理的条目的数量。
-	processingNumber uint64             // 正在被处理的条目的数量。
+	failFast         bool                     // 表示处理是否需要快速失败的标志位。
+	sent             uint64                   // 已被发送的条目的数量。
+	accepted         uint64                   // 已被接受的条目的数量。
+	processed        uint64                   // 已被处理的条目的数量。
+	processingNumber uint64                   // 正在被处理的条目的数量。
 }

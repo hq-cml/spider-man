@@ -1,15 +1,14 @@
 package requestcache
 
-
 /*
  * 请求缓冲
  * 用一个带锁保护的slice实现
  */
 
 import (
+	"fmt"
 	"github.com/hq-cml/spider-go/basic"
 	"sync"
-	"fmt"
 )
 
 // 请求缓存的实现类型。

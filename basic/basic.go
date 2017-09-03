@@ -1,8 +1,8 @@
 package basic
 
 import (
-	"net/http"
 	"errors"
+	"net/http"
 )
 
 /********************** Request 相关基本函数 **********************/
@@ -60,10 +60,10 @@ func (e Entry) Valid() bool {
 }
 
 /************************ 请求通道相关 ************************/
-func NewRequestChannel(capacity int) SpiderChannelIntfs{
+func NewRequestChannel(capacity int) SpiderChannelIntfs {
 	return &RequestChannel{
 		capacity: capacity,
-		reqCh: make(chan Request, capacity),
+		reqCh:    make(chan Request, capacity),
 	}
 }
 func (c *RequestChannel) Put(data interface{}) error {
@@ -90,10 +90,10 @@ func (c *RequestChannel) Close() {
 }
 
 /************************ 响应通道相关 ************************/
-func NewResponseChannel(capacity int) SpiderChannelIntfs{
+func NewResponseChannel(capacity int) SpiderChannelIntfs {
 	return &ResponseChannel{
 		capacity: capacity,
-		respCh: make(chan Response, capacity),
+		respCh:   make(chan Response, capacity),
 	}
 }
 func (r *ResponseChannel) Put(data interface{}) error {
@@ -120,10 +120,10 @@ func (c *ResponseChannel) Close() {
 }
 
 /************************ 结果通道相关 ************************/
-func NewEntryChannel(capacity int) SpiderChannelIntfs{
+func NewEntryChannel(capacity int) SpiderChannelIntfs {
 	return &EntryChannel{
 		capacity: capacity,
-		entryCh: make(chan Entry, capacity),
+		entryCh:  make(chan Entry, capacity),
 	}
 }
 func (c *EntryChannel) Put(data interface{}) error {
@@ -150,10 +150,10 @@ func (c *EntryChannel) Close() {
 }
 
 /************************ 错误通道相关 ************************/
-func NewErrorChannel(capacity int) SpiderChannelIntfs{
+func NewErrorChannel(capacity int) SpiderChannelIntfs {
 	return &ErrorChannel{
 		capacity: capacity,
-		errorCh: make(chan SpiderError, capacity),
+		errorCh:  make(chan SpiderError, capacity),
 	}
 }
 func (c *ErrorChannel) Put(data interface{}) error {
