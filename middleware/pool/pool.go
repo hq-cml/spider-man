@@ -13,7 +13,7 @@ import (
 
 //实体接口类型
 type EntityIntfs interface {
-	Id() uint32 // ID获取方法
+	Id() uint64 // ID获取方法
 }
 
 //实体池的接口类型
@@ -30,7 +30,7 @@ type Pool struct {
 	etype       reflect.Type       //池子中实体的类型
 	genEntity   func() EntityIntfs //池中实体的生成函数
 	container   chan EntityIntfs   //实体容器，以channel为载体
-	idContainer map[uint32]bool    //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
+	idContainer map[uint64]bool    //实体ID容器，用于辨别一个实体有效性（是否属于该池子）
 	mutex       sync.Mutex         //针对IDContainer的保护锁
 }
 
@@ -45,7 +45,7 @@ func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (
 	//初始化容器载体channel
 	size := int(total)
 	container := make(chan EntityIntfs, size)
-	idContainer := make(map[uint32]bool)
+	idContainer := make(map[uint64]bool)
 	for i := 0; i < size; i++ {
 		newEntity := genEntity()
 		if entityType != reflect.TypeOf(newEntity) {
@@ -112,7 +112,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 //       -1：表示键值对不存在。
 //        0：表示操作失败。其他的goroutine可能已经操作过了
 //        1：表示操作成功。
-func (pool *Pool) compareAndSetIdContainer(entityId uint32, oldValue bool, newValue bool) int8 {
+func (pool *Pool) compareAndSetIdContainer(entityId uint64, oldValue bool, newValue bool) int8 {
 	pool.mutex.Lock()
 	pool.mutex.Unlock()
 

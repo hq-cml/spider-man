@@ -11,13 +11,13 @@ import (
  * 下载器主要职责是下载网页
  */
 type DownloaderIntfs interface {
-	Id() uint32                                          //获得下载器的Id
+	Id() uint64                                          //获得下载器的Id
 	Download(req basic.Request) (*basic.Response, error) //实际的下载行为
 }
 
 //网页下载器，*Downloader实现PageDownloaderIntfs接口
 type Downloader struct {
-	id         uint32 //ID
+	id         uint64 //ID
 	httpClient http.Client
 }
 

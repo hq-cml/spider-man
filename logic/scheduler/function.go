@@ -49,7 +49,7 @@ func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
 }
 
 // 生成组件实例代号，比如为下载器，分析器等等生成一个全局唯一代号。
-func generateModuleCode(moudle string, id uint32) string {
+func generateModuleCode(moudle string, id uint64) string {
 	return fmt.Sprintf("%s-%d", moudle, id)
 }
 

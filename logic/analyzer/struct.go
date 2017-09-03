@@ -15,7 +15,7 @@ import (
 // 分析器接口类型
 type AnalyzerIntfs interface {
 	// 获得分析器自身Id
-	Id() uint32
+	Id() uint64
 	//根据规则分析响应并返回请求和条目
 	//AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
 	//返回值是一个列表，其中元素可能是两种类型：请求 or 条目
@@ -24,7 +24,7 @@ type AnalyzerIntfs interface {
 
 // 分析器接口的实现类型
 type Analyzer struct {
-	id uint32 // ID
+	id uint64 // ID
 }
 
 //分析器池类型接口

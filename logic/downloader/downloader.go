@@ -20,13 +20,13 @@ func NewDownloader(client *http.Client) DownloaderIntfs {
 	}
 
 	return &Downloader{
-		id:         uint32(id),
+		id:         id,
 		httpClient: *client,
 	}
 }
 
 //*Downloader实现DownloaderIntfs接口
-func (dl *Downloader) Id() uint32 {
+func (dl *Downloader) Id() uint64 {
 	return dl.id
 }
 

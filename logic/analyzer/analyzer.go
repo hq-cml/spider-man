@@ -16,12 +16,12 @@ var analyzerIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 func NewAnalyzer() AnalyzerIntfs {
 	id := analyzerIdGenerator.GetId()
 	return &Analyzer{
-		id: uint32(id),
+		id: id,
 	}
 }
 
 //*Analyzer实现AnalyzerIntfs接口
-func (analyzer *Analyzer) Id() uint32 {
+func (analyzer *Analyzer) Id() uint64 {
 	return analyzer.id
 }
 

@@ -40,6 +40,11 @@ func NewResponse(httpResp *http.Response, depth int) *Response {
 	}
 }
 
+//*Request实现DataIntfs接口
+func (resp *Response) Valid() bool {
+	return resp.httpResp != nil && resp.httpResp.Body != nil
+}
+
 //获取响应体指针
 func (resp *Response) HttpResp() *http.Response {
 	return resp.httpResp
@@ -50,11 +55,6 @@ func (resp *Response) Depth() int {
 	return resp.depth
 }
 
-//*Request实现DataIntfs接口
-func (resp *Response) Valid() bool {
-	return resp.httpResp != nil && resp.httpResp.Body != nil
-}
-
 /*************************** 条目相关 ***************************/
 //实现EntryIntfs接口
 func (e Entry) Valid() bool {
@@ -62,6 +62,14 @@ func (e Entry) Valid() bool {
 }
 
 /*************************** 错误相关 ***************************/
+//New
+func NewSpiderErr(errType ErrorType, errMsg string) *SpiderError {
+	return &SpiderError{
+		errType: errType,
+		errMsg:  errMsg,
+	}
+}
+
 func (e *SpiderError) Type() ErrorType {
 	return e.errType
 }
@@ -86,13 +94,6 @@ func (e *SpiderError) genFullErrMsg() {
 	e.fullErrMsg = fmt.Sprintf("%s\n", buffer.String())
 }
 
-//惯例New函数
-func NewSpiderErr(errType ErrorType, errMsg string) *SpiderError {
-	return &SpiderError{
-		errType: errType,
-		errMsg:  errMsg,
-	}
-}
 /*************************** 请求通道相关 ***************************/
 func NewRequestChannel(capacity int) SpiderChannelIntfs {
 	return &RequestChannel{
@@ -100,6 +101,7 @@ func NewRequestChannel(capacity int) SpiderChannelIntfs {
 		reqCh:    make(chan Request, capacity),
 	}
 }
+//实现SpiderChannelIntfs接口
 func (c *RequestChannel) Put(data interface{}) error {
 	req, ok := data.(Request)
 	if !ok {
@@ -130,6 +132,7 @@ func NewResponseChannel(capacity int) SpiderChannelIntfs {
 		respCh:   make(chan Response, capacity),
 	}
 }
+//实现SpiderChannelIntfs接口
 func (r *ResponseChannel) Put(data interface{}) error {
 	req, ok := data.(Response)
 	if !ok {
@@ -160,6 +163,7 @@ func NewEntryChannel(capacity int) SpiderChannelIntfs {
 		entryCh:  make(chan Entry, capacity),
 	}
 }
+//实现SpiderChannelIntfs接口
 func (c *EntryChannel) Put(data interface{}) error {
 	req, ok := data.(Entry)
 	if !ok {
@@ -190,6 +194,7 @@ func NewErrorChannel(capacity int) SpiderChannelIntfs {
 		errorCh:  make(chan SpiderError, capacity),
 	}
 }
+//实现SpiderChannelIntfs接口
 func (c *ErrorChannel) Put(data interface{}) error {
 	req, ok := data.(SpiderError)
 	if !ok {
