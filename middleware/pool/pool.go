@@ -23,6 +23,7 @@ type PoolIntfs interface {
 	Put(e EntityIntfs) error   //归还实体到池子
 	Total() int                //池子总容量
 	Used() int                 //池子中已使用的数量
+	Close()                    //关闭池子的载体Channel
 }
 
 //实体池类型，*Pool实现PoolIntfs接口
