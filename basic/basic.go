@@ -74,24 +74,19 @@ func (e *SpiderError) Type() ErrorType {
 	return e.errType
 }
 
-//实现SpiderErrIntfs接口：获得错误信息
+//获得错误信息
 func (e *SpiderError) Error() string {
 	if e.fullErrMsg == "" {
-		e.genFullErrMsg()
+		var buffer bytes.Buffer
+		buffer.WriteString("Spider Error:")
+		if e.errType != "" {
+			buffer.WriteString(string(e.errType))
+			buffer.WriteString(": ")
+		}
+		buffer.WriteString(e.errMsg)
+		e.fullErrMsg = fmt.Sprintf("%s\n", buffer.String())
 	}
 	return e.fullErrMsg
-}
-
-//生成完整错误信息
-func (e *SpiderError) genFullErrMsg() {
-	var buffer bytes.Buffer
-	buffer.WriteString("Spider Error:")
-	if e.errType != "" {
-		buffer.WriteString(string(e.errType))
-		buffer.WriteString(": ")
-	}
-	buffer.WriteString(e.errMsg)
-	e.fullErrMsg = fmt.Sprintf("%s\n", buffer.String())
 }
 
 /*************************** 请求通道相关 ***************************/

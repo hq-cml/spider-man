@@ -51,6 +51,7 @@ func (chm *ChannelManager) Close() bool {
 	chm.rwmutex.Lock()
 	defer chm.rwmutex.Unlock()
 
+	//状态校验
 	if chm.status != CHANNEL_MANAGER_STATUS_INITIALIZED {
 		return false
 	}

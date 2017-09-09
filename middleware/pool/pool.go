@@ -31,7 +31,7 @@ type Pool struct {
 	etype       reflect.Type       //池子中实体的类型
 	genEntity   func() EntityIntfs //池中实体的生成函数
 	container   chan EntityIntfs   //实体的容器，以channel为载体
-	idContainer map[uint64]bool    //实体id识别器，用于辨别一个实体有效性（是否从该池子取出）
+	idContainer map[uint64]bool    //实体id识别器，用于辨别一个实体有效性（是否从该池子取出，true表示在池子中，false表示不在）
 	mutex       sync.Mutex         //针对IDContainer的保护锁
 }
 
@@ -87,7 +87,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 	if entity == nil {
 		return errors.New("The returning entity is invalid!")
 	}
-	//入参check：类型需要一直
+	//入参check：类型需要一致
 	if pool.etype != reflect.TypeOf(entity) {
 		return errors.New(fmt.Sprintf("The type of returning entity is NOT %s!\n", pool.etype))
 	}
@@ -100,6 +100,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 		return nil
 	} else if tmp == 0 {
 		//操作权被其他goroutine得到
+		//理论上不可能发生这种事情
 		return errors.New(fmt.Sprintf("The entity (id=%d) is already in the pool!\n", entityId))
 	} else {
 		return errors.New(fmt.Sprintf("The entity (id=%d) is illegal!\n", entityId))
