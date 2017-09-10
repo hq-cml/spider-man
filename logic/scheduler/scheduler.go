@@ -74,22 +74,27 @@ func (schdl *Scheduler) Start(
 	}
 
 	//TODO 参数校验 & 赋值
-	if schdl.downloaderPool, err = downloader.NewDownloaderPool(3,
+	schdl.poolManager = pool.NewPoolManager()
+	if dp, err := downloader.NewDownloaderPool(3,
 		func() pool.EntityIntfs {
 			return downloader.NewDownloader(httpClient)
 		},
 	); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
-		return
+		return err
+	} else {
+		schdl.poolManager.RegisterOnePool("downloader", dp)
 	}
 
-	if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(3,
+	if ap, err := analyzer.NewAnalyzerPool(3,
 		func() pool.EntityIntfs {
 			return analyzer.NewAnalyzer()
 		},
 	); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
-		return
+		return err
+	} else {
+		schdl.poolManager.RegisterOnePool("analyzer", ap)
 	}
 
 	if entryProcessors == nil {
@@ -139,6 +144,7 @@ func (schdl *Scheduler) Stop() bool {
 	schdl.stopSign.Sign()
 	schdl.channelManager.Close()
 	schdl.requestCache.Close()
+	schdl.poolManager.Close()
 	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_STOP)
 	return true
 }
@@ -154,7 +160,8 @@ func (schdl *Scheduler) Running() bool {
 // 若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
 func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
 	//TODO 曾经出过panic 地址为空的段错误
-	if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED {
+	if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED ||
+	   schdl.poolManager.Status() != pool.POOL_MANAGER_STATUS_INITIALIZED {
 		return nil
 	}
 	return schdl.getErrorChan()
@@ -163,8 +170,8 @@ func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
 //实现Idle方法
 //判断所有处理模块是否都处于空闲状态。
 func (schdl *Scheduler) Idle() bool {
-	idleDlPool := schdl.downloaderPool.Used() == 0
-	idleAnalyzerPool := schdl.analyzerPool.Used() == 0
+	idleDlPool := schdl.getDownloaderPool().Used() == 0
+	idleAnalyzerPool := schdl.getAnalyzerPool().Used() == 0
 	idleEntryPipeline := schdl.processChain.ProcessingNumber() == 0
 	if idleDlPool && idleAnalyzerPool && idleEntryPipeline {
 		return true
@@ -275,14 +282,14 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 		}
 	}()
 
-	entity, err := schdl.analyzerPool.Get()
+	entity, err := schdl.getAnalyzerPool().Get()
 	if err != nil {
 		msg := fmt.Sprintf("Analyzer pool error: %s", err)
 		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		return
 	}
 	defer func() { //注册延时归还
-		err = schdl.analyzerPool.Put(entity)
+		err = schdl.getAnalyzerPool().Put(entity)
 		if err != nil {
 			msg := fmt.Sprintf("Analyzer pool error: %s", err)
 			schdl.sendError(errors.New(msg), SCHEDULER_CODE)
@@ -358,14 +365,14 @@ func (schdl *Scheduler) download(request basic.Request) {
 		}
 	}()
 
-	entity, err := schdl.downloaderPool.Get()
+	entity, err := schdl.getDownloaderPool().Get()
 	if err != nil {
 		msg := fmt.Sprintf("Downloader pool error: %s", err)
 		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		return
 	}
 	defer func() { //注册延时归还
-		err = schdl.downloaderPool.Put(entity)
+		err = schdl.getDownloaderPool().Put(entity)
 		if err != nil {
 			msg := fmt.Sprintf("Downloader pool error: %s", err)
 			schdl.sendError(errors.New(msg), SCHEDULER_CODE)

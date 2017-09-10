@@ -10,6 +10,7 @@ import (
 	"github.com/hq-cml/spider-go/helper/log"
 	"github.com/hq-cml/spider-go/helper/util"
 	"strings"
+	"github.com/hq-cml/spider-go/middleware/pool"
 )
 
 // 获取通道管理器持有的请求通道。
@@ -46,6 +47,24 @@ func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
 		panic(err)
 	}
 	return errorChan
+}
+
+// 获取Pool管理器持有的下载器Pool。
+func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
+	p, err := schdl.poolManager.GetOnePool("downloader")
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+// 获取Pool管理器持有的分析器Pool。
+func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
+	p, err := schdl.poolManager.GetOnePool("analyzer")
+	if err != nil {
+		panic(err)
+	}
+	return p
 }
 
 // 生成组件实例代号，比如为下载器，分析器等等生成一个全局唯一代号。

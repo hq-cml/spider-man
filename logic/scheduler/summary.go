@@ -29,10 +29,7 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 		grabDepth:           schdl.grabDepth,
 		chanmanSummary:      schdl.channelManager.Summary(),
 		reqCacheSummary:     schdl.requestCache.Summary(),
-		dlPoolLen:           schdl.downloaderPool.Used(),
-		dlPoolCap:           schdl.downloaderPool.Total(),
-		analyzerPoolLen:     schdl.analyzerPool.Used(),
-		analyzerPoolCap:     schdl.analyzerPool.Total(),
+		poolmanSummary:      schdl.poolManager.Summary(),
 		processChainSummary: schdl.processChain.Summary(),
 		urlCount:            urlCount,
 		urlDetail:           urlDetail,
@@ -58,14 +55,11 @@ func (ss *SchedSummary) Same(other *SchedSummary) bool {
 	}
 	if ss.running != otherSs.grabDepth ||
 		ss.grabDepth != otherSs.grabDepth ||
-		ss.dlPoolLen != otherSs.dlPoolLen ||
-		ss.dlPoolCap != otherSs.dlPoolCap ||
-		ss.analyzerPoolLen != otherSs.analyzerPoolLen ||
-		ss.analyzerPoolCap != otherSs.analyzerPoolCap ||
 		ss.urlCount != otherSs.urlCount ||
 		ss.stopSignSummary != otherSs.stopSignSummary ||
 		ss.reqCacheSummary != otherSs.reqCacheSummary ||
 		ss.processChainSummary != otherSs.processChainSummary ||
+		ss.poolmanSummary != otherSs.poolmanSummary ||
 		ss.chanmanSummary != otherSs.chanmanSummary {
 		return false
 	} else {
@@ -78,11 +72,10 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 	prefix := ss.prefix
 	template := prefix + "Running: %v \n" +
 		prefix + "Channel args: %s \n" +
-		prefix + "Crawl depth: %d \n" +
+		prefix + "Grab depth: %d \n" +
 		prefix + "Channels manager: %s \n" +
 		prefix + "Request cache: %s\n" +
-		prefix + "Downloader pool: %d/%d\n" +
-		prefix + "Analyzer pool: %d/%d\n" +
+	    prefix + "Pool manager: %s \n" +
 		prefix + "Entry process chain: %s\n" +
 		prefix + "Urls(%d): %s" +
 		prefix + "Stop sign: %s\n"
@@ -93,8 +86,7 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 		ss.grabDepth,
 		ss.chanmanSummary,
 		ss.reqCacheSummary,
-		ss.dlPoolLen, ss.dlPoolCap,
-		ss.analyzerPoolLen, ss.analyzerPoolCap,
+		ss.poolmanSummary,
 		ss.processChainSummary,
 		ss.urlCount,
 		func() string {

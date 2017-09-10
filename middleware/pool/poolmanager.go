@@ -37,7 +37,7 @@ type PoolManager struct {
 //New
 func NewPoolManager() *PoolManager {
     pm := &PoolManager{
-        status:  POOL_MANAGER_STATUS_UNINITIALIZED,
+        status:  POOL_MANAGER_STATUS_INITIALIZED,
         pools: make(map[string]PoolIntfs),
     }
     return pm

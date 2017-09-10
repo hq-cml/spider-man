@@ -16,10 +16,10 @@ type Scheduler struct {
 	grabDepth      int                            // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                         // 主域名。
 	channelManager *channelmanager.ChannelManager // 通道管理器。
-	//poolManager *pool.PoolManager // Pool管理器。
+	poolManager    *pool.PoolManager              // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
-	downloaderPool pool.PoolIntfs // 网页下载器池。
-	analyzerPool   pool.PoolIntfs     // 分析器池。
+	//downloaderPool pool.PoolIntfs // 网页下载器池。
+	//analyzerPool   pool.PoolIntfs     // 分析器池。
 	processChain   processchain.ProcessChainIntfs // 条目处理管道。
 	requestCache   *requestcache.RequestCache     // 请求缓存。
 	urlMap         map[string]bool                // 已请求的URL的字典。
@@ -33,10 +33,7 @@ type SchedSummary struct {
 	grabDepth           int    // 爬取的最大深度。
 	chanmanSummary      string // 通道管理器的摘要信息。
 	reqCacheSummary     string // 请求缓存的摘要信息。
-	dlPoolLen           int    // 网页下载器池的长度。
-	dlPoolCap           int    // 网页下载器池的容量。
-	analyzerPoolLen     int    // 分析器池的长度。
-	analyzerPoolCap     int    // 分析器池的容量。
+	poolmanSummary      string // pool管理器的摘要信息。
 	processChainSummary string // 条目处理管道的摘要信息。
 	urlCount            int    // 已请求的URL的计数。
 	urlDetail           string // 已请求的URL的详细信息。
