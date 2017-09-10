@@ -8,10 +8,13 @@ import (
 	"github.com/hq-cml/spider-go/helper/log"
 	"net/url"
 	"github.com/hq-cml/spider-go/middleware/pool"
+	"reflect"
 )
 
+/***********************************分析器**********************************/
+
 //下载器专用的id生成器
-var analyzerIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
+var analyzerIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
 //New, 创建分析器
 func NewAnalyzer() pool.EntityIntfs {
@@ -21,13 +24,11 @@ func NewAnalyzer() pool.EntityIntfs {
 	}
 }
 
-//*Analyzer实现AnalyzerIntfs接口
+//*Analyzer实现pool.EntityIntfs接口
 func (analyzer *Analyzer) Id() uint64 {
 	return analyzer.id
 }
 
-//把响应结果一次传递给parser函数，然后将解析的结果汇总返回
-//根据规则分析响应并返回请求和条目
 //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
 //返回值是一个列表，其中元素可能是两种类型：请求 or 条目
 func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
@@ -66,9 +67,7 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, res
 		}
 
 		if pErrorList != nil {
-			for _, pError := range pErrorList {
-				errorList = appendErrorList(errorList, pError)
-			}
+			errorList = append(errorList, pErrorList...)
 		}
 
 	}
@@ -98,10 +97,40 @@ func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth 
 	}
 }
 
-// 添加错误值到列表。
-func appendErrorList(errorList []error, err error) []error {
-	if err == nil {
-		return errorList
+
+/**********************************分析器池**********************************/
+
+func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
+	etype := reflect.TypeOf(gen())
+
+	pool, err := pool.NewPool(total, etype, gen)
+	if err != nil {
+		return nil, err
 	}
-	return append(errorList, err)
+
+	alpool := &AnalyzerPool{pool: pool, etype: etype}
+	return alpool, nil
+}
+
+func (alpool *AnalyzerPool) Get() (pool.EntityIntfs, error) {
+	entity, err := alpool.pool.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (alpool *AnalyzerPool) Put(analyzer pool.EntityIntfs) error {
+	return alpool.pool.Put(analyzer)
+}
+
+func (alpool *AnalyzerPool) Total() int {
+	return alpool.pool.Total()
+}
+func (alpool *AnalyzerPool) Used() int {
+	return alpool.pool.Used()
+}
+func (dlpool *AnalyzerPool) Close() {
+	dlpool.pool.Close()
 }

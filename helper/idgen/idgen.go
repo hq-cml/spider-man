@@ -5,11 +5,6 @@ import (
 	"sync"
 )
 
-//ID 生成器接口
-type IdGeneratorIntfs interface {
-	GetId() uint64 //获得一个uint64类型的ID
-}
-
 type IdGenerator struct {
 	sn    uint64
 	ended bool //是否已经达到最大的值
@@ -17,7 +12,7 @@ type IdGenerator struct {
 }
 
 //惯例New
-func NewIdGenerator() IdGeneratorIntfs {
+func NewIdGenerator() *IdGenerator {
 	return &IdGenerator{}
 }
 
