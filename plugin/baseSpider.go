@@ -44,11 +44,11 @@ func (b *BaseSpider) GenEntryProcessors() []basic.ProcessEntryFunc {
 }
 
 //响应解析函数。只解析“A”标签。
-func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.DataIntfs, []error) {
+func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.Entry, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
 		err := errors.New(fmt.Sprintf("Unsupported status code %d. (httpResponse=%v)", httpResp))
-		return nil, []error{err}
+		return nil, nil, []error{err}
 	}
 
 	//对响应做一些处理
@@ -60,13 +60,14 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.DataIntfs, []
 		}
 	}()
 
-	dataList := make([]basic.DataIntfs, 0)
+	entryList := []basic.Entry{}
+	requestList := []*basic.Request{}
 	errs := make([]error, 0)
 	//开始解析
 	doc, err := goquery.NewDocumentFromReader(httpRespBody)
 	if err != nil {
 		errs = append(errs, err)
-		return dataList, errs
+		return nil, nil, errs
 	}
 
 	//查找“A”标签并提取链接地址
@@ -95,7 +96,7 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.DataIntfs, []
 			} else {
 				req := basic.NewRequest(httpReq, grabDepth)
 				//将新分析出来的请求，放入dataList
-				dataList = append(dataList, req)
+				requestList = append(requestList, req)
 			}
 		}
 		text := strings.TrimSpace(sel.Text())
@@ -106,10 +107,10 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]basic.DataIntfs, []
 			imap["a.text"] = text
 			imap["a.index"] = index
 			entry := basic.Entry(imap)
-			dataList = append(dataList, &entry)
+			entryList = append(entryList, entry)
 		}
 	})
-	return dataList, errs
+	return entryList, requestList, errs
 }
 
 // 条目处理器。

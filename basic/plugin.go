@@ -11,9 +11,11 @@ import (
 
 
 //被用于解析Http响应的函数的类型，为了框架的通用性，分析规则及产出规则均可以交由用户进行自定制
-//返回值是两个，第一个是Entry的slice和新的request的slice，他们合在了同一个DataIntfs的slice中
-//第二个是错误的slice
-type AnalyzeResponseFunc func(httpResp *http.Response, respDepth int) ([]DataIntfs, []error)
+//返回值是三个
+//1.是Entry的slice
+//2.新的request的slice
+//3.第二个是错误的slice
+type AnalyzeResponseFunc func(httpResp *http.Response, respDepth int) ([]Entry, []*Request, []error)
 
 // 被用来处理entry的函数的类型
 type ProcessEntryFunc func(entry Entry) (result Entry, err error)

@@ -10,7 +10,6 @@ import (
 	"github.com/hq-cml/spider-go/middleware/pool"
 	"reflect"
 )
-
 /***********************************分析器**********************************/
 
 //下载器专用的id生成器
@@ -31,16 +30,16 @@ func (analyzer *Analyzer) Id() uint64 {
 
 //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
 //返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
+func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.Entry, []*basic.Request, []error) {
 	//参数校验
 	if respAnalyzers == nil {
-		return nil, []error{errors.New("The response parser list is invalid!")}
+		return nil, nil,[]error{errors.New("The response parser list is invalid!")}
 	}
 
 	//获取到实际的响应内容，并做校验
 	httpResp := resp.HttpResp()
 	if httpResp == nil {
-		return nil, []error{errors.New("The http response is invalid!")}
+		return nil, nil,[]error{errors.New("The http response is invalid!")}
 	}
 
 	//日志记录
@@ -50,7 +49,8 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, res
 	respDepth := resp.Depth()
 
 	//解析http响应，respAnalyzers，利用每一个分析函数进行分析
-	dataList := []basic.DataIntfs{}
+	entryList := []basic.Entry{}
+	requestList := []*basic.Request{}
 	errorList := []error{}
 	for i, respAnalyzer := range respAnalyzers {
 		if respAnalyzer == nil {
@@ -58,45 +58,32 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, res
 			continue
 		}
 
-		pDataList, pErrorList := respAnalyzer(httpResp, respDepth)
+		eList, rList, errList := respAnalyzer(httpResp, respDepth)
 
-		if pDataList != nil {
-			for _, pData := range pDataList {
-				dataList = appendDataList(dataList, pData, respDepth)
+		if eList != nil && len(eList) > 0 {
+			entryList = append(entryList, eList...)
+		}
+
+		if rList != nil && len(rList) > 0 {
+			for _, req := range rList {
+				newDepth := respDepth + 1
+				if req.Depth() != newDepth {
+					req = basic.NewRequest(req.HttpReq(), newDepth)
+				}
+
+				requestList = append(requestList, req)
 			}
+
 		}
 
-		if pErrorList != nil {
-			errorList = append(errorList, pErrorList...)
+		if errList != nil && len(errList) > 0 {
+			errorList = append(errorList, errList...)
 		}
 
 	}
 
-	return dataList, errorList
+	return entryList, requestList, errorList
 }
-
-//将处理完毕的值附加到列之后
-func appendDataList(dataList []basic.DataIntfs, data basic.DataIntfs, respDepth int) []basic.DataIntfs {
-	//检查参数有效性
-	if data == nil {
-		return dataList
-	}
-
-	//断言检查data的类型
-	request, ok := data.(*basic.Request)
-	if ok {
-		//data是请求，则封装出一个新的请求
-		newDepth := respDepth + 1
-		if request.Depth() != newDepth {
-			request = basic.NewRequest(request.HttpReq(), newDepth)
-		}
-		return append(dataList, request)
-	} else {
-		//data是条目，则
-		return append(dataList, data)
-	}
-}
-
 
 /**********************************分析器池**********************************/
 

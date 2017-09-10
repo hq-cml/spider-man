@@ -304,32 +304,46 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 		return
 	}
 	moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
-	dataList, errs := ana.Analyze(respAnalyzers, response)
+	entryList, requestList, errs := ana.Analyze(respAnalyzers, response)
+
+	if entryList != nil {
+		for _, entry := range entryList {
+			schdl.sendEntry(entry, moudleCode)
+		}
+	}
+
+	if requestList != nil {
+		for _, req := range requestList {
+			schdl.sendRequestToCache(*req, moudleCode)
+		}
+	}
+
 	if errs != nil {
 		for _, err := range errs {
 			schdl.sendError(err, moudleCode)
 		}
 
 	}
-	//Analyze返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-	if dataList != nil {
-		for _, data := range dataList {
-			if data == nil {
-				continue
-			}
-
-			switch d := data.(type) {
-			case *basic.Request:
-				schdl.sendRequestToCache(*d, moudleCode)
-			case *basic.Entry:
-				schdl.sendEntry(*d, moudleCode)
-			default:
-				//%T打印实际类型
-				msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)
-				schdl.sendError(errors.New(msg), moudleCode)
-			}
-		}
-	}
+	//
+	////Analyze返回值是一个列表，其中元素可能是两种类型：请求 or 条目
+	//if dataList != nil {
+	//	for _, data := range dataList {
+	//		if data == nil {
+	//			continue
+	//		}
+    //
+	//		switch d := data.(type) {
+	//		case *basic.Request:
+	//			schdl.sendRequestToCache(*d, moudleCode)
+	//		case *basic.Entry:
+	//			schdl.sendEntry(*d, moudleCode)
+	//		default:
+	//			//%T打印实际类型
+	//			msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)
+	//			schdl.sendError(errors.New(msg), moudleCode)
+	//		}
+	//	}
+	//}
 }
 
 /*
