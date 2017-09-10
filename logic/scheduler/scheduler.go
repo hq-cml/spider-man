@@ -12,6 +12,7 @@ import (
 	"github.com/hq-cml/spider-go/middleware/channelmanager"
 	"github.com/hq-cml/spider-go/middleware/requestcache"
 	"github.com/hq-cml/spider-go/middleware/stopsign"
+	"github.com/hq-cml/spider-go/middleware/pool"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -74,7 +75,7 @@ func (schdl *Scheduler) Start(
 
 	//TODO 参数校验 & 赋值
 	if schdl.downloaderPool, err = downloader.NewDownloaderPool(3,
-		func() downloader.DownloaderIntfs {
+		func() pool.EntityIntfs {
 			return downloader.NewDownloader(httpClient)
 		},
 	); err != nil {
@@ -350,13 +351,20 @@ func (schdl *Scheduler) download(request basic.Request) {
 		}
 	}()
 
-	downloader, err := schdl.downloaderPool.Get()
+	entity, err := schdl.downloaderPool.Get()
 	if err != nil {
 		msg := fmt.Sprintf("Downloader pool error: %s", err)
 		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		return
 	}
+	downloader, ok := entity.(*downloader.Downloader)
+	if !ok {
+		msg := fmt.Sprintf("Downloader pool Wrong type")
+		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+		return
+	}
 	defer func() { //注册延时归还
+		//err = schdl.downloaderPool.Put(pool.EntityIntfs(downloader))
 		err = schdl.downloaderPool.Put(downloader)
 		if err != nil {
 			msg := fmt.Sprintf("Downloader pool error: %s", err)

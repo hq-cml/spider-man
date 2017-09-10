@@ -135,3 +135,7 @@ func (pool *Pool) Total() int {
 func (pool *Pool) Used() int {
 	return pool.total - len(pool.container)
 }
+
+func (pool *Pool) Close() {
+	close(pool.container)
+}

@@ -100,7 +100,7 @@ func (pm *PoolManager) Summary() string {
     var buff bytes.Buffer
     buff.WriteString("PoolManager Status:" + statusNameMap[pm.status] + "\n")
     for k, p := range pm.pools {
-        buff.WriteString(fmt.Sprint("%s: Total:%d, Used:/%d\n ", k, p.Total(), p.Close()))
+        buff.WriteString(fmt.Sprint("%s: Total:%d, Used:/%d\n ", k, p.Total(), p.Used()))
     }
 
     return buff.String()

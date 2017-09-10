@@ -3,6 +3,7 @@ package downloader
 import (
 	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/helper/idgen"
+	"github.com/hq-cml/spider-go/middleware/pool"
 	"net/http"
 )
 
@@ -12,7 +13,7 @@ import (
 var downloaderIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 
 //New
-func NewDownloader(client *http.Client) DownloaderIntfs {
+func NewDownloader(client *http.Client) pool.EntityIntfs {
 	id := downloaderIdGenerator.GetId()
 
 	if client == nil {
