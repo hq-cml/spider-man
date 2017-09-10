@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"github.com/hq-cml/spider-go/logic/analyzer"
 	"github.com/hq-cml/spider-go/logic/processchain"
 	"github.com/hq-cml/spider-go/middleware/channelmanager"
 	"github.com/hq-cml/spider-go/middleware/requestcache"
@@ -20,7 +19,7 @@ type Scheduler struct {
 	//poolManager *pool.PoolManager // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
 	downloaderPool pool.PoolIntfs // 网页下载器池。
-	analyzerPool   analyzer.AnalyzerPoolIntfs     // 分析器池。
+	analyzerPool   pool.PoolIntfs     // 分析器池。
 	processChain   processchain.ProcessChainIntfs // 条目处理管道。
 	requestCache   *requestcache.RequestCache     // 请求缓存。
 	urlMap         map[string]bool                // 已请求的URL的字典。

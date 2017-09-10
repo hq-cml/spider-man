@@ -84,7 +84,7 @@ func (schdl *Scheduler) Start(
 	}
 
 	if schdl.analyzerPool, err = analyzer.NewAnalyzerPool(3,
-		func() analyzer.AnalyzerIntfs {
+		func() pool.EntityIntfs {
 			return analyzer.NewAnalyzer()
 		},
 	); err != nil {
@@ -275,22 +275,29 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 		}
 	}()
 
-	analyzer, err := schdl.analyzerPool.Get()
+	entity, err := schdl.analyzerPool.Get()
 	if err != nil {
 		msg := fmt.Sprintf("Analyzer pool error: %s", err)
 		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		return
 	}
 	defer func() { //注册延时归还
-		err = schdl.analyzerPool.Put(analyzer)
+		err = schdl.analyzerPool.Put(entity)
 		if err != nil {
 			msg := fmt.Sprintf("Analyzer pool error: %s", err)
 			schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		}
 	}()
 
-	moudleCode := generateModuleCode(ANALYZER_CODE, analyzer.Id())
-	dataList, errs := analyzer.Analyze(respAnalyzers, response)
+	//断言转换
+	ana, ok := entity.(*analyzer.Analyzer)
+	if !ok {
+		msg := fmt.Sprintf("Downloader pool Wrong type")
+		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+		return
+	}
+	moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
+	dataList, errs := ana.Analyze(respAnalyzers, response)
 	if errs != nil {
 		for _, err := range errs {
 			schdl.sendError(err, moudleCode)
@@ -357,23 +364,23 @@ func (schdl *Scheduler) download(request basic.Request) {
 		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		return
 	}
-	downloader, ok := entity.(*downloader.Downloader)
-	if !ok {
-		msg := fmt.Sprintf("Downloader pool Wrong type")
-		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		return
-	}
 	defer func() { //注册延时归还
-		//err = schdl.downloaderPool.Put(pool.EntityIntfs(downloader))
-		err = schdl.downloaderPool.Put(downloader)
+		err = schdl.downloaderPool.Put(entity)
 		if err != nil {
 			msg := fmt.Sprintf("Downloader pool error: %s", err)
 			schdl.sendError(errors.New(msg), SCHEDULER_CODE)
 		}
 	}()
 
-	moudleCode := generateModuleCode(DOWNLOADER_CODE, downloader.Id())
-	response, err := downloader.Download(request)
+	//断言转换
+	dl, ok := entity.(*downloader.Downloader)
+	if !ok {
+		msg := fmt.Sprintf("Downloader pool Wrong type")
+		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+		return
+	}
+	moudleCode := generateModuleCode(DOWNLOADER_CODE, dl.Id())
+	response, err := dl.Download(request)
 	if err != nil {
 		schdl.sendError(err, moudleCode)
 	}

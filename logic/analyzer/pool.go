@@ -1,18 +1,14 @@
 package analyzer
 
 import (
-	"errors"
-	"fmt"
 	"github.com/hq-cml/spider-go/middleware/pool"
 	"reflect"
 )
 
-func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (AnalyzerPoolIntfs, error) {
+func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
 	etype := reflect.TypeOf(gen())
-	genEntity := func() pool.EntityIntfs {
-		return gen()
-	}
-	pool, err := pool.NewPool(total, etype, genEntity)
+
+	pool, err := pool.NewPool(total, etype, gen)
 	if err != nil {
 		return nil, err
 	}
@@ -21,20 +17,20 @@ func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (AnalyzerPoolIntfs, error) 
 	return alpool, nil
 }
 
-func (alpool *AnalyzerPool) Get() (AnalyzerIntfs, error) {
+func (alpool *AnalyzerPool) Get() (pool.EntityIntfs, error) {
 	entity, err := alpool.pool.Get()
 	if err != nil {
 		return nil, err
 	}
-	analyzer, ok := entity.(AnalyzerIntfs)
-	if !ok {
-		errMsg := fmt.Sprintf("The type of entity is NOT %s!\n", alpool.etype)
-		panic(errors.New(errMsg))
-	}
-	return analyzer, nil
+	//analyzer, ok := entity.(AnalyzerIntfs)
+	//if !ok {
+	//	errMsg := fmt.Sprintf("The type of entity is NOT %s!\n", alpool.etype)
+	//	panic(errors.New(errMsg))
+	//}
+	return entity, nil
 }
 
-func (alpool *AnalyzerPool) Put(analyzer AnalyzerIntfs) error {
+func (alpool *AnalyzerPool) Put(analyzer pool.EntityIntfs) error {
 	return alpool.pool.Put(analyzer)
 }
 
@@ -43,4 +39,7 @@ func (alpool *AnalyzerPool) Total() int {
 }
 func (alpool *AnalyzerPool) Used() int {
 	return alpool.pool.Used()
+}
+func (dlpool *AnalyzerPool) Close() {
+	dlpool.pool.Close()
 }

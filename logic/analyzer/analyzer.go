@@ -7,13 +7,14 @@ import (
 	"github.com/hq-cml/spider-go/helper/idgen"
 	"github.com/hq-cml/spider-go/helper/log"
 	"net/url"
+	"github.com/hq-cml/spider-go/middleware/pool"
 )
 
 //下载器专用的id生成器
 var analyzerIdGenerator idgen.IdGeneratorIntfs = idgen.NewIdGenerator()
 
 //New, 创建分析器
-func NewAnalyzer() AnalyzerIntfs {
+func NewAnalyzer() pool.EntityIntfs {
 	id := analyzerIdGenerator.GetId()
 	return &Analyzer{
 		id: id,
@@ -26,6 +27,9 @@ func (analyzer *Analyzer) Id() uint64 {
 }
 
 //把响应结果一次传递给parser函数，然后将解析的结果汇总返回
+//根据规则分析响应并返回请求和条目
+//AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
+//返回值是一个列表，其中元素可能是两种类型：请求 or 条目
 func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.DataIntfs, []error) {
 	//参数校验
 	if respAnalyzers == nil {
