@@ -43,6 +43,16 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf errorChanCapcity failed!")
 	}
 
+	c.DownloaderPoolSize, err = cfg.Int("spider", "downloaderPoolSize")
+	if err != nil {
+		panic("Load conf downloaderPoolSize failed!")
+	}
+
+	c.AnalyzerPoolSize, err = cfg.Int("spider", "analyzerPoolSize")
+	if err != nil {
+		panic("Load conf analyzerPoolSize failed!")
+	}
+
 	c.MaxIdleCount, err = cfg.Int("spider", "maxIdleCount")
 	if err != nil {
 		panic("Load conf maxIdleCount failed!")

@@ -75,7 +75,7 @@ func (schdl *Scheduler) Start(
 
 	//TODO 参数校验 & 赋值
 	schdl.poolManager = pool.NewPoolManager()
-	if dp, err := downloader.NewDownloaderPool(3,
+	if dp, err := downloader.NewDownloaderPool(context.Conf.DownloaderPoolSize,
 		func() pool.EntityIntfs {
 			return downloader.NewDownloader(httpClient)
 		},
@@ -86,7 +86,7 @@ func (schdl *Scheduler) Start(
 		schdl.poolManager.RegisterOnePool("downloader", dp)
 	}
 
-	if ap, err := analyzer.NewAnalyzerPool(3,
+	if ap, err := analyzer.NewAnalyzerPool(context.Conf.AnalyzerPoolSize,
 		func() pool.EntityIntfs {
 			return analyzer.NewAnalyzer()
 		},

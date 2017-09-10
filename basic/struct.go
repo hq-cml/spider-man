@@ -95,6 +95,9 @@ type SpiderConf struct {
 	EntryChanCapcity    int
 	ErrorChanCapcity    int
 
+	DownloaderPoolSize    int
+	AnalyzerPoolSize    int
+
 	MaxIdleCount int
 	IntervalNs   int
 }
