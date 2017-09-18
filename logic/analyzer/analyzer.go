@@ -29,8 +29,9 @@ func (analyzer *Analyzer) Id() uint64 {
 }
 
 //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
-//返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, resp basic.Response) ([]basic.Entry, []*basic.Request, []error) {
+//返回值请求、条目、error的slice
+func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc,
+	resp basic.Response) ([]*basic.Entry, []*basic.Request, []error) {
 	//参数校验
 	if respAnalyzers == nil {
 		return nil, nil,[]error{errors.New("The response parser list is invalid!")}
@@ -49,7 +50,7 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc, res
 	respDepth := resp.Depth()
 
 	//解析http响应，respAnalyzers，利用每一个分析函数进行分析
-	entryList := []basic.Entry{}
+	entryList := []*basic.Entry{}
 	requestList := []*basic.Request{}
 	errorList := []error{}
 	for i, respAnalyzer := range respAnalyzers {

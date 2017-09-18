@@ -86,11 +86,7 @@ func (schdl *Scheduler) Start(
 		schdl.poolManager.RegisterOnePool("downloader", dp)
 	}
 
-	if ap, err := analyzer.NewAnalyzerPool(context.Conf.AnalyzerPoolSize,
-		func() pool.EntityIntfs {
-			return analyzer.NewAnalyzer()
-		},
-	); err != nil {
+	if ap, err := analyzer.NewAnalyzerPool(context.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
@@ -308,7 +304,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 
 	if entryList != nil {
 		for _, entry := range entryList {
-			schdl.sendEntry(entry, moudleCode)
+			schdl.sendEntry(*entry, moudleCode)
 		}
 	}
 

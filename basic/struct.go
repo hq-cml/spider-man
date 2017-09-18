@@ -80,17 +80,17 @@ type ErrorChannel struct {
 
 /************************************** 配置相关 *************************************/
 type SpiderConf struct {
-	GrabDepth int
+	GrabDepth int                //抓取深度
 
-	PluginKey string
+	PluginKey string             //插件名字，根据这个值，框架会自动选择对应的插件
 
-	RequestChanCapcity  int
-	ResponseChanCapcity int
-	EntryChanCapcity    int
-	ErrorChanCapcity    int
+	RequestChanCapcity  int      //请求通道容量
+	ResponseChanCapcity int      //响应通道容量
+	EntryChanCapcity    int      //条目通道容量
+	ErrorChanCapcity    int      //错误通道容量
 
-	DownloaderPoolSize    int
-	AnalyzerPoolSize    int
+	DownloaderPoolSize  int      //下载器池大小
+	AnalyzerPoolSize    int      //分析器池大小
 
 	MaxIdleCount int
 	IntervalNs   int

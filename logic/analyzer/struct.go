@@ -18,7 +18,8 @@ type Analyzer struct {
 // 生成分析器的函数类型。
 type GenAnalyzerFunc func() pool.EntityIntfs
 
-//分析器池子，*AnalyzerPool实现DownloaderPoolIntfs
+//分析器池子，AnalyzerPool嵌套了一个PoolIntfs成员
+//并且，*AnalyzerPool实现了接口PoolIntfs
 type AnalyzerPool struct {
 	pool  pool.PoolIntfs // 实体池。
 	etype reflect.Type   // 池内实体的类型。
