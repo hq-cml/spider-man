@@ -49,14 +49,7 @@ func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
 	return errorChan
 }
 
-// 获取Pool管理器持有的下载器Pool。
-func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
-	p, err := schdl.poolManager.GetOnePool("downloader")
-	if err != nil {
-		panic(err)
-	}
-	return p
-}
+
 
 // 获取Pool管理器持有的分析器Pool。
 func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
@@ -124,17 +117,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 	return true
 }
 
-// 发送响应到通道管理器中的错响应通道
-func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bool {
-	if schdl.stopSign.Signed() {
-		schdl.stopSign.Deal(mouduleCode)
-		//如果stop标记已经生效，则通道管理器可能已经关闭，此时不应该再进行通道写入
-		return false
-	}
 
-	schdl.getResponseChan().Put(resp)
-	return true
-}
 
 //对分析出来的请求做合法性校验
 func (schdl *Scheduler) filterRequest(request *basic.Request) bool {

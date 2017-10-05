@@ -116,12 +116,14 @@ func (schdl *Scheduler) schedulerInit(
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
+		//注册进入池管理器
 		schdl.poolManager.RegisterOnePool("downloader", dp)
 	}
 	if ap, err := analyzer.NewAnalyzerPool(context.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
+		//注册进入池管理器
 		schdl.poolManager.RegisterOnePool("analyzer", ap)
 	}
 
@@ -183,6 +185,7 @@ func (schdl *Scheduler) Start(
 		return err
 	}
 
+	//下载器激活
 	schdl.activateDownloaders()
 	schdl.activateAnalyzers(respAnalyzers)
 	schdl.activateProcessChain()
@@ -404,68 +407,4 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 	//		}
 	//	}
 	//}
-}
-
-/*
- * 激活下载器，开始下载，下载工作由异步的goroutine进行负责
- * 无限循环，从请求通道中获取请求，完成下载任务
- */
-func (schdl *Scheduler) activateDownloaders() {
-	go func() {
-		//无限循环，从请求通道中获取请求
-		for {
-			request, ok := schdl.getReqestChan().Get()
-			if !ok {
-				//通道已关闭
-				break
-			}
-			//类型断言
-			req, ok := request.(basic.Request)
-			if !ok {
-				break
-			}
-			//每个请求都交给一个独立的goroutine来处理
-			go schdl.download(req)
-		}
-	}()
-}
-
-//实际下载
-func (schdl *Scheduler) download(request basic.Request) {
-	defer func() {
-		if p := recover(); p != nil {
-			msg := fmt.Sprintf("Fatal Download Error: %s\n", p)
-			log.Warn(msg)
-		}
-	}()
-
-	entity, err := schdl.getDownloaderPool().Get()
-	if err != nil {
-		msg := fmt.Sprintf("Downloader pool error: %s", err)
-		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		return
-	}
-	defer func() { //注册延时归还
-		err = schdl.getDownloaderPool().Put(entity)
-		if err != nil {
-			msg := fmt.Sprintf("Downloader pool error: %s", err)
-			schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		}
-	}()
-
-	//断言转换
-	dl, ok := entity.(*downloader.Downloader)
-	if !ok {
-		msg := fmt.Sprintf("Downloader pool Wrong type")
-		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		return
-	}
-	moudleCode := generateModuleCode(DOWNLOADER_CODE, dl.Id())
-	response, err := dl.Download(request)
-	if err != nil {
-		schdl.sendError(err, moudleCode)
-	}
-	if response != nil {
-		schdl.sendResponse(*response, moudleCode)
-	}
 }
