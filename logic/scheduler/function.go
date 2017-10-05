@@ -7,10 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hq-cml/spider-go/basic"
-	"github.com/hq-cml/spider-go/helper/log"
-	"github.com/hq-cml/spider-go/helper/util"
 	"strings"
-	"github.com/hq-cml/spider-go/middleware/pool"
 )
 
 // 获取通道管理器持有的请求通道。
@@ -47,17 +44,6 @@ func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
 		panic(err)
 	}
 	return errorChan
-}
-
-
-
-// 获取Pool管理器持有的分析器Pool。
-func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
-	p, err := schdl.poolManager.GetOnePool("analyzer")
-	if err != nil {
-		panic(err)
-	}
-	return p
 }
 
 // 生成组件实例代号，比如为下载器，分析器等等生成一个全局唯一代号。
@@ -117,75 +103,3 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 	return true
 }
 
-
-
-//对分析出来的请求做合法性校验
-func (schdl *Scheduler) filterRequest(request *basic.Request) bool {
-	httpRequest := request.HttpReq()
-	//校验请求体本身
-	if httpRequest == nil {
-		log.Warnln("Ignore the request! It's HTTP request is invalid!")
-		return false
-	}
-	requestUrl := httpRequest.URL
-	if requestUrl == nil {
-		log.Warnln("Ignore the request! It's url is is invalid!")
-		return false
-	}
-
-	if strings.ToLower(requestUrl.Scheme) != "http" {
-		log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
-		return false
-	}
-
-	//已经处理过的URL不再处理
-	if _, ok := schdl.urlMap[requestUrl.String()]; ok {
-		log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
-		return false
-	}
-
-	//只有主域名相同的URL才是合法的
-	if pd, _ := util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
-		log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
-			httpRequest.Host, schdl.primaryDomain, requestUrl)
-		return false
-	}
-
-	//请求深度不能超过阈值
-	if request.Depth() > schdl.grabDepth {
-		log.Warnf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
-			request.Depth(), schdl.grabDepth, requestUrl)
-		return false
-	}
-	return true
-}
-
-// 把请求存放到请求缓存。
-func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode string) bool {
-
-	//过滤掉非法的请求
-	if schdl.filterRequest(&request) == false {
-		return false
-	}
-
-	//check停止信号
-	if schdl.stopSign.Signed() {
-		schdl.stopSign.Deal(mouduleCode)
-		return false
-	}
-
-	schdl.requestCache.Put(&request)
-	schdl.urlMap[request.HttpReq().URL.String()] = true
-
-	return true
-}
-
-// 发送条目到通道管理器中的条目通道
-func (schdl *Scheduler) sendEntry(entry basic.Entry, moduleCode string) bool {
-	if schdl.stopSign.Signed() {
-		schdl.stopSign.Deal(moduleCode)
-		return false
-	}
-	schdl.getEntryChan().Put(entry)
-	return true
-}

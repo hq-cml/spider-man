@@ -187,7 +187,11 @@ func (schdl *Scheduler) Start(
 
 	//下载器激活
 	schdl.activateDownloaders()
+
+	//分析器激活
 	schdl.activateAnalyzers(respAnalyzers)
+
+
 	schdl.activateProcessChain()
 	schdl.schedule(10 * time.Millisecond)
 
@@ -317,94 +321,3 @@ func (schdl *Scheduler) activateProcessChain() {
 	}()
 }
 
-/*
- * 激活分析器，开始分析，分析工作由异步的goroutine进行负责
- * 无限循环，从响应通道中获取响应，完成分析工作
- */
-func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseFunc) {
-	go func() {
-		for { //无限循环
-			response, ok := schdl.getResponseChan().Get()
-			if !ok {
-				//通道已关闭
-				break
-			}
-			resp, ok := response.(basic.Response)
-			//启动异步分析
-			go schdl.analyze(respAnalyzers, resp)
-		}
-	}()
-}
-
-//实际分析工作
-func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, response basic.Response) {
-	defer func() {
-		if p := recover(); p != nil {
-			msg := fmt.Sprintf("Fatal Analysis Error: %s\n", p)
-			log.Warn(msg)
-		}
-	}()
-
-	entity, err := schdl.getAnalyzerPool().Get()
-	if err != nil {
-		msg := fmt.Sprintf("Analyzer pool error: %s", err)
-		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		return
-	}
-	defer func() { //注册延时归还
-		err = schdl.getAnalyzerPool().Put(entity)
-		if err != nil {
-			msg := fmt.Sprintf("Analyzer pool error: %s", err)
-			schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		}
-	}()
-
-	//断言转换
-	ana, ok := entity.(*analyzer.Analyzer)
-	if !ok {
-		msg := fmt.Sprintf("Downloader pool Wrong type")
-		schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-		return
-	}
-	moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
-	entryList, requestList, errs := ana.Analyze(respAnalyzers, response)
-
-	if entryList != nil {
-		for _, entry := range entryList {
-			schdl.sendEntry(*entry, moudleCode)
-		}
-	}
-
-	if requestList != nil {
-		for _, req := range requestList {
-			schdl.sendRequestToCache(*req, moudleCode)
-		}
-	}
-
-	if errs != nil {
-		for _, err := range errs {
-			schdl.sendError(err, moudleCode)
-		}
-
-	}
-	//
-	////Analyze返回值是一个列表，其中元素可能是两种类型：请求 or 条目
-	//if dataList != nil {
-	//	for _, data := range dataList {
-	//		if data == nil {
-	//			continue
-	//		}
-    //
-	//		switch d := data.(type) {
-	//		case *basic.Request:
-	//			schdl.sendRequestToCache(*d, moudleCode)
-	//		case *basic.Entry:
-	//			schdl.sendEntry(*d, moudleCode)
-	//		default:
-	//			//%T打印实际类型
-	//			msg := fmt.Sprintf("Unsported data type:%T! (value=%v)\n", d, d)
-	//			schdl.sendError(errors.New(msg), moudleCode)
-	//		}
-	//	}
-	//}
-}
