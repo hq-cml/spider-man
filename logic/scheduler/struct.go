@@ -20,7 +20,7 @@ type Scheduler struct {
 	stopSign       *stopsign.StopSign             // 停止信号。
 	//downloaderPool pool.PoolIntfs // 网页下载器池。
 	//analyzerPool   pool.PoolIntfs     // 分析器池。
-	processChain   processchain.ProcessChainIntfs // 条目处理管道。
+	processChain   *processchain.ProcessChain     // 条目处理管道。
 	requestCache   *requestcache.RequestCache     // 请求缓存。
 	urlMap         map[string]bool                // 已请求的URL的字典。
 	running        uint32                         // 运行标记。0表示未运行，1表示已运行，2表示已停止。
