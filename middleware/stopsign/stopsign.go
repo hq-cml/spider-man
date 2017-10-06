@@ -84,10 +84,6 @@ func (s *StopSign) DealTotal() uint32 {
 }
 
 // 获取摘要信息。其中应该包含所有的停止信号处理记录。
-func (s *StopSign) Summary() string {
-	if s.signed {
-		return fmt.Sprintf("signed: true, dealCount: %v", s.dealCountMap)
-	} else {
-		return "Signed: false"
-	}
+func (s *StopSign) Summary(prefix string) string {
+	return fmt.Sprintf(prefix + "signed: %v, dealCountMap: %v\n", s.signed, s.dealCountMap)
 }

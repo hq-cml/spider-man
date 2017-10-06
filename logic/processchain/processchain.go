@@ -93,12 +93,12 @@ func (pc *ProcessChain) ProcessingNumber() uint64 {
 }
 
 //获取摘要信息
-func (pc *ProcessChain) Summary() string {
+func (pc *ProcessChain) Summary(prefix string) string {
 	sent := atomic.LoadUint64(&pc.sent)				//已发送
 	accepted := atomic.LoadUint64(&pc.accepted)		//已接收
 	processed := atomic.LoadUint64(&pc.processed)	//已处理
 
-	summary := fmt.Sprintf("failFast: %v, processorNumber: %d, sent: %d, accepted: %d, processed: %d, processingNumber: %d",
+	summary := fmt.Sprintf(prefix + "FailFast: %v, processorNumber: %d\n" + prefix+ "sent: %d, accepted: %d, processed: %d, processingNumber: %d\n",
 		pc.failFast, len(pc.entryProcessors), sent, accepted, processed, pc.ProcessingNumber())
 	return summary
 }

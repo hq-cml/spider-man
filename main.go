@@ -139,7 +139,7 @@ func AsyncLoopCheckStatus(
 		var firstIdleTime time.Time
 		for {
 			// 检查调度器的空闲状态
-			if schdl.Idle() {
+			if schdl.IsIdle() {
 				idleCount++
 				if idleCount == 1 {
 					firstIdleTime = time.Now()
@@ -148,7 +148,7 @@ func AsyncLoopCheckStatus(
 					msg := fmt.Sprintf(msgReachMaxIdleCount, time.Since(firstIdleTime).String())
 					record(0, msg)
 					// 再次检查调度器的空闲状态，确保它已经可以被停止
-					if schdl.Idle() {
+					if schdl.IsIdle() {
 						if autoStop {
 							var result string
 							if schdl.Stop() {
@@ -270,7 +270,7 @@ func AsyncReportError(schdl *scheduler.Scheduler, record Record, stopNotifier <-
 
 //阻塞等待调度器开启。
 func waitForSchedulerStart(scheduler *scheduler.Scheduler) {
-	for !scheduler.Running() {
+	for !scheduler.IsRunning() {
 		time.Sleep(time.Microsecond)
 	}
 }

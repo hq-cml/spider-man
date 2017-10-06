@@ -92,17 +92,16 @@ func (pm *PoolManager) GetOnePool(name string) (PoolIntfs, error) {
 }
 
 //摘要方法
-func (pm *PoolManager) Summary() string {
+func (pm *PoolManager) Summary(prefix string) string {
     //读锁保护
     pm.rwmutex.RLock()
     defer pm.rwmutex.RUnlock()
 
     var buff bytes.Buffer
-    buff.WriteString("PoolManager Status:" + statusNameMap[pm.status] + "\n")
+    buff.WriteString(prefix + "Status:" + statusNameMap[pm.status] + "\n")
     for k, p := range pm.pools {
-        buff.WriteString(fmt.Sprint("%s: Total:%d, Used:/%d\n ", k, p.Total(), p.Used()))
+        buff.WriteString(fmt.Sprintf(prefix + "%s Pool: Total:%d, Used: %d\n", k, p.Total(), p.Used()))
     }
-
     return buff.String()
 }
 

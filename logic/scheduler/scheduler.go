@@ -202,7 +202,7 @@ func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
  * 参数entryProcessors是用户定制的处理器链
  * 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
  */
-func (schdl *Scheduler) Start(
+func (schdl *Scheduler)Start(
 	context basic.Context,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
@@ -249,27 +249,24 @@ func (schdl *Scheduler) Start(
 	return nil
 }
 
-//实现Stop方法，调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止
-//调用该方法会停止调度器的运行。所有处理模块执行的流程都会被中止。
-func (schdl *Scheduler) Stop() bool {
+//Stop方法，该方法会停止调度器的运行。所有处理模块执行的流程都会被中止
+func (schdl *Scheduler)Stop() bool {
 	if atomic.LoadUint32(&schdl.running) != RUNNING_STATUS_RUNNING {
 		return false
 	}
-	schdl.stopSign.Sign()
-	schdl.channelManager.Close()
+	schdl.stopSign.Sign() 			//发出停止信号
+	schdl.channelManager.Close()    //所有中间件关闭
 	schdl.requestCache.Close()
 	schdl.poolManager.Close()
 	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_STOP)
 	return true
 }
 
-//实现Running方法，判断调度器是否正在运行。
-func (schdl *Scheduler) Running() bool {
+//判断调度器是否正在运行。
+func (schdl *Scheduler)IsRunning() bool {
 	return atomic.LoadUint32(&schdl.running) == RUNNING_STATUS_RUNNING
 }
 
-//实现ErrorChan方法
-//若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
 //获得错误通道。调度器以及各个处理模块运行过程中出现的所有错误都会被发送到该通道。
 //若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
 func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
@@ -281,9 +278,8 @@ func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
 	return schdl.getErrorChan()
 }
 
-//实现Idle方法
 //判断所有处理模块是否都处于空闲状态。
-func (schdl *Scheduler) Idle() bool {
+func (schdl *Scheduler) IsIdle() bool {
 	idleDlPool := schdl.getDownloaderPool().Used() == 0
 	idleAnalyzerPool := schdl.getAnalyzerPool().Used() == 0
 	idleEntryPipeline := schdl.processChain.ProcessingNumber() == 0
@@ -293,7 +289,7 @@ func (schdl *Scheduler) Idle() bool {
 	return false
 }
 
-//实现Summary方法
+//Summary方法
 func (sched *Scheduler) Summary(prefix string) *SchedSummary {
 	return NewSchedSummary(sched, prefix)
 }

@@ -5,7 +5,10 @@ import (
 	"fmt"
 )
 
-// 创建调度器摘要信息。
+/*
+ * 创建调度器摘要信息。
+ * 汇总各个模块的summary，得到整体的摘要
+ */
 func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	if schdl == nil {
 		return nil
@@ -17,7 +20,6 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 		buffer.WriteByte('\n')
 		for k, _ := range schdl.urlMap {
 			buffer.WriteString(prefix)
-			buffer.WriteString(prefix)
 			buffer.WriteString(k)
 			buffer.WriteByte('\n')
 		}
@@ -25,15 +27,18 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	} else {
 		urlDetail = "\n"
 	}
+	prefix = "* " + prefix
 	return &SchedSummary{
+		prefix:              prefix,
+		running:             schdl.running,
 		grabDepth:           schdl.grabDepth,
-		chanmanSummary:      schdl.channelManager.Summary(),
-		reqCacheSummary:     schdl.requestCache.Summary(),
-		poolmanSummary:      schdl.poolManager.Summary(),
-		processChainSummary: schdl.processChain.Summary(),
+		chanmanSummary:      schdl.channelManager.Summary(prefix),
+		reqCacheSummary:     schdl.requestCache.Summary(prefix),
+		poolmanSummary:      schdl.poolManager.Summary(prefix),
+		processChainSummary: schdl.processChain.Summary(prefix),
 		urlCount:            urlCount,
 		urlDetail:           urlDetail,
-		stopSignSummary:     schdl.stopSign.Summary(),
+		stopSignSummary:     schdl.stopSign.Summary(prefix),
 	}
 }
 
@@ -45,6 +50,42 @@ func (ss *SchedSummary) Detail() string {
 	return ss.getSummary(true)
 }
 
+// 获取摘要信息。
+func (ss *SchedSummary) getSummary(detail bool) string {
+	//prefix := "* " + ss.prefix
+	template := "*********************************************************************\n"+
+	    "*                            SPIDER SUMMARY \n" +
+		"*  \n" +
+		"* Running: %v \n" +
+		"* GrabDepth: %d \n" +
+		"* StopSigin:\n%s" +
+		"* ChannelManager:\n%s" +
+		"* PoolManager:\n%s" +
+		"* RequestCache:\n%s" +
+		"* ProcessChain:\n%s" +
+		"* Urls(%d): %s\n" +
+		"*  \n" +
+		"*********************************************************************\n "
+
+	d := ""
+	if detail {
+		d = ss.urlDetail
+	} else {
+		d = "<concealed>"
+	}
+
+	return fmt.Sprintf(template,
+		ss.running == 1,
+		ss.grabDepth,
+		ss.stopSignSummary,
+		ss.chanmanSummary,
+		ss.poolmanSummary,
+		ss.reqCacheSummary,
+		ss.processChainSummary,
+		ss.urlCount, d)
+}
+
+
 func (ss *SchedSummary) Same(other *SchedSummary) bool {
 	if other == nil {
 		return false
@@ -53,48 +94,16 @@ func (ss *SchedSummary) Same(other *SchedSummary) bool {
 	if !ok {
 		return false
 	}
-	if ss.running != otherSs.grabDepth ||
-		ss.grabDepth != otherSs.grabDepth ||
-		ss.urlCount != otherSs.urlCount ||
-		ss.stopSignSummary != otherSs.stopSignSummary ||
-		ss.reqCacheSummary != otherSs.reqCacheSummary ||
-		ss.processChainSummary != otherSs.processChainSummary ||
-		ss.poolmanSummary != otherSs.poolmanSummary ||
-		ss.chanmanSummary != otherSs.chanmanSummary {
+	if ss.running != otherSs.running ||
+	ss.grabDepth != otherSs.grabDepth ||
+	ss.urlCount != otherSs.urlCount ||
+	ss.stopSignSummary != otherSs.stopSignSummary ||
+	ss.reqCacheSummary != otherSs.reqCacheSummary ||
+	ss.processChainSummary != otherSs.processChainSummary ||
+	ss.poolmanSummary != otherSs.poolmanSummary ||
+	ss.chanmanSummary != otherSs.chanmanSummary {
 		return false
 	} else {
 		return true
 	}
-}
-
-// 获取摘要信息。
-func (ss *SchedSummary) getSummary(detail bool) string {
-	prefix := ss.prefix
-	template := prefix + "Running: %v \n" +
-		prefix + "Channel args: %s \n" +
-		prefix + "Grab depth: %d \n" +
-		prefix + "Channels manager: %s \n" +
-		prefix + "Request cache: %s\n" +
-	    prefix + "Pool manager: %s \n" +
-		prefix + "Entry process chain: %s\n" +
-		prefix + "Urls(%d): %s" +
-		prefix + "Stop sign: %s\n"
-	return fmt.Sprintf(template,
-		func() bool {
-			return ss.running == 1
-		}(),
-		ss.grabDepth,
-		ss.chanmanSummary,
-		ss.reqCacheSummary,
-		ss.poolmanSummary,
-		ss.processChainSummary,
-		ss.urlCount,
-		func() string {
-			if detail {
-				return ss.urlDetail
-			} else {
-				return "<concealed>\n"
-			}
-		}(),
-		ss.stopSignSummary)
 }

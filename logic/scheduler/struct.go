@@ -18,8 +18,6 @@ type Scheduler struct {
 	channelManager *channelmanager.ChannelManager // 通道管理器。
 	poolManager    *pool.PoolManager              // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
-	//downloaderPool pool.PoolIntfs // 网页下载器池。
-	//analyzerPool   pool.PoolIntfs     // 分析器池。
 	processChain   *processchain.ProcessChain     // 条目处理管道。
 	requestCache   *requestcache.RequestCache     // 请求缓存。
 	urlMap         map[string]bool                // 已请求的URL的字典。
@@ -29,7 +27,7 @@ type Scheduler struct {
 // 调度器摘要信息的实现类型。
 type SchedSummary struct {
 	prefix              string // 前缀。
-	running             int    // 运行标记。
+	running             uint32 // 运行标记。
 	grabDepth           int    // 爬取的最大深度。
 	chanmanSummary      string // 通道管理器的摘要信息。
 	reqCacheSummary     string // 请求缓存的摘要信息。

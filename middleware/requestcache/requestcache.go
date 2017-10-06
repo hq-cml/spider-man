@@ -92,8 +92,8 @@ func (rc *RequestCache) Close() {
 }
 
 // 摘要信息
-func (rc *RequestCache) Summary() string {
-	summary := fmt.Sprintf("status: %s, " + "length: %d, " + "capacity: %d",
+func (rc *RequestCache) Summary(prefix string) string {
+	summary := fmt.Sprintf(prefix + "Status: %s\n" + prefix + "Len: %d, " + "Cap: %d\n",
 		statusMap[rc.status],
 		rc.Length(),
 		rc.Capacity())

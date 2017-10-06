@@ -94,17 +94,16 @@ func (chm *ChannelManager) GetOneChannel(name string) (basic.SpiderChannelIntfs,
 }
 
 //摘要方法
-func (chm *ChannelManager) Summary() string {
+func (chm *ChannelManager) Summary(prefix string) string {
 	//读锁保护
 	chm.rwmutex.RLock()
 	defer chm.rwmutex.RUnlock()
 
 	var buff bytes.Buffer
-	buff.WriteString("ChannelManager Status:" + statusNameMap[chm.status] + "\n")
+	buff.WriteString(prefix +"Status:" + statusNameMap[chm.status] + "\n")
 	for k, c := range chm.channels {
-		buff.WriteString(fmt.Sprint("%s: Len:%d, Cap:/%d\n ", k, c.Len(), c.Cap()))
+		buff.WriteString(fmt.Sprintf(prefix + "%s Channel: Len:%d, Cap: %d\n", k, c.Len(), c.Cap()))
 	}
-
 	return buff.String()
 }
 
