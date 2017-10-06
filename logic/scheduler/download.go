@@ -85,7 +85,7 @@ func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
     return p
 }
 
-//发送响应到通道管理器中的错响应通道
+//发送响应到通道管理器中的响应通道
 func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bool {
     if schdl.stopSign.Signed() {
         schdl.stopSign.Deal(mouduleCode)
