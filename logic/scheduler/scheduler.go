@@ -3,6 +3,13 @@ package scheduler
 /*
  * 调度器
  * 框架的核心，将所有的中间件和逻辑组件进行整合、同步、协调，组装成爬虫的核心逻辑
+ *
+ * 调度的最核心的一步是对于request缓冲区的利用，而不是直接利用request通道：
+ * 整个框架最有可能阻塞的是request通道，因为无法预知分析出的页面会产出多少新的request
+ * 如果request通道被打满阻塞，可能会导致整个框架的阻塞，所以利用request缓冲区来避免
+ * 每一轮都会先计算出request通道的剩余容量，然后从缓冲中取出相同的数量的请求放入通道
+ * 这样就可以完全防止request通道的阻塞，从而保证所有通道的顺畅（如果reqeust通道不出现
+ * 阻塞，那么其他通道也不会出现阻塞，因为request通道是所有的工作的源！）
  */
 import (
 	"errors"
@@ -152,7 +159,44 @@ func (schdl *Scheduler) schedulerInit(
 }
 
 /*
- *开启调度器。调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
+ * 开始调度，一个独立的goroutine负责：
+ * 一个无限Loop，适当的搬运请求缓存中的请求到请求通道
+ * 每一轮都会先计算出request通道的剩余容量，然后从缓冲中取出相同的数量的请求放入通道
+ * 这样就可以完全防止request通道的阻塞，从而保证所有通道的顺畅
+ */
+func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
+	go func() {
+		for {
+			if schdl.stopSign.Signed() {
+				schdl.stopSign.Deal(SCHEDULER_CODE)
+				return
+			}
+
+			//请求通道的空闲数量（请求通道的容量 - 长度）
+			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
+			var temp *basic.Request
+			for remainder > 0 {
+				temp = schdl.requestCache.Get()
+				if temp == nil {
+					break
+				}
+
+				if schdl.stopSign.Signed() {
+					schdl.stopSign.Deal(SCHEDULER_CODE)
+					return
+				}
+
+				schdl.getReqestChan().Put(*temp)
+				remainder--
+			}
+
+			time.Sleep(interval)
+		}
+	}()
+}
+
+/*
+ * 开启调度器。调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
  * 参数httpClient是客户端句柄。
  * 参数respAnalyzers是用户定制的分析器链
  * 参数entryProcessors是用户定制的处理器链
@@ -193,10 +237,12 @@ func (schdl *Scheduler) Start(
 
 	//处理链激活
 	schdl.activateProcessChain()
-	
-	schdl.schedule(10 * time.Millisecond)
+
+	//开始调度
+	schdl.beginToSchedule(10 * time.Millisecond)
 
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。
+	//一切的开始。。。。
 	firstReq := basic.NewRequest(firstHttpReq, 0) //深度0
 	schdl.requestCache.Put(firstReq)
 
@@ -252,37 +298,7 @@ func (sched *Scheduler) Summary(prefix string) *SchedSummary {
 	return NewSchedSummary(sched, prefix)
 }
 
-// 调度。适当的搬运请求缓存中的请求到请求通道。
-func (schdl *Scheduler) schedule(interval time.Duration) {
-	go func() {
-		for {
-			if schdl.stopSign.Signed() {
-				schdl.stopSign.Deal(SCHEDULER_CODE)
-				return
-			}
 
-			//请求通道的容量-长度=请求通道的空闲数量
-			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
-			var temp *basic.Request
-			for remainder > 0 {
-				temp = schdl.requestCache.Get()
-				if temp == nil {
-					break
-				}
-
-				if schdl.stopSign.Signed() {
-					schdl.stopSign.Deal(SCHEDULER_CODE)
-					return
-				}
-
-				schdl.getReqestChan().Put(*temp)
-				remainder--
-			}
-
-			time.Sleep(interval)
-		}
-	}()
-}
 
 
 

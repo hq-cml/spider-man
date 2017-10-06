@@ -52,7 +52,7 @@ func (rc *RequestCache) Put(req *basic.Request) bool {
 	return true
 }
 
-// 从请求缓存获取最早被放入且仍在其中的请求。
+//从请求缓存获取最早被放入且仍在其中的请求。
 func (rc *RequestCache) Get() *basic.Request {
 	if rc.Length() == 0 {
 		return nil
