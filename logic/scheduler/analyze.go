@@ -25,7 +25,7 @@ func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseF
             }
             resp, ok := response.(basic.Response)
             if !ok {
-                break
+                continue
             }
             //启动异步分析
             go schdl.analyze(respAnalyzers, resp)

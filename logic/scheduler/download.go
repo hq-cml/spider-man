@@ -26,7 +26,7 @@ func (schdl *Scheduler) activateDownloaders() {
             //类型断言
             req, ok := request.(basic.Request)
             if !ok {
-                break
+                continue
             }
             //每个请求都交给一个独立的goroutine来处理
             go schdl.download(req)

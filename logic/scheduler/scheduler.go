@@ -239,6 +239,9 @@ func (schdl *Scheduler)Start(
 	//处理链激活
 	schdl.activateProcessChain()
 
+	//Error处理器激活
+	schdl.activateProcessError()
+
 	//开始调度
 	schdl.beginToSchedule(10 * time.Millisecond)
 

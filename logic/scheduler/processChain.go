@@ -21,6 +21,9 @@ func (schdl *Scheduler) activateProcessChain() {
                 break //通道关闭
             }
             e, ok := entry.(basic.Entry)
+            if !ok {
+                continue
+            }
             //每次从entry通道中取出一个entry，然后扔给一个独立的gorouting处理
             go schdl.processOneEntry(e)
         }

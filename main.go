@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// 日志记录函数的类型。
-// 参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
+//日志记录函数的类型。
+//参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
 type Record func(level byte, content string)
 
 //插件容器
@@ -57,12 +57,13 @@ func main() {
 
 	//TODO 配置文件处理
 	intervalNs := 10 * time.Millisecond
-	//channelParams := basic.NewChannelParams(10, 10, 10, 10)
-	//channelParams := basic.NewChannelParams(1, 1, 1, 1)     //TODO 配置
-	//poolParams := basic.NewPoolParams(3, 3)
-	//grabDepth := uint32(1)
 
 	//TODO 创建日志
+
+	spider, ok := plugins[conf.PluginKey]
+	if !ok {
+		panic("Not found plugin:" + conf.PluginKey)
+	}
 
 	//TODO 参数校验
 	// 防止过小的参数值对爬取流程的影响
@@ -80,7 +81,7 @@ func main() {
 	stopNotifier := make(chan byte, 1)
 
 	//异步得从错误通道中接收和报告错误。
-	AsyncReportError(schdl, record, stopNotifier)
+	//AsyncReportError(schdl, record, stopNotifier)
 
 	//记录摘要信息
 	AsyncRecordSummary(schdl, false, record, stopNotifier)
@@ -88,7 +89,7 @@ func main() {
 	//检查空闲状态
 	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, conf.MaxIdleCount, true, record, stopNotifier)
 
-	spider := plugins[conf.PluginKey]
+
 
 	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
 	if err != nil {
@@ -129,7 +130,7 @@ func AsyncLoopCheckStatus(
 	go func() {
 		defer func() {
 			stopNotifier <- 1
-			stopNotifier <- 2
+			//stopNotifier <- 2
 			checkCountChan <- checkCount
 		}()
 		// 等待调度器开启
@@ -240,33 +241,33 @@ func AsyncRecordSummary(
 }
 
 //从错误通道中接收和报告错误。
-func AsyncReportError(schdl *scheduler.Scheduler, record Record, stopNotifier <-chan byte) {
-
-	go func() {
-		//阻塞等待调度器开启
-		waitForSchedulerStart(schdl)
-		for {
-			//非阻塞得查看监控停止通知器
-			select {
-			case <-stopNotifier:
-				return
-			default: //非阻塞
-			}
-
-			err, ok := schdl.ErrorChan().Get()
-			if !ok {
-				return
-			}
-			//如果errorChan关闭，则err可能是nil
-			if err != nil {
-				errMsg := fmt.Sprintf("Error (received from error channel): %s", err)
-				record(2, errMsg)
-			}
-			//让出时间片
-			time.Sleep(time.Microsecond)
-		}
-	}()
-}
+//func AsyncReportError(schdl *scheduler.Scheduler, record Record, stopNotifier <-chan byte) {
+//
+//	go func() {
+//		//阻塞等待调度器开启
+//		waitForSchedulerStart(schdl)
+//		for {
+//			//非阻塞得查看监控停止通知器
+//			select {
+//			case <-stopNotifier:
+//				return
+//			default: //非阻塞
+//			}
+//
+//			err, ok := schdl.ErrorChan().Get()
+//			if !ok {
+//				return
+//			}
+//			//如果errorChan关闭，则err可能是nil
+//			if err != nil {
+//				errMsg := fmt.Sprintf("Error (received from error channel): %s", err)
+//				record(2, errMsg)
+//			}
+//			//让出时间片
+//			time.Sleep(time.Microsecond)
+//		}
+//	}()
+//}
 
 //阻塞等待调度器开启。
 func waitForSchedulerStart(scheduler *scheduler.Scheduler) {
@@ -282,11 +283,11 @@ func record(level byte, content string) {
 	}
 	switch level {
 	case 0:
-		log.Infoln(content)
+		log.Infoln("0000000000000000000000000000" + content)
 	case 1:
 		log.Warnln(content)
 	case 2:
-		log.Infoln(content)
+		log.Infoln("2222222222222222222222222222" + content)
 	}
 }
 
