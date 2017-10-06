@@ -43,7 +43,7 @@ func NewProcessChain(entryProcessors []basic.ProcessEntryFunc) *ProcessChain {
 }
 
 //向处理链发送entry，调用处理链自动进行处理
-func (pc *ProcessChain) Send(entry basic.Entry) []error {
+func (pc *ProcessChain) SendAndProcess(entry basic.Entry) []error {
 	atomic.AddUint64(&pc.processingNumber, 1)                //原子加1
 	defer atomic.AddUint64(&pc.processingNumber, ^uint64(0)) //原子减1
 	atomic.AddUint64(&pc.sent, 1)

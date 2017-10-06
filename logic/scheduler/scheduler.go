@@ -191,8 +191,9 @@ func (schdl *Scheduler) Start(
 	//分析器激活
 	schdl.activateAnalyzers(respAnalyzers)
 
-
+	//处理链激活
 	schdl.activateProcessChain()
+	
 	schdl.schedule(10 * time.Millisecond)
 
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。
@@ -283,41 +284,5 @@ func (schdl *Scheduler) schedule(interval time.Duration) {
 	}()
 }
 
-/*
- * 激活处理链
- * 一个独立的goroutine，循环从Entry通道中取出Entry
- * 然后交给独立的goroutine利用process chain去处理
- */
-func (schdl *Scheduler) activateProcessChain() {
-	go func() {
-		schdl.processChain.SetFailFast(true)
-		moudleCode := PROCESS_CHAIN_CODE
-		//对一个channel进行range操作，就是循环<-操作，并且在channel关闭之后能够自动结束
-		for {
-			entry, ok := schdl.getEntryChan().Get()
-			if !ok {
-				break
-			}
-			e, ok := entry.(basic.Entry)
-			//每次从entry通道中取出一个entry，然后扔给一个独立的gorouting处理
-			go func(e basic.Entry) {
-				defer func() {
-					if p := recover(); p != nil {
-						msg := fmt.Sprintf("Fatal entry Processing Error: %s\n", p)
-						log.Warn(msg)
-					}
-				}()
 
-				//放入处理链，处理链上的节点自动处理，处理完毕就不必在理会了
-				errs := schdl.processChain.Send(e)
-				if errs != nil {
-					for _, err := range errs {
-						schdl.sendError(err, moudleCode)
-					}
-				}
-			}(e)
-
-		}
-	}()
-}
 
