@@ -89,29 +89,6 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 		ss.urlCount, d)
 }
 
-
-func (ss *SchedSummary) Same(other *SchedSummary) bool {
-	if other == nil {
-		return false
-	}
-	otherSs, ok := interface{}(other).(*SchedSummary)
-	if !ok {
-		return false
-	}
-	if ss.running != otherSs.running ||
-	ss.grabDepth != otherSs.grabDepth ||
-	ss.urlCount != otherSs.urlCount ||
-	ss.stopSignSummary != otherSs.stopSignSummary ||
-	ss.reqCacheSummary != otherSs.reqCacheSummary ||
-	ss.processChainSummary != otherSs.processChainSummary ||
-	ss.poolmanSummary != otherSs.poolmanSummary ||
-	ss.chanmanSummary != otherSs.chanmanSummary {
-		return false
-	} else {
-		return true
-	}
-}
-
 // 记录摘要信息。
 func (schdl *Scheduler)activateRecordSummary(context basic.Context) {
 

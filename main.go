@@ -13,30 +13,17 @@ import (
 	"time"
 )
 
-//插件容器
-var plugins = map[string]basic.SpiderPluginIntfs{
-	"base": plugin.NewBaseSpider(),
-	//....
-}
-
 //全局配置
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
-var firstUrl *string = flag.String("u", "http://www.sogou.com", "first url")
+var firstUrl *string = flag.String("f", "http://www.sogou.com", "first url")
+var userArgu *string = flag.String("u", "http://www.sogou.com", "user argument")
 
 /*
- * 监视器实现：主要功能是对Scheduler的监视和控制：
- * 1. 在适当的时候停止自身和Scheduler
- * 2. 实时监控Scheduler及其各个组件的运行状况
- * 3. 一旦Scheduler及其各组件发生错误能够及时报告
+ * 主函数：
+ * 解析配置；初始化；启动异步调度器
+ * 主协程开始主循环，主要是检查状态，并在满足持续空闲时间的条件时停止Spider
  *
- *
-// 参数intervalNs代表检查间隔时间，单位：纳秒。
-// 参数maxIdleCount代表最大空闲计数。
-// 参数autoStop被用来指示该方法是否在调度器空闲一段时间（即持续空闲时间，由intervalNs * maxIdleCount得出）之后自行停止调度器。
-// 参数detailSummary被用来表示是否需要详细的摘要信息。
-// 参数record代表日志记录函数。
-// 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
-*/
+ */
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	//解析参数
@@ -49,6 +36,12 @@ func main() {
 
 	context := basic.Context{
 		Conf: conf,
+	}
+
+	//插件容器
+	var plugins = map[string]basic.SpiderPluginIntfs{
+		"base": plugin.NewBaseSpider(),
+		//....
 	}
 
 	//TODO 创建日志
@@ -93,7 +86,11 @@ func main() {
 	//主协程同步等待，检查空闲状态
 	cnt := loopCheckStatus(schdl, intervalNs, conf.MaxIdleCount)
 
+
+	summary := scheduler.NewSchedSummary(schdl, "    ")
+	s := summary.Detail()
 	fmt.Println("The Spider Finish. check times:", cnt)
+	fmt.Println("Final summary:\n", s)
 }
 
 //检查状态，并在满足持续空闲时间的条件时采取必要措施。
