@@ -94,6 +94,9 @@ type SpiderConf struct {
 
 	MaxIdleCount int
 	IntervalNs   int
+
+	SummaryDetail bool           //是否打印详细Url
+	SummaryInterval int          //打印summary的间隔，单位：秒
 }
 
 /************************************ Context相关 **********************************/

@@ -6,6 +6,7 @@ import (
 	"time"
 	"runtime"
 	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-go/basic"
 )
 
 /*
@@ -112,7 +113,7 @@ func (ss *SchedSummary) Same(other *SchedSummary) bool {
 }
 
 // 记录摘要信息。
-func (schdl *Scheduler)activateRecordSummary(isDetail bool, d time.Duration) {
+func (schdl *Scheduler)activateRecordSummary(context basic.Context) {
 
 	// 摘要信息的模板。
 	var summaryForMonitoring = "\n    Monitor - Collected information[%d]:\n" +
@@ -136,7 +137,7 @@ func (schdl *Scheduler)activateRecordSummary(isDetail bool, d time.Duration) {
 			currNumGoroutine := runtime.NumGoroutine()
 			currSchedSummary := NewSchedSummary(schdl, "    ")
 			schedSummaryStr := ""
-			if isDetail {
+			if context.Conf.SummaryDetail {
 				schedSummaryStr = currSchedSummary.Detail()
 			} else {
 				schedSummaryStr = currSchedSummary.String()
@@ -153,7 +154,8 @@ func (schdl *Scheduler)activateRecordSummary(isDetail bool, d time.Duration) {
 			recordCount++
 
 			//time.Sleep(time.Microsecond)
-			time.Sleep(d)
+			d := time.Duration(context.Conf.SummaryInterval)
+			time.Sleep(d * time.Second)
 		}
 	}()
 }

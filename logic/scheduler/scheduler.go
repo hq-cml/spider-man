@@ -243,8 +243,7 @@ func (schdl *Scheduler)Start(
 	schdl.activateProcessError()
 
 	//Summary打印器激活：定期打印summray报告
-	//TODO 这两个需要搞成配置
-	schdl.activateRecordSummary(false, 5 *time.Second)
+	schdl.activateRecordSummary(context)
 
 	//开始调度
 	schdl.beginToSchedule(10 * time.Millisecond)

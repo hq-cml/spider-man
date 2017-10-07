@@ -63,5 +63,15 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf intervalNs failed!")
 	}
 
+	c.SummaryDetail, err = cfg.Bool("spider", "summaryDetail")
+	if err != nil {
+		panic("Load conf summaryDetail failed!" + err.Error())
+	}
+
+	c.SummaryInterval, err = cfg.Int("spider", "summaryInterval")
+	if err != nil {
+		panic("Load conf summaryInterval failed!")
+	}
+
 	return c, nil
 }
