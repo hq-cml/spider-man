@@ -44,6 +44,7 @@ const (
 	ANALYZER_CODE      = "analyzer"
 	PROCESS_CHAIN_CODE = "process_chain"
 	SCHEDULER_CODE     = "scheduler"
+	SUMMARY_CODE       = "summary"
 )
 
 const (

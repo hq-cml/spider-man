@@ -242,6 +242,10 @@ func (schdl *Scheduler)Start(
 	//Error处理器激活
 	schdl.activateProcessError()
 
+	//Summary打印器激活：定期打印summray报告
+	//TODO 这两个需要搞成配置
+	schdl.activateRecordSummary(false, 5 *time.Second)
+
 	//开始调度
 	schdl.beginToSchedule(10 * time.Millisecond)
 
@@ -291,11 +295,6 @@ func (schdl *Scheduler) IsIdle() bool {
 		return true
 	}
 	return false
-}
-
-//Summary方法
-func (sched *Scheduler) Summary(prefix string) *SchedSummary {
-	return NewSchedSummary(sched, prefix)
 }
 
 /*

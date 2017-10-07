@@ -84,7 +84,7 @@ func main() {
 	//AsyncReportError(schdl, record, stopNotifier)
 
 	//记录摘要信息
-	AsyncRecordSummary(schdl, false, record, stopNotifier)
+	//AsyncRecordSummary(schdl, false, record, stopNotifier)
 
 	//检查空闲状态
 	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, conf.MaxIdleCount, true, record, stopNotifier)
@@ -180,65 +180,65 @@ func AsyncLoopCheckStatus(
 	return checkCountChan
 }
 
-// 记录摘要信息。
-func AsyncRecordSummary(
-	schdl *scheduler.Scheduler,
-	detailSummary bool,
-	record Record,
-	stopNotifier <-chan byte) {
-
-	// 摘要信息的模板。
-	var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
-		"  Goroutine number: %d\n" +
-		"  Scheduler:\n%s" +
-		"  Escaped time: %s\n"
-
-	go func() {
-		//阻塞等待调度器开启
-		waitForSchedulerStart(schdl)
-
-		// 准备
-		var prevSchedSummary *scheduler.SchedSummary
-		var prevNumGoroutine int
-		var recordCount uint64 = 1
-		startTime := time.Now()
-
-		for {
-			// 查看监控停止通知器
-			select {
-			case <-stopNotifier:
-				return
-			default:
-			}
-			// 获取摘要信息的各组成部分
-			currNumGoroutine := runtime.NumGoroutine()
-			currSchedSummary := schdl.Summary("    ")
-			// 比对前后两份摘要信息的一致性。只有不一致时才会予以记录。主要为了防止日志的大量生产造成干扰
-			if currNumGoroutine != prevNumGoroutine || !currSchedSummary.Same(prevSchedSummary) {
-				schedSummaryStr := func() string {
-					if detailSummary {
-						return currSchedSummary.Detail()
-					} else {
-						return currSchedSummary.String()
-					}
-				}()
-				// 记录摘要信息
-				info := fmt.Sprintf(summaryForMonitoring,
-					recordCount,
-					currNumGoroutine,
-					schedSummaryStr,
-					time.Since(startTime).String(), //当前时间和startTime的时间间隔
-				)
-				record(0, info)
-				prevNumGoroutine = currNumGoroutine
-				prevSchedSummary = currSchedSummary
-				recordCount++
-			}
-			//time.Sleep(time.Microsecond)
-			time.Sleep(time.Second)
-		}
-	}()
-}
+//// 记录摘要信息。
+//func AsyncRecordSummary(
+//	schdl *scheduler.Scheduler,
+//	detailSummary bool,
+//	record Record,
+//	stopNotifier <-chan byte) {
+//
+//	// 摘要信息的模板。
+//	var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
+//		"  Goroutine number: %d\n" +
+//		"  Scheduler:\n%s" +
+//		"  Escaped time: %s\n"
+//
+//	go func() {
+//		//阻塞等待调度器开启
+//		waitForSchedulerStart(schdl)
+//
+//		// 准备
+//		var prevSchedSummary *scheduler.SchedSummary
+//		var prevNumGoroutine int
+//		var recordCount uint64 = 1
+//		startTime := time.Now()
+//
+//		for {
+//			// 查看监控停止通知器
+//			select {
+//			case <-stopNotifier:
+//				return
+//			default:
+//			}
+//			// 获取摘要信息的各组成部分
+//			currNumGoroutine := runtime.NumGoroutine()
+//			currSchedSummary := schdl.Summary("    ")
+//			// 比对前后两份摘要信息的一致性。只有不一致时才会予以记录。主要为了防止日志的大量生产造成干扰
+//			if currNumGoroutine != prevNumGoroutine || !currSchedSummary.Same(prevSchedSummary) {
+//				schedSummaryStr := func() string {
+//					if detailSummary {
+//						return currSchedSummary.Detail()
+//					} else {
+//						return currSchedSummary.String()
+//					}
+//				}()
+//				// 记录摘要信息
+//				info := fmt.Sprintf(summaryForMonitoring,
+//					recordCount,
+//					currNumGoroutine,
+//					schedSummaryStr,
+//					time.Since(startTime).String(), //当前时间和startTime的时间间隔
+//				)
+//				record(0, info)
+//				prevNumGoroutine = currNumGoroutine
+//				prevSchedSummary = currSchedSummary
+//				recordCount++
+//			}
+//			//time.Sleep(time.Microsecond)
+//			time.Sleep(time.Second)
+//		}
+//	}()
+//}
 
 //从错误通道中接收和报告错误。
 //func AsyncReportError(schdl *scheduler.Scheduler, record Record, stopNotifier <-chan byte) {

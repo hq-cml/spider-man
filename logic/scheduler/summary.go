@@ -3,6 +3,9 @@ package scheduler
 import (
 	"bytes"
 	"fmt"
+	"time"
+	"runtime"
+	"github.com/hq-cml/spider-go/helper/log"
 )
 
 /*
@@ -106,4 +109,51 @@ func (ss *SchedSummary) Same(other *SchedSummary) bool {
 	} else {
 		return true
 	}
+}
+
+// 记录摘要信息。
+func (schdl *Scheduler)activateRecordSummary(isDetail bool, d time.Duration) {
+
+	// 摘要信息的模板。
+	var summaryForMonitoring = "\n    Monitor - Collected information[%d]:\n" +
+	"    Goroutine number: %d\n" +
+	"    Escaped time: %s\n" +
+	"    Scheduler Summary:\n%s"
+
+	go func() {
+		//准备
+		var recordCount uint64 = 1
+		startTime := time.Now()
+
+		for {
+			//查看监控停止通知器
+			if schdl.stopSign.Signed() {
+				schdl.stopSign.Deal(SUMMARY_CODE)
+				return
+			}
+
+			// 获取摘要信息的各组成部分
+			currNumGoroutine := runtime.NumGoroutine()
+			currSchedSummary := NewSchedSummary(schdl, "    ")
+			schedSummaryStr := ""
+			if isDetail {
+				schedSummaryStr = currSchedSummary.Detail()
+			} else {
+				schedSummaryStr = currSchedSummary.String()
+			}
+
+			// 记录摘要信息
+			info := fmt.Sprintf(summaryForMonitoring,
+				recordCount,
+				currNumGoroutine,
+				time.Since(startTime).String(), //当前时间和startTime的时间间隔
+				schedSummaryStr,
+			)
+			log.Infoln(info)
+			recordCount++
+
+			//time.Sleep(time.Microsecond)
+			time.Sleep(d)
+		}
+	}()
 }
