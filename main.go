@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-//日志记录函数的类型。
-//参数level代表日志级别。级别设定：0：普通；1：警告；2：错误。
-type Record func(level byte, content string)
-
 //插件容器
 var plugins = map[string]basic.SpiderPluginIntfs{
 	"base": plugin.NewBaseSpider(),
@@ -55,30 +51,38 @@ func main() {
 		Conf: conf,
 	}
 
-	//TODO 配置文件处理
-	intervalNs := 10 * time.Millisecond
-
 	//TODO 创建日志
 
+	//配置文件处理
+	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
+	//防止过小的参数值对爬取流程的影响
+	if intervalNs < 10*time.Millisecond {
+		intervalNs = 10*time.Millisecond
+	}
+	if conf.MaxIdleCount < 5 {
+		conf.MaxIdleCount = 5
+	}
+
+	//插件加载
 	spider, ok := plugins[conf.PluginKey]
 	if !ok {
 		panic("Not found plugin:" + conf.PluginKey)
 	}
 
-	//TODO 参数校验
-	// 防止过小的参数值对爬取流程的影响
-	if intervalNs < time.Millisecond {
-		intervalNs = time.Millisecond
-	}
-	if conf.MaxIdleCount < 1000 {
-		conf.MaxIdleCount = 1000
-	}
-
-	// 创建调度器
+	//创建并启动调度器
 	schdl := scheduler.NewScheduler()
+	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
+	if err != nil {
+		log.Warnln(err.Error())
+		return
+	}
+	if err := schdl.Start(context, spider.GenHttpClient(), spider.GenResponseAnalysers(),
+		spider.GenEntryProcessors(), firstHttpReq); err != nil {
+		panic("Scheduler Start error:" + err.Error())
+	}
 
 	// 监控停止通知器
-	stopNotifier := make(chan byte, 1)
+	//stopNotifier := make(chan byte, 1)
 
 	//异步得从错误通道中接收和报告错误。
 	//AsyncReportError(schdl, record, stopNotifier)
@@ -86,211 +90,52 @@ func main() {
 	//记录摘要信息
 	//AsyncRecordSummary(schdl, false, record, stopNotifier)
 
-	//检查空闲状态
-	waitChan := AsyncLoopCheckStatus(schdl, intervalNs, conf.MaxIdleCount, true, record, stopNotifier)
+	//主协程同步等待，检查空闲状态
+	cnt := loopCheckStatus(schdl, intervalNs, conf.MaxIdleCount)
 
-
-
-	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
-	if err != nil {
-		log.Warnln(err.Error())
-		return
-	}
-
-	schdl.Start(context,
-		spider.GenHttpClient(),
-		spider.GenResponseAnalysers(),
-		spider.GenEntryProcessors(),
-		firstHttpReq)
-
-	//主协程同步等待
-	cnt := WaitExit(waitChan)
-	fmt.Println("Exit:", cnt)
+	fmt.Println("The Spider Finish. check times:", cnt)
 }
 
-// 检查状态，并在满足持续空闲时间的条件时采取必要措施。
-func AsyncLoopCheckStatus(
-	schdl *scheduler.Scheduler,
-	intervalNs time.Duration,
-	maxIdleCount int,
-	autoStop bool,
-	record Record,
-	stopNotifier chan<- byte) <-chan uint64 {
-
-	//检查计数通道
-	checkCountChan := make(chan uint64, 1)
-
+//检查状态，并在满足持续空闲时间的条件时采取必要措施。
+func loopCheckStatus(schdl *scheduler.Scheduler, intervalNs time.Duration,	maxIdleCount int) uint64{
 	var checkCount uint64
-	// 已达到最大空闲计数的消息模板。
-	var msgReachMaxIdleCount = "The scheduler has been idle for a period of time (about %s). \n" +
-		"Now consider what stop it."
-	// 停止调度器的消息模板。
-	var msgStopScheduler = "Stop scheduler...%s."
 
-	go func() {
-		defer func() {
-			stopNotifier <- 1
-			//stopNotifier <- 2
-			checkCountChan <- checkCount
-		}()
-		// 等待调度器开启
-		waitForSchedulerStart(schdl)
-		// 准备
-		var idleCount int
-		var firstIdleTime time.Time
-		for {
-			// 检查调度器的空闲状态
-			if schdl.IsIdle() {
-				idleCount++
-				if idleCount == 1 {
-					firstIdleTime = time.Now()
-				}
-				if idleCount >= maxIdleCount {
-					msg := fmt.Sprintf(msgReachMaxIdleCount, time.Since(firstIdleTime).String())
-					record(0, msg)
-					// 再次检查调度器的空闲状态，确保它已经可以被停止
-					if schdl.IsIdle() {
-						if autoStop {
-							var result string
-							if schdl.Stop() {
-								result = "success"
-							} else {
-								result = "failing"
-							}
-							msg = fmt.Sprintf(msgStopScheduler, result)
-							record(0, msg)
-						}
-						break
-					} else {
-						if idleCount > 0 {
-							idleCount = 0
-						}
-					}
-				}
-			} else {
-				if idleCount > 0 {
-					idleCount = 0
-				}
-			}
-			checkCount++
-			time.Sleep(intervalNs)
-		}
-	}()
-
-	return checkCountChan
-}
-
-//// 记录摘要信息。
-//func AsyncRecordSummary(
-//	schdl *scheduler.Scheduler,
-//	detailSummary bool,
-//	record Record,
-//	stopNotifier <-chan byte) {
-//
-//	// 摘要信息的模板。
-//	var summaryForMonitoring = "Monitor - Collected information[%d]:\n" +
-//		"  Goroutine number: %d\n" +
-//		"  Scheduler:\n%s" +
-//		"  Escaped time: %s\n"
-//
-//	go func() {
-//		//阻塞等待调度器开启
-//		waitForSchedulerStart(schdl)
-//
-//		// 准备
-//		var prevSchedSummary *scheduler.SchedSummary
-//		var prevNumGoroutine int
-//		var recordCount uint64 = 1
-//		startTime := time.Now()
-//
-//		for {
-//			// 查看监控停止通知器
-//			select {
-//			case <-stopNotifier:
-//				return
-//			default:
-//			}
-//			// 获取摘要信息的各组成部分
-//			currNumGoroutine := runtime.NumGoroutine()
-//			currSchedSummary := schdl.Summary("    ")
-//			// 比对前后两份摘要信息的一致性。只有不一致时才会予以记录。主要为了防止日志的大量生产造成干扰
-//			if currNumGoroutine != prevNumGoroutine || !currSchedSummary.Same(prevSchedSummary) {
-//				schedSummaryStr := func() string {
-//					if detailSummary {
-//						return currSchedSummary.Detail()
-//					} else {
-//						return currSchedSummary.String()
-//					}
-//				}()
-//				// 记录摘要信息
-//				info := fmt.Sprintf(summaryForMonitoring,
-//					recordCount,
-//					currNumGoroutine,
-//					schedSummaryStr,
-//					time.Since(startTime).String(), //当前时间和startTime的时间间隔
-//				)
-//				record(0, info)
-//				prevNumGoroutine = currNumGoroutine
-//				prevSchedSummary = currSchedSummary
-//				recordCount++
-//			}
-//			//time.Sleep(time.Microsecond)
-//			time.Sleep(time.Second)
-//		}
-//	}()
-//}
-
-//从错误通道中接收和报告错误。
-//func AsyncReportError(schdl *scheduler.Scheduler, record Record, stopNotifier <-chan byte) {
-//
-//	go func() {
-//		//阻塞等待调度器开启
-//		waitForSchedulerStart(schdl)
-//		for {
-//			//非阻塞得查看监控停止通知器
-//			select {
-//			case <-stopNotifier:
-//				return
-//			default: //非阻塞
-//			}
-//
-//			err, ok := schdl.ErrorChan().Get()
-//			if !ok {
-//				return
-//			}
-//			//如果errorChan关闭，则err可能是nil
-//			if err != nil {
-//				errMsg := fmt.Sprintf("Error (received from error channel): %s", err)
-//				record(2, errMsg)
-//			}
-//			//让出时间片
-//			time.Sleep(time.Microsecond)
-//		}
-//	}()
-//}
-
-//阻塞等待调度器开启。
-func waitForSchedulerStart(scheduler *scheduler.Scheduler) {
-	for !scheduler.IsRunning() {
+	//等待调度器开启
+	for !schdl.IsRunning() {
 		time.Sleep(time.Microsecond)
 	}
+
+	var idleCount int
+	var firstIdleTime time.Time
+	for {
+		// 检查调度器的空闲状态
+		if schdl.IsIdle() {
+			idleCount++
+			if idleCount == 1 {
+				firstIdleTime = time.Now()
+			}
+			if idleCount >= maxIdleCount {
+				msg := fmt.Sprintf("The scheduler has been idle for a period of time (about %s). \n" +
+						"Now it will stop!", time.Since(firstIdleTime).String())
+				log.Infoln(msg)
+				//再次检查调度器的空闲状态，确保它已经可以被停止
+				var result string
+				if schdl.Stop() {
+					result = "success"
+				} else {
+					result = "failing"
+				}
+				msg = fmt.Sprintf("Stop scheduler...%s.", result)
+				log.Infoln(msg)
+				break
+			}
+		} else {
+			idleCount = 0
+		}
+		checkCount++
+		time.Sleep(intervalNs)
+	}
+
+	return checkCount
 }
 
-//TODO 重构
-func record(level byte, content string) {
-	if content == "" {
-		return
-	}
-	switch level {
-	case 0:
-		log.Infoln("0000000000000000000000000000" + content)
-	case 1:
-		log.Warnln(content)
-	case 2:
-		log.Infoln("2222222222222222222222222222" + content)
-	}
-}
-
-func WaitExit(ch <-chan uint64) uint64 {
-	return <-ch
-}

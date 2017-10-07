@@ -102,7 +102,7 @@ func (schdl *Scheduler) schedulerInit(
 		err = errors.New("The scheduler has been started!\n") //已经开启，则退出，单例
 		return
 	}
-	atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
+	defer atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
 	//GrabDepth赋值
 	schdl.grabDepth = context.Conf.GrabDepth
@@ -383,9 +383,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 		return false
 	}
 
-	//错误的发送通道操作是放在goroutine异步执行的，原因是错误类型通道和其他几种通道
-	//略有不同，错误通道的内容依赖调度器的使用方来读取，而其他几种择时调度器本身读取
-	//所以此处需要防止由于调度器使用方不读取，不能因为这个问题阻塞了调度器本身
+	//错误的发送通道操作是放在goroutine异步执行的，原因不确定会出现多少Error的情况，所以放到独立goroutine中防止阻塞
 	go func() {
 		schdl.getErrorChan().Put(cError)
 	}()
