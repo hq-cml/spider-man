@@ -5,52 +5,63 @@ package log
  */
 import (
 	"log"
+	"os"
 )
 
+var spiderLog *log.Logger
+
+func InitLog(path string) {
+	f, err := os.OpenFile(path, os.O_RDWR | os.O_CREATE | os.O_APPEND , 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	spiderLog = log.New(f, "", log.LstdFlags)
+}
+
 func Infof(format string, v ...interface{}) {
-	log.Printf("[INFO] "+format, v...)
+	spiderLog.Printf("[INFO] "+format, v...)
 }
 
 func Infoln(v ...interface{}) {
 	v1 := []interface{}{"[INFO]"}
 	v1 = append(v1, v...)
-	log.Println(v1...)
+	spiderLog.Println(v1...)
 }
 
 func Info(format string, v ...interface{}) {
 	v1 := []interface{}{"[INFO]"}
 	v1 = append(v1, v...)
-	log.Print(v1...)
+	spiderLog.Print(v1...)
 }
 
 func Warnf(format string, v ...interface{}) {
-	log.Printf("[WARN] "+format, v...)
+	spiderLog.Printf("[WARN] "+format, v...)
 }
 
 func Warnln(v ...interface{}) {
 	v1 := []interface{}{"[WARN]"}
 	v1 = append(v1, v...)
-	log.Println(v1...)
+	spiderLog.Println(v1...)
 }
 
 func Warn(format string, v ...interface{}) {
 	v1 := []interface{}{"[WARN]"}
 	v1 = append(v1, v...)
-	log.Print(v1...)
+	spiderLog.Print(v1...)
 }
 
 func Fatalf(format string, v ...interface{}) {
-	log.Fatalf("[WARN] "+format, v...)
+	spiderLog.Fatalf("[WARN] "+format, v...)
 }
 
 func Fatalln(format string, v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
-	log.Fatalln(v1...)
+	spiderLog.Fatalln(v1...)
 }
 
 func Fatal(format string, v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
-	log.Fatal(v1...)
+	spiderLog.Fatal(v1...)
 }

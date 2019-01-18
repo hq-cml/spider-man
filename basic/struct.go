@@ -93,13 +93,15 @@ type SpiderConf struct {
 	AnalyzerPoolSize    int      //分析器池大小
 
 	MaxIdleCount int             //当满足MaxIdleCount次空闲之后，程序结束
-	IntervalNs   int             //检查程序结束的时间间隔，单位：毫秒
+	IntervalNs   int             //检查程序结束标志的轮训时间间隔，单位：毫秒
 
 	SummaryDetail bool           //是否打印详细Url
 	SummaryInterval int          //打印summary的间隔，单位：秒
+
+	LogPath  string              //日志路径
+	LogLevel string              //日志级别
 }
 
-/************************************ Context相关 **********************************/
-type Context struct {
-	Conf *SpiderConf
-}
+/************************************ 全局Conf变量 **********************************/
+var	Conf *SpiderConf
+

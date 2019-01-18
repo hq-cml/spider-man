@@ -49,7 +49,8 @@ func (s *StopSign) Reset() {
 }
 
 //处理停止信号。
-//当处理了停止信号之后，停止信号的处理方应该调用停止信号Deal方法，表示已经对该信号处理完毕。参数code应该代表停止信号处理方的代号。
+//当处理了停止信号之后，停止信号的处理方应该调用停止信号Deal方法
+//表示已经对该信号处理完毕。参数code应该代表停止信号处理方的代号。
 func (s *StopSign) Deal(code string) {
 	s.rwmutex.Lock()
 	defer s.rwmutex.Unlock()

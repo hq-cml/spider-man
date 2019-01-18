@@ -90,7 +90,7 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 }
 
 // 记录摘要信息。
-func (schdl *Scheduler)activateRecordSummary(context basic.Context) {
+func (schdl *Scheduler)activateRecordSummary() {
 
 	// 摘要信息的模板。
 	var summaryForMonitoring = "\n    Monitor - Collected information[%d]:\n" +
@@ -114,7 +114,7 @@ func (schdl *Scheduler)activateRecordSummary(context basic.Context) {
 			currNumGoroutine := runtime.NumGoroutine()
 			currSchedSummary := NewSchedSummary(schdl, "    ")
 			schedSummaryStr := ""
-			if context.Conf.SummaryDetail {
+			if basic.Conf.SummaryDetail {
 				schedSummaryStr = currSchedSummary.Detail()
 			} else {
 				schedSummaryStr = currSchedSummary.String()
@@ -131,7 +131,7 @@ func (schdl *Scheduler)activateRecordSummary(context basic.Context) {
 			recordCount++
 
 			//time.Sleep(time.Microsecond)
-			d := time.Duration(context.Conf.SummaryInterval)
+			d := time.Duration(basic.Conf.SummaryInterval)
 			time.Sleep(d * time.Second)
 		}
 	}()

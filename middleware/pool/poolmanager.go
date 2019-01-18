@@ -43,7 +43,7 @@ func NewPoolManager() *PoolManager {
     return pm
 }
 
-//关闭通道管理器
+//关闭池管理器
 func (pm *PoolManager) Close() bool {
     //写锁保护
     pm.rwmutex.Lock()

@@ -1,3 +1,5 @@
 .idea/
 spider-go.iml
 test.go
+spider-go
+log/

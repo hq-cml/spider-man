@@ -2,8 +2,7 @@ package pool
 
 /*
  * 实体池：池操作的抽象
- * 实体池中的实体的类型是任意的，只要这个实体类型实现了EntityIntfs接口
- * 用一个channel和一个map搭配使用实现池子的抽象功能
+ * 实体池中的实体的类需要实现EntityIntfs接口
  */
 import (
 	"errors"
@@ -27,6 +26,7 @@ type PoolIntfs interface {
 }
 
 //实体池类型，*Pool实现PoolIntfs接口
+//用一个channel和一个map配合使用实现池子的抽象功能
 type Pool struct {
 	total       int                //池容量
 	etype       reflect.Type       //池子中实体的类型
@@ -36,8 +36,11 @@ type Pool struct {
 	mutex       sync.Mutex         //针对IDContainer的保护锁
 }
 
+//生成实体函数的类型
+type GenEntity func() EntityIntfs
+
 //惯例New函数，创建实体池
-func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
+func NewPool(total int, entityType reflect.Type, genEntity GenEntity) (PoolIntfs, error) {
 	//参数校验
 	if total == 0 {
 		return nil, errors.New(fmt.Sprintf("NewPool failed.(total=%d)\n", total))

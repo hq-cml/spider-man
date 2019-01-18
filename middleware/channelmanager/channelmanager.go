@@ -2,8 +2,8 @@ package channelmanager
 
 /*
  * channel管理器
- * 框架用到四种类型的数据需要管道传递：请求、响应、条目、Error
- * 他们均是SpiderChannelIntfs接口的实现类型，这里
+ * 框架用到四种类型的数据需要管道传递：请求、响应、Entry、Error
+ * 均是SpiderChannelIntfs接口的实现类型
  */
 import (
 	"bytes"
@@ -23,7 +23,7 @@ const (
 )
 
 //状态码与状态名称映射字典
-var statusNameMap = map[ChannelManagerStatus]string{
+var statusNameMap = map[ChannelManagerStatus]string {
 	CHANNEL_MANAGER_STATUS_UNINITIALIZED: "uninitialized",
 	CHANNEL_MANAGER_STATUS_INITIALIZED:   "inititalized",
 	CHANNEL_MANAGER_STATUS_CLOSED:        "closed",
@@ -38,7 +38,7 @@ type ChannelManager struct {
 
 //New
 func NewChannelManager() *ChannelManager {
-	chm := &ChannelManager{
+	chm := &ChannelManager {
 		status:  CHANNEL_MANAGER_STATUS_INITIALIZED,
 		channels: make(map[string]basic.SpiderChannelIntfs),
 	}

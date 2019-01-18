@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+//Id生成器
 type IdGenerator struct {
 	sn    uint64
 	ended bool //是否已经达到最大的值

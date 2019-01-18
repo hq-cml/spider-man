@@ -37,20 +37,19 @@ func NewScheduler() *Scheduler {
 
 //统一Start的参数校验，对于入参进行逐个的校验
 func (schdl *Scheduler) startParamCheck(
-	context basic.Context,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
 	entryProcessors []basic.ProcessEntryFunc,
 	firstHttpReq *http.Request) (error) {
 
-	if context.Conf.GrabDepth <= 0 {
+	if basic.Conf.GrabDepth <= 0 {
 		return errors.New("GrabDepth can not be 0!")
 	}
 
-	if context.Conf.RequestChanCapcity <= 0 ||
-		context.Conf.ResponseChanCapcity <= 0 ||
-		context.Conf.EntryChanCapcity <= 0 ||
-		context.Conf.ErrorChanCapcity <= 0 {
+	if basic.Conf.RequestChanCapcity <= 0 ||
+		basic.Conf.ResponseChanCapcity <= 0 ||
+		basic.Conf.EntryChanCapcity <= 0 ||
+		basic.Conf.ErrorChanCapcity <= 0 {
 		return errors.New("Channel length can not be 0!")
 	}
 
@@ -58,8 +57,8 @@ func (schdl *Scheduler) startParamCheck(
 		return errors.New("The httpClient can not be nil!")
 	}
 
-	if context.Conf.DownloaderPoolSize <= 0 ||
-		context.Conf.AnalyzerPoolSize <= 0 {
+	if basic.Conf.DownloaderPoolSize <= 0 ||
+		basic.Conf.AnalyzerPoolSize <= 0 {
 		return errors.New("Pool size can not be 0!")
 	}
 
@@ -81,7 +80,6 @@ func (schdl *Scheduler) startParamCheck(
 
 //scheduler初始化
 func (schdl *Scheduler) schedulerInit(
-	context basic.Context,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
 	entryProcessors []basic.ProcessEntryFunc,
@@ -105,18 +103,18 @@ func (schdl *Scheduler) schedulerInit(
 	defer atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
 	//GrabDepth赋值
-	schdl.grabDepth = context.Conf.GrabDepth
+	schdl.grabDepth = basic.Conf.GrabDepth
 
 	//middleware生成；通道管理器
 	schdl.channelManager = channelmanager.NewChannelManager()
-	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(context.Conf.RequestChanCapcity))
-	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(context.Conf.ResponseChanCapcity))
-	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(context.Conf.EntryChanCapcity))
-	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(context.Conf.ErrorChanCapcity))
+	schdl.channelManager.RegisterOneChannel("request", basic.NewRequestChannel(basic.Conf.RequestChanCapcity))
+	schdl.channelManager.RegisterOneChannel("response", basic.NewResponseChannel(basic.Conf.ResponseChanCapcity))
+	schdl.channelManager.RegisterOneChannel("entry", basic.NewEntryChannel(basic.Conf.EntryChanCapcity))
+	schdl.channelManager.RegisterOneChannel("error", basic.NewErrorChannel(basic.Conf.ErrorChanCapcity))
 
 	//middleware生成；池管理器
 	schdl.poolManager = pool.NewPoolManager()
-	if dp, err := downloader.NewDownloaderPool(context.Conf.DownloaderPoolSize,
+	if dp, err := downloader.NewDownloaderPool(basic.Conf.DownloaderPoolSize,
 		func() pool.EntityIntfs {
 			return downloader.NewDownloader(httpClient)
 		},
@@ -127,7 +125,7 @@ func (schdl *Scheduler) schedulerInit(
 		//注册进入池管理器
 		schdl.poolManager.RegisterOnePool("downloader", dp)
 	}
-	if ap, err := analyzer.NewAnalyzerPool(context.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
+	if ap, err := analyzer.NewAnalyzerPool(basic.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
@@ -174,6 +172,7 @@ func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
 			}
 
 			//请求通道的空闲数量（请求通道的容量 - 长度）
+			//尽量将请求通道放满, 但是又保证不会阻塞之
 			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
 			var temp *basic.Request
 			for remainder > 0 {
@@ -204,7 +203,6 @@ func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
  * 参数firstHttpReq即代表首次请求。调度器会以此为起始点开始执行爬取流程。
  */
 func (schdl *Scheduler)Start(
-	context basic.Context,
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
 	entryProcessors []basic.ProcessEntryFunc,
@@ -221,12 +219,12 @@ func (schdl *Scheduler)Start(
 	}()
 
 	//统一的参数校验
-	if err := schdl.startParamCheck(context, httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
+	if err := schdl.startParamCheck(httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
 		return err
 	}
 
 	//初始化sheduler
-	if err := schdl.schedulerInit(context, httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
+	if err := schdl.schedulerInit(httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
 		return err
 	}
 
@@ -243,7 +241,7 @@ func (schdl *Scheduler)Start(
 	schdl.activateProcessError()
 
 	//Summary打印器激活：定期打印summray报告
-	schdl.activateRecordSummary(context)
+	schdl.activateRecordSummary()
 
 	//开始调度
 	schdl.beginToSchedule(10 * time.Millisecond)

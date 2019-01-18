@@ -3,9 +3,8 @@ package requestcache
 /*
  * 请求缓冲
  * 用一个带锁保护的slice实现缓冲的效果
- * 用slice的好处是不用担心满了导致阻塞的问题
+ * golang源码中, 很多的buf都是用slice来实现的缓冲效果
  */
-
 import (
 	"fmt"
 	"github.com/hq-cml/spider-go/basic"
@@ -25,7 +24,7 @@ const (
 )
 
 //状态字典。
-var statusMap = map[int]string{
+var statusMap = map[int]string {
 	REQUEST_CACHE_STATUS_RUNNING: "running",
 	REQUEST_CACHE_STATUS_COLOSED: "closed",
 }

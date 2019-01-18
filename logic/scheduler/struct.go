@@ -9,7 +9,7 @@ import (
 )
 
 /*
- * 调度控制器
+ * 调度器
  */
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
