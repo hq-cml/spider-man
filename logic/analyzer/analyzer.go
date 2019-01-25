@@ -10,7 +10,20 @@ import (
 	"github.com/hq-cml/spider-go/middleware/pool"
 	"reflect"
 )
+
 /***********************************分析器**********************************/
+/*
+ * 分析器的作用是根据给定的分析规则链，分析指定网页内容，最终输出请求和条目：
+ * 1. 条目entry，是分析的最终产出结果，应该存下这个entry
+ * 2. 一个新的请求，如果这样的话，框架应该能够自动继续进行探测
+ */
+// 分析器接口的实现类型
+type Analyzer struct {
+	id uint64 // ID
+}
+
+// 生成分析器的函数类型。
+type GenAnalyzerFunc func() pool.EntityIntfs
 
 //下载器专用的id生成器
 var analyzerIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
@@ -30,10 +43,11 @@ func (analyzer *Analyzer) Id() uint64 {
 
 //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
 //返回值请求、条目、error的slice
-func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc,
+func (analyzer *Analyzer) Analyze(
+	respAnalyzeFuncs []basic.AnalyzeResponseFunc,
 	resp basic.Response) ([]*basic.Entry, []*basic.Request, []error) {
 	//参数校验
-	if respAnalyzers == nil {
+	if respAnalyzeFuncs == nil {
 		return nil, nil,[]error{errors.New("The response parser list is invalid!")}
 	}
 
@@ -53,13 +67,13 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc,
 	entryList := []*basic.Entry{}
 	requestList := []*basic.Request{}
 	errorList := []error{}
-	for i, respAnalyzer := range respAnalyzers {
-		if respAnalyzer == nil {
+	for i, analyzeFunc := range respAnalyzeFuncs {
+		if analyzeFunc == nil {
 			errorList = append(errorList, errors.New(fmt.Sprintf("The document parser [%d] is invalid!", i)))
 			continue
 		}
 
-		eList, rList, errList := respAnalyzer(httpResp, respDepth)
+		eList, rList, errList := analyzeFunc(httpResp, respDepth)
 
 		if eList != nil && len(eList) > 0 {
 			entryList = append(entryList, eList...)
@@ -68,25 +82,27 @@ func (analyzer *Analyzer) Analyze(respAnalyzers []basic.AnalyzeResponseFunc,
 		if rList != nil && len(rList) > 0 {
 			for _, req := range rList {
 				newDepth := respDepth + 1
-				if req.Depth() != newDepth {
+				if req.Depth() != newDepth { //TODO 从插件的实现来看,这个地方是不可能出现==的情况的...
 					req = basic.NewRequest(req.HttpReq(), newDepth)
 				}
-
 				requestList = append(requestList, req)
 			}
-
 		}
 
 		if errList != nil && len(errList) > 0 {
 			errorList = append(errorList, errList...)
 		}
-
 	}
 
 	return entryList, requestList, errorList
 }
 
 /**********************************分析器池**********************************/
+//分析器池子，AnalyzerPool嵌套了一个PoolIntfs成员
+//并且，*AnalyzerPool实现了接口PoolIntfs
+type AnalyzerPool struct {
+	pool  pool.PoolIntfs // 实体池。
+}
 
 func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
 	etype := reflect.TypeOf(gen())
@@ -96,7 +112,9 @@ func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
 		return nil, err
 	}
 
-	alpool := &AnalyzerPool{pool: pool, etype: etype}
+	alpool := &AnalyzerPool {
+		pool: pool,
+	}
 	return alpool, nil
 }
 

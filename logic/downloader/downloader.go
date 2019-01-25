@@ -9,6 +9,15 @@ import (
 )
 
 /***********************************下载器**********************************/
+//网页下载器，*Downloader实现EntityIntfs接口
+type Downloader struct {
+	id         uint64 //ID
+	httpClient http.Client
+}
+
+//生成网页下载器的函数的类型
+type GenDownloaderFunc func() pool.EntityIntfs
+
 //下载器专用的id生成器
 var downloaderIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
@@ -38,11 +47,19 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	//TODO close? 这个地方感觉稍显怪异
 	return basic.NewResponse(httpResp, req.Depth()), nil
 }
 
-
 /**********************************下载器池**********************************/
+/*
+ * 网页下载器存在于下载器池中，每个下载器有自己的Id
+ * DownloaderPool封装了pool.PoolIntfs！！
+ */
+type DownloaderPool struct {
+	pool  pool.PoolIntfs
+}
+
 //New,创建网页下载器
 func NewDownloaderPool(total int, gen GenDownloaderFunc) (pool.PoolIntfs, error) {
 	//直接调用gen()，利用反射获取类型
@@ -55,7 +72,6 @@ func NewDownloaderPool(total int, gen GenDownloaderFunc) (pool.PoolIntfs, error)
 
 	dl := &DownloaderPool{
 		pool:  pool,
-		etype: etype,
 	}
 
 	return dl, nil

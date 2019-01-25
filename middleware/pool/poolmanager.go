@@ -1,6 +1,6 @@
 package pool
 /*
- * Pool管理器
+ * Pool管理器实现
  * 框架用到两种类型的pool：分析器池 & 下载器池
  * 他们均是PoolIntfs接口的实现类型
  */
@@ -21,7 +21,7 @@ const (
 )
 
 //状态码与状态名称映射字典
-var statusNameMap = map[PoolManagerStatus]string{
+var statusNameMap = map[PoolManagerStatus]string {
     POOL_MANAGER_STATUS_UNINITIALIZED: "uninitialized",
     POOL_MANAGER_STATUS_INITIALIZED:   "inititalized",
     POOL_MANAGER_STATUS_CLOSED:        "closed",
@@ -29,8 +29,8 @@ var statusNameMap = map[PoolManagerStatus]string{
 
 //Pool管理器实现类型
 type PoolManager struct {
-    pools   map[string]PoolIntfs //通道容器
-    status  PoolManagerStatus    //channel管理器状态
+    pools   map[string]PoolIntfs //池子容器
+    status  PoolManagerStatus    //管理器状态
     rwmutex sync.RWMutex         //读写锁
 }
 

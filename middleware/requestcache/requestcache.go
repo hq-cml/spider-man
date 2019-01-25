@@ -13,7 +13,7 @@ import (
 
 // 请求缓存的实现类型。
 type RequestCache struct {
-	cache  []*basic.Request // 请求的存储介质。
+	cache  []*basic.Request // 请求的缓存介质。
 	mutex  sync.Mutex       // 互斥锁。
 	status int              // 缓存状态。0表示正在运行，1表示已关闭。
 }
@@ -31,7 +31,7 @@ var statusMap = map[int]string {
 
 // 创建请求缓存。
 func NewRequestCache() *RequestCache {
-	rc := &RequestCache{
+	rc := &RequestCache {
 		cache: make([]*basic.Request, 0),
 	}
 	return rc

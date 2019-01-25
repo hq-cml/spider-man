@@ -1,6 +1,7 @@
 package pool
 
 /*
+ * 一个简单池子的实现
  * 实体池：池操作的抽象
  * 实体池中的实体的类需要实现EntityIntfs接口
  */
@@ -86,6 +87,7 @@ func (pool *Pool) Get() (EntityIntfs, error) {
 	return entity, nil
 }
 
+//用一个乐观锁保护了IdContainer, 其功能简单说就是一个实体,不能被放入池子两次
 func (pool *Pool) Put(entity EntityIntfs) error {
 	//入参check：entiy不能为空
 	if entity == nil {
@@ -104,7 +106,6 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 		return nil
 	} else if tmp == 0 {
 		//操作权被其他goroutine得到
-		//理论上不可能发生这种事情
 		return errors.New(fmt.Sprintf("The entity (id=%d) is already in the pool!\n", entityId))
 	} else {
 		return errors.New(fmt.Sprintf("The entity (id=%d) is illegal!\n", entityId))
@@ -118,7 +119,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 //        1：表示操作成功。
 func (pool *Pool) compareAndSetIdContainer(entityId uint64, oldValue bool, newValue bool) int8 {
 	pool.mutex.Lock()
-	pool.mutex.Unlock()
+	defer pool.mutex.Unlock()
 
 	v, ok := pool.idContainer[entityId]
 	if !ok {
