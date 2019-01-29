@@ -104,7 +104,7 @@ func (schdl *Scheduler) sendEntry(entry basic.Entry, moduleCode string) bool {
 
 //获取Pool管理器持有的分析器Pool。
 func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
-    p, err := schdl.poolManager.GetOnePool("analyzer")
+    p, err := schdl.poolManager.GetPool("analyzer")
     if err != nil {
         panic(err)
     }
@@ -163,9 +163,9 @@ func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
     }
 
     //请求深度不能超过阈值
-    if request.Depth() > schdl.grabDepth {
+    if request.Depth() > schdl.grabMaxDepth {
         log.Warnf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
-            request.Depth(), schdl.grabDepth, requestUrl)
+            request.Depth(), schdl.grabMaxDepth, requestUrl)
         return false
     }
     return true

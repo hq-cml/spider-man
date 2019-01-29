@@ -66,7 +66,7 @@ func (chm *ChannelManager) Close() bool {
 }
 
 //注册一个新的通道进入管理器
-func (chm *ChannelManager) RegisterOneChannel(name string, c basic.SpiderChannelIntfs) error {
+func (chm *ChannelManager) RegisterChannel(name string, c basic.SpiderChannelIntfs) error {
 	//写锁保护
 	chm.rwmutex.Lock()
 	defer chm.rwmutex.Unlock()
@@ -80,7 +80,7 @@ func (chm *ChannelManager) RegisterOneChannel(name string, c basic.SpiderChannel
 }
 
 //获取request通道
-func (chm *ChannelManager) GetOneChannel(name string) (basic.SpiderChannelIntfs, error) {
+func (chm *ChannelManager) GetChannel(name string) (basic.SpiderChannelIntfs, error) {
 	//读锁保护
 	chm.rwmutex.RLock()
 	defer chm.rwmutex.RUnlock()

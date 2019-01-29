@@ -70,7 +70,7 @@ func NewDownloaderPool(total int, gen GenDownloaderFunc) (pool.PoolIntfs, error)
 		return nil, err
 	}
 
-	dl := &DownloaderPool{
+	dl := &DownloaderPool {
 		pool:  pool,
 	}
 

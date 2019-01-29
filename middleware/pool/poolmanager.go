@@ -64,7 +64,7 @@ func (pm *PoolManager) Close() bool {
 }
 
 //注册一个新的通道进入管理器
-func (pm *PoolManager) RegisterOnePool(name string, c PoolIntfs) error {
+func (pm *PoolManager) RegisterPool(name string, c PoolIntfs) error {
     //写锁保护
     pm.rwmutex.Lock()
     defer pm.rwmutex.Unlock()
@@ -78,7 +78,7 @@ func (pm *PoolManager) RegisterOnePool(name string, c PoolIntfs) error {
 }
 
 //获取request通道
-func (pm *PoolManager) GetOnePool(name string) (PoolIntfs, error) {
+func (pm *PoolManager) GetPool(name string) (PoolIntfs, error) {
     //读锁保护
     pm.rwmutex.RLock()
     defer pm.rwmutex.RUnlock()

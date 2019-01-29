@@ -15,7 +15,8 @@ import (
 
 //全局配置
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
-var firstUrl *string = flag.String("f", "http://www.sogou.com", "first url")
+var firstUrl *string = flag.String("f", "http://www.baidu.com", "first url")
+var pluginName *string = flag.String("f", "base", "plugin name")
 //var userArgu *string = flag.String("u", "http://www.sogou.com", "user argument")
 
 /*
@@ -37,6 +38,7 @@ func main() {
 	basic.Conf = conf
 
 	//插件列表, 加载所有的支持插件
+	//TODO 这块不太合理
 	var plugins = map[string]basic.SpiderPluginIntfs {
 		"base": plugin.NewBaseSpider(),
 		//....
@@ -46,18 +48,8 @@ func main() {
 	log.InitLog(conf.LogPath)
 	log.Infof("------------Spider Begin To Run------------")
 
-	//配置文件处理
-	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
-	//防止过小的参数值对爬取流程的影响
-	if intervalNs < 10 * time.Millisecond {
-		intervalNs = 10 * time.Millisecond
-	}
-	if conf.MaxIdleCount < 5 {
-		conf.MaxIdleCount = 5
-	}
-
-	//插件加载
-	spider, ok := plugins[conf.PluginKey]
+	//插件指定加载
+	spiderPlugin, ok := plugins[conf.PluginKey]
 	if !ok {
 		panic("Not found plugin:" + conf.PluginKey)
 	}
@@ -69,8 +61,11 @@ func main() {
 		log.Warnln(err.Error())
 		return
 	}
-	if err := schdl.Start(spider.GenHttpClient(), spider.GenResponseAnalysers(),
-		spider.GenEntryProcessors(), firstHttpReq); err != nil {
+	if err := schdl.Start (
+		spiderPlugin.GenHttpClient(),
+		spiderPlugin.GenResponseAnalysers(),
+		spiderPlugin.GenEntryProcessors(),
+		firstHttpReq); err != nil {
 		panic("Scheduler Start error:" + err.Error())
 	}
 
@@ -84,9 +79,14 @@ func main() {
 	//AsyncRecordSummary(schdl, false, record, stopNotifier)
 
 	//主协程同步等待，检查空闲状态
+	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
+	if intervalNs < 10 * time.Millisecond { //防止过小的参数值对爬取流程的影响
+		intervalNs = 10 * time.Millisecond
+	}
+	if conf.MaxIdleCount < 5 {
+		conf.MaxIdleCount = 5
+	}
 	cnt := loopCheckStatus(schdl, intervalNs, conf.MaxIdleCount)
-
-	//TODO 信号处理
 
 	//程序结束, 生成最终报告
 	summary := scheduler.NewSchedSummary(schdl, "    ")
@@ -95,6 +95,7 @@ func main() {
 }
 
 //检查状态，并在满足持续空闲时间的条件时采取必要措施。
+//TODO 信号处理
 func loopCheckStatus(schdl *scheduler.Scheduler, intervalNs time.Duration,	maxIdleCount int) uint64{
 	var checkCount uint64
 

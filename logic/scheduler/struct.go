@@ -13,8 +13,8 @@ import (
  */
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
-	grabDepth      int                            // 爬取的最大深度。首次请求的深度为0。
-	primaryDomain  string                         // 主域名。
+	grabMaxDepth   int                            // 爬取的最大深度。首次请求的深度为0。
+	primaryDomain  string                         // 起始域名。
 	channelManager *channelmanager.ChannelManager // 通道管理器。
 	poolManager    *pool.PoolManager              // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
@@ -28,7 +28,7 @@ type Scheduler struct {
 type SchedSummary struct {
 	prefix              string // 前缀。
 	running             uint32 // 运行标记。
-	grabDepth           int    // 爬取的最大深度。
+	grabMaxDepth        int    // 爬取的最大深度。
 	chanmanSummary      string // 通道管理器的摘要信息。
 	reqCacheSummary     string // 请求缓存的摘要信息。
 	poolmanSummary      string // pool管理器的摘要信息。

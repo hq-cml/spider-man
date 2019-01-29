@@ -13,7 +13,7 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 	}
 
 	c := &basic.SpiderConf{}
-	if c.GrabDepth, err = cfg.Int("spider", "grabDepth"); err != nil {
+	if c.GrabMaxDepth, err = cfg.Int("spider", "grabMaxDepth"); err != nil {
 		panic("Load conf grabDepth failed!")
 	}
 

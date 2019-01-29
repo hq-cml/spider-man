@@ -78,7 +78,7 @@ func (schdl *Scheduler) download(request basic.Request) {
 
 //获取Pool管理器持有的下载器Pool。
 func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
-    p, err := schdl.poolManager.GetOnePool("downloader")
+    p, err := schdl.poolManager.GetPool("downloader")
     if err != nil {
         panic(err)
     }

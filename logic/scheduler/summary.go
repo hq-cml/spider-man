@@ -35,7 +35,7 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	return &SchedSummary{
 		prefix:              prefix,
 		running:             schdl.running,
-		grabDepth:           schdl.grabDepth,
+		grabMaxDepth:           schdl.grabMaxDepth,
 		chanmanSummary:      schdl.channelManager.Summary(prefix),
 		reqCacheSummary:     schdl.requestCache.Summary(prefix),
 		poolmanSummary:      schdl.poolManager.Summary(prefix),
@@ -80,7 +80,7 @@ func (ss *SchedSummary) getSummary(detail bool) string {
 
 	return fmt.Sprintf(template,
 		ss.running == 1,
-		ss.grabDepth,
+		ss.grabMaxDepth,
 		ss.stopSignSummary,
 		ss.chanmanSummary,
 		ss.poolmanSummary,

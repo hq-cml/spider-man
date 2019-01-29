@@ -80,26 +80,26 @@ type ErrorChannel struct {
 
 /************************************** 配置相关 *************************************/
 type SpiderConf struct {
-	GrabDepth int                //抓取深度
+	GrabMaxDepth        int    //抓取最大深度
 
-	PluginKey string             //插件名字，根据这个值，框架会自动选择对应的插件
+	PluginKey           string //插件名字，根据这个值，框架会自动选择对应的插件
 
-	RequestChanCapcity  int      //请求通道容量
-	ResponseChanCapcity int      //响应通道容量
-	EntryChanCapcity    int      //条目通道容量
-	ErrorChanCapcity    int      //错误通道容量
+	RequestChanCapcity  int    //请求通道容量
+	ResponseChanCapcity int    //响应通道容量
+	EntryChanCapcity    int    //条目通道容量
+	ErrorChanCapcity    int    //错误通道容量
 
-	DownloaderPoolSize  int      //下载器池大小
-	AnalyzerPoolSize    int      //分析器池大小
+	DownloaderPoolSize  int    //下载器池大小
+	AnalyzerPoolSize    int    //分析器池大小
 
-	MaxIdleCount int             //当满足MaxIdleCount次空闲之后，程序结束
-	IntervalNs   int             //检查程序结束标志的轮训时间间隔，单位：毫秒
+	MaxIdleCount        int    //当满足MaxIdleCount次空闲之后，程序结束
+	IntervalNs          int    //检查程序结束标志的轮训时间间隔，单位：毫秒
 
-	SummaryDetail bool           //是否打印详细Url
-	SummaryInterval int          //打印summary的间隔，单位：秒
+	SummaryDetail       bool   //是否打印详细Url
+	SummaryInterval     int    //打印summary的间隔，单位：秒
 
-	LogPath  string              //日志路径
-	LogLevel string              //日志级别
+	LogPath  string            //日志路径
+	LogLevel string            //日志级别
 }
 
 /************************************ 全局Conf变量 **********************************/
