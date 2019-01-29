@@ -7,7 +7,7 @@ import (
 )
 
 /*
- * 激活处理链
+ * 激活Item处理器
  * 一个独立的goroutine，循环从Entry通道中取出Entry
  * 然后交给独立的goroutine利用process chain去处理
  */

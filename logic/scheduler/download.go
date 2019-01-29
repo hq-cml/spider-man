@@ -11,7 +11,8 @@ import (
 
 /*
  * 激活下载器，开始下载，下载器是一个独立的的goroutine无限循环，从请求通道中获取请求
- * 每个请求都扔给独立的goroutine去处理，但是全部的下载goroutine会受到下载器池的整体制约
+ * 每个请求都扔给独立的goroutine去处理，但是goroutine并不一定能够立刻开始下载工作
+ * 同时能够执行下载的goroutine数量,受到下载器池容量的制约, 其他goroutine会阻塞
  */
 func (schdl *Scheduler) activateDownloaders() {
     //downloader是异步独立的goroutine
@@ -34,7 +35,10 @@ func (schdl *Scheduler) activateDownloaders() {
     }()
 }
 
-//实际下载工作，下载goroutine的逻辑，但是全部下载goroutine是受到下载器池子的约束的
+/*
+ * 实际下载工作，下载goroutine的逻辑
+ * 但是全部下载goroutine是受到下载器池子的约束的
+ */
 func (schdl *Scheduler) download(request basic.Request) {
     //panic错误兜底
     defer func() {
@@ -72,7 +76,7 @@ func (schdl *Scheduler) download(request basic.Request) {
         schdl.sendError(err, moudleCode)
     }
     if response != nil {
-        schdl.sendResponse(*response, moudleCode)
+        schdl.sendToRespChan(*response, moudleCode)
     }
 }
 
@@ -86,10 +90,10 @@ func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
 }
 
 //发送响应到通道管理器中的响应通道
-func (schdl *Scheduler) sendResponse(resp basic.Response, mouduleCode string) bool {
+func (schdl *Scheduler) sendToRespChan(resp basic.Response, mouduleCode string) bool {
     if schdl.stopSign.Signed() {
-        schdl.stopSign.Deal(mouduleCode)
         //如果stop标记已经生效，则通道管理器可能已经关闭，此时不应该再进行通道写入
+        schdl.stopSign.Deal(mouduleCode)
         return false
     }
 

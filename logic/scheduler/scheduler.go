@@ -3,13 +3,6 @@ package scheduler
 /*
  * 调度器
  * 框架的核心组件，将所有的中间件和逻辑组件进行整合、同步、协调
- *
- * 调度的最核心的一步是对于request缓冲区的利用，而不是直接利用request通道：
- * 整个框架最有可能阻塞的是request通道，因为无法预知分析出的页面会产出多少新的request
- * 如果request通道被打满阻塞，可能会导致整个框架的阻塞，所以利用request缓冲区来避免
- * 每一轮都会先计算出request通道的剩余容量，然后从缓冲中取出相同的数量的请求放入通道
- * 这样就可以完全防止request通道的阻塞，从而保证所有通道的顺畅（如果reqeust通道不出现
- * 阻塞，那么其他通道也不会出现阻塞，因为request通道是所有的工作的源！）
  */
 import (
 	"errors"
@@ -171,9 +164,11 @@ func (schdl *Scheduler) initScheduler(
 
 /*
  * 开始调度，一个独立的goroutine负责：
- * 一个无限Loop，适当的搬运请求缓存中的请求到请求通道
+ * 一个无限Loop，适当的搬运请求缓存中的请求到请求通道, 以防止request通道的阻塞
  * 每一轮都会先计算出request通道的剩余容量，然后从缓冲中取出相同的数量的请求放入通道
- * 这样就可以完全防止request通道的阻塞，从而保证所有通道的顺畅
+ *
+ * 整个框架最有可能阻塞的是request通道，因为无法预知分析出的页面会产出多少新的request
+ * 如果request通道被打满阻塞，可能会导致整个框架的阻塞，所以利用request缓冲区来避免
  */
 func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
 	go func() {
@@ -184,7 +179,6 @@ func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
 			}
 
 			//请求通道的空闲数量（请求通道的容量 - 长度）
-			//尽量将请求通道放满, 但是又保证不会阻塞之
 			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
 			var temp *basic.Request
 			for remainder > 0 {
@@ -393,7 +387,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 		return false
 	}
 
-	//错误的发送通道操作是放在goroutine异步执行的，原因不确定会出现多少Error的情况，所以放到独立goroutine中防止阻塞
+	//不确定会出现多少Error的情况, 所以异步发送
 	go func() {
 		schdl.getErrorChan().Put(cError)
 	}()

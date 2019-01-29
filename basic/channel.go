@@ -2,6 +2,7 @@ package basic
 
 import "errors"
 
+//TODO 位置要移动到logic中
 /*************************** 请求通道相关 ***************************/
 func NewRequestChannel(capacity int) SpiderChannelIntfs {
 	return &RequestChannel{

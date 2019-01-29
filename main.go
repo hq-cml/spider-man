@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"time"
 )
+//TODO 加入pprof
 
 //全局配置
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
@@ -23,7 +24,6 @@ var pluginName *string = flag.String("f", "base", "plugin name")
  * 主函数：
  * 解析配置；初始化；启动异步调度器
  * 主协程开始主循环，主要是检查状态，并在满足持续空闲时间的条件时停止Spider
- *
  */
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

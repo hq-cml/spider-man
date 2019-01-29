@@ -13,7 +13,8 @@ import (
 
 /*
  * 激活分析器，开始分析，分析工作由独立的goroutine进行负责，无限循环，从响应通道中获取响应
- * 每一个响应再交给独立的goroutine完成分析工作，分析goroutine整体上受到分析器池的制约
+ * 每一个响应再交给独立的goroutine完成分析工作，但是goroutine并不一定能够立刻开始分析工作
+ * 同时能够进行分析工作的goroutine数量, 受到分析器池容量的的制约
  */
 func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseFunc) {
     go func() {
@@ -70,7 +71,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
     //将分析出的entry放到entry通道里
     if entryList != nil {
         for _, entry := range entryList {
-            schdl.sendEntry(*entry, moudleCode)
+            schdl.sendToEntryChan(*entry, moudleCode)
         }
     }
 
@@ -93,7 +94,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 }
 
 //发送条目到通道管理器中的条目通道
-func (schdl *Scheduler) sendEntry(entry basic.Entry, moduleCode string) bool {
+func (schdl *Scheduler) sendToEntryChan(entry basic.Entry, moduleCode string) bool {
     if schdl.stopSign.Signed() {
         schdl.stopSign.Deal(moduleCode)
         return false
@@ -115,7 +116,7 @@ func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
 func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode string) bool {
 
     //过滤掉非法的请求
-    if schdl.checkRequest(&request) == false {
+    if schdl.filterInvalidRequest(&request) == false {
         return false
     }
 
@@ -130,7 +131,7 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
 }
 
 //对分析出来的请求做合法性校验
-func (schdl *Scheduler) checkRequest(request *basic.Request) bool {
+func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     httpRequest := request.HttpReq()
     //校验请求体本身
     if httpRequest == nil {

@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 )
 
+//TODO 重命名processChain
 /*
  * Entry处理处理链，每个entry都会被处理链进行流式处理
  * 具体的处理逻辑就是这些链中的每个函数，交由用户自定制
@@ -37,7 +38,7 @@ func NewProcessChain(entryProcessors []basic.ProcessEntryFunc) *ProcessChain {
 		pc = append(pc, v)
 	}
 
-	return &ProcessChain{
+	return &ProcessChain {
 		entryProcessors: pc,
 	}
 }
