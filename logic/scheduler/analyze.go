@@ -66,12 +66,12 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
         return
     }
     moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
-    entryList, requestList, errs := ana.Analyze(respAnalyzers, response)
+    itemList, requestList, errs := ana.Analyze(respAnalyzers, response)
 
-    //将分析出的entry放到entry通道里
-    if entryList != nil {
-        for _, entry := range entryList {
-            schdl.sendToEntryChan(*entry, moudleCode)
+    //将分析出的item放到item通道里
+    if itemList != nil {
+        for _, item := range itemList {
+            schdl.sendToItemChan(*item, moudleCode)
         }
     }
 
@@ -94,12 +94,12 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 }
 
 //发送条目到通道管理器中的条目通道
-func (schdl *Scheduler) sendToEntryChan(entry basic.Entry, moduleCode string) bool {
+func (schdl *Scheduler) sendToItemChan(item basic.Item, moduleCode string) bool {
     if schdl.stopSign.Signed() {
         schdl.stopSign.Deal(moduleCode)
         return false
     }
-    schdl.getEntryChan().Put(entry)
+    schdl.getItemChan().Put(item)
     return true
 }
 

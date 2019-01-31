@@ -9,57 +9,57 @@ import (
 
 //TODO 重命名processChain
 /*
- * Entry处理处理链，每个entry都会被处理链进行流式处理
+ * Item处理处理链，每个item都会被处理链进行流式处理
  * 具体的处理逻辑就是这些链中的每个函数，交由用户自定制
  */
 // 条目处理链类型。
 type ProcessChain struct {
-	entryProcessors  []basic.ProcessEntryFunc // 条目处理器的列表。
-	failFast         bool                     // 表示处理是否需要快速失败的标志位。
-	sent             uint64                   // 已被发送的条目的数量。
-	accepted         uint64                   // 已被接受的条目的数量。
-	processed        uint64                   // 已被处理的条目的数量。
-	processingNumber uint64                   // 正在被处理的条目的数量。
+	itemProcessors   []basic.ProcessItemFunc // 条目处理器的列表。
+	failFast         bool                    // 表示处理是否需要快速失败的标志位。
+	sent             uint64                  // 已被发送的条目的数量。
+	accepted         uint64                  // 已被接受的条目的数量。
+	processed        uint64                  // 已被处理的条目的数量。
+	processingNumber uint64                  // 正在被处理的条目的数量。
 }
 
 //New, 创建处理链
-func NewProcessChain(entryProcessors []basic.ProcessEntryFunc) *ProcessChain {
+func NewProcessChain(itemProcessors []basic.ProcessItemFunc) *ProcessChain {
 	//用户自定制处理链，如果是空的，则程序无法正常运转
-	if entryProcessors == nil {
-		panic(errors.New("Invalid entry processor list!"))
+	if itemProcessors == nil {
+		panic(errors.New("Invalid item processor list!"))
 	}
 
-	pc := make([]basic.ProcessEntryFunc, 0)
+	pc := make([]basic.ProcessItemFunc, 0)
 
-	for k, v := range entryProcessors {
+	for k, v := range itemProcessors {
 		if v == nil {
-			panic(errors.New(fmt.Sprint("Invalid entry processor:", k)))
+			panic(errors.New(fmt.Sprint("Invalid item processor:", k)))
 		}
 		pc = append(pc, v)
 	}
 
 	return &ProcessChain {
-		entryProcessors: pc,
+		itemProcessors: pc,
 	}
 }
 
-//向处理链发送entry，调用处理链自动进行处理
-func (pc *ProcessChain) SendAndProcess(entry basic.Entry) []error {
+//向处理链发送item，调用处理链自动进行处理
+func (pc *ProcessChain) SendAndProcess(item basic.Item) []error {
 	atomic.AddUint64(&pc.processingNumber, 1)                //原子加1
 	defer atomic.AddUint64(&pc.processingNumber, ^uint64(0)) //原子减1
 	atomic.AddUint64(&pc.sent, 1)
 
 	errs := []error{}
-	if entry == nil {
-		errs = append(errs, errors.New("entry is invalid!"))
+	if item == nil {
+		errs = append(errs, errors.New("item is invalid!"))
 		return errs
 	}
 
 	atomic.AddUint64(&pc.accepted, 1)
-	var currentEntry basic.Entry = entry //备份出一份本地entry，其实没啥用，map是引用类型
+	var currentItem basic.Item = item //备份出一份本地item，其实没啥用，map是引用类型
 	//链式处理
-	for _, processFunc := range pc.entryProcessors {
-		processedEntry, err := processFunc(currentEntry)
+	for _, processFunc := range pc.itemProcessors {
+		processedItem, err := processFunc(currentItem)
 
 		if err != nil {
 			errs = append(errs, err)
@@ -68,8 +68,8 @@ func (pc *ProcessChain) SendAndProcess(entry basic.Entry) []error {
 			}
 		}
 
-		if processedEntry != nil {
-			currentEntry = processedEntry
+		if processedItem != nil {
+			currentItem = processedItem
 		}
 	}
 
@@ -100,6 +100,6 @@ func (pc *ProcessChain) Summary(prefix string) string {
 	processed := atomic.LoadUint64(&pc.processed)	//已处理
 
 	summary := fmt.Sprintf(prefix + "FailFast: %v, processorNumber: %d\n" + prefix+ "sent: %d, accepted: %d, processed: %d, processingNumber: %d\n",
-		pc.failFast, len(pc.entryProcessors), sent, accepted, processed, pc.ProcessingNumber())
+		pc.failFast, len(pc.itemProcessors), sent, accepted, processed, pc.ProcessingNumber())
 	return summary
 }

@@ -36,15 +36,15 @@ func (b *BaseSpider) GenResponseAnalysers() []basic.AnalyzeResponseFunc {
 }
 
 // 获得条目处理链的序列。
-func (b *BaseSpider) GenEntryProcessors() []basic.ProcessEntryFunc {
-	entryProcessors := []basic.ProcessEntryFunc{
-		processEntry,
+func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
+	itemProcessors := []basic.ProcessItemFunc{
+		processItem,
 	}
-	return entryProcessors
+	return itemProcessors
 }
 
 //响应解析函数。只解析“A”标签。
-func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Entry, []*basic.Request, []error) {
+func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
 		err := errors.New(fmt.Sprintf("Unsupported status code %d. (httpResponse=%v)", httpResp))
@@ -60,7 +60,7 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Entry, []*ba
 		}
 	}()
 
-	entryList := []*basic.Entry{}
+	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errs := make([]error, 0)
 	//开始解析
@@ -100,28 +100,28 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Entry, []*ba
 			}
 		}
 		text := strings.TrimSpace(sel.Text())
-		//将新分析出来的Entry，放入dataList
+		//将新分析出来的Item，放入dataList
 		if text != "" {
 			imap := make(map[string]interface{})
 			imap["parent_url"] = reqUrl
 			imap["a.text"] = text
 			imap["a.index"] = index
-			entry := basic.Entry(imap)
-			entryList = append(entryList, &entry)
+			item := basic.Item(imap)
+			itemList = append(itemList, &item)
 		}
 	})
-	return entryList, requestList, errs
+	return itemList, requestList, errs
 }
 
 // 条目处理器。
-func processEntry(entry basic.Entry) (result basic.Entry, err error) {
-	if entry == nil {
-		return nil, errors.New("Invalid entry!")
+func processItem(item basic.Item) (result basic.Item, err error) {
+	if item == nil {
+		return nil, errors.New("Invalid item!")
 	}
 
 	// 生成结果
 	result = make(map[string]interface{})
-	for k, v := range entry {
+	for k, v := range item {
 		result[k] = v
 	}
 	if _, ok := result["number"]; !ok {

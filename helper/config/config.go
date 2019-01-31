@@ -29,8 +29,8 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf responseChanCapcity failed!")
 	}
 
-	if c.EntryChanCapcity, err = cfg.Int("spider", "entryChanCapcity"); err != nil {
-		panic("Load conf entryChanCapcity failed!")
+	if c.ItemChanCapcity, err = cfg.Int("spider", "itemChanCapcity"); err != nil {
+		panic("Load conf itemChanCapcity failed!")
 	}
 
 	if c.ErrorChanCapcity, err = cfg.Int("spider", "errorChanCapcity"); err != nil {

@@ -32,7 +32,7 @@ func NewScheduler() *Scheduler {
 func (schdl *Scheduler) checkParam (
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
-	entryProcessors []basic.ProcessEntryFunc,
+	itemProcessors []basic.ProcessItemFunc,
 	firstHttpReq *http.Request) (error) {
 
 	if basic.Conf.GrabMaxDepth <= 0 {
@@ -41,7 +41,7 @@ func (schdl *Scheduler) checkParam (
 
 	if basic.Conf.RequestChanCapcity <= 0 ||
 		basic.Conf.ResponseChanCapcity <= 0 ||
-		basic.Conf.EntryChanCapcity <= 0 ||
+		basic.Conf.ItemChanCapcity <= 0 ||
 		basic.Conf.ErrorChanCapcity <= 0 {
 		return errors.New("Channel length can not be 0!")
 	}
@@ -55,12 +55,12 @@ func (schdl *Scheduler) checkParam (
 		return errors.New("Pool size can not be 0!")
 	}
 
-	if entryProcessors == nil {
-		return errors.New("The entry processor list is invalid!")
+	if itemProcessors == nil {
+		return errors.New("The item processor list is invalid!")
 	}
-	for i, ip := range entryProcessors {
+	for i, ip := range itemProcessors {
 		if ip == nil {
-			return errors.New(fmt.Sprintf("The %dth entry processor is invalid!", i))
+			return errors.New(fmt.Sprintf("The %dth item processor is invalid!", i))
 		}
 	}
 
@@ -69,7 +69,7 @@ func (schdl *Scheduler) checkParam (
 	}
 	for i, ip := range respAnalyzers {
 		if ip == nil {
-			return errors.New(fmt.Sprintf("The %dth entry analyzer is invalid!", i))
+			return errors.New(fmt.Sprintf("The %dth item analyzer is invalid!", i))
 		}
 	}
 
@@ -84,7 +84,7 @@ func (schdl *Scheduler) checkParam (
 func (schdl *Scheduler) initScheduler(
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
-	entryProcessors []basic.ProcessEntryFunc,
+	itemProcessors []basic.ProcessItemFunc,
 	firstHttpReq *http.Request) (err error) {
 
 	//错误兜底
@@ -111,7 +111,7 @@ func (schdl *Scheduler) initScheduler(
 	schdl.channelManager = channelmanager.NewChannelManager()
 	schdl.channelManager.RegisterChannel("request", basic.NewRequestChannel(basic.Conf.RequestChanCapcity))
 	schdl.channelManager.RegisterChannel("response", basic.NewResponseChannel(basic.Conf.ResponseChanCapcity))
-	schdl.channelManager.RegisterChannel("entry", basic.NewEntryChannel(basic.Conf.EntryChanCapcity))
+	schdl.channelManager.RegisterChannel("item", basic.NewItemChannel(basic.Conf.ItemChanCapcity))
 	schdl.channelManager.RegisterChannel("error", basic.NewErrorChannel(basic.Conf.ErrorChanCapcity))
 
 	//middleware生成: 池管理器, 注册2种池子
@@ -149,7 +149,7 @@ func (schdl *Scheduler) initScheduler(
 	schdl.requestCache = requestcache.NewRequestCache()
 
 	//processChain生成
-	schdl.processChain = processchain.NewProcessChain(entryProcessors)
+	schdl.processChain = processchain.NewProcessChain(itemProcessors)
 
 	//初始化已请求的URL的字典
 	schdl.urlMap = make(map[string]bool)
@@ -205,13 +205,13 @@ func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
  * 开启调度器。调用该方法会使调度器创建和初始化各个组件。在此之后，调度器会激活爬取流程的执行。
  * 参数httpClient是客户端句柄。
  * 参数respAnalyzers是用户定制的分析器列表
- * 参数entryProcessors是用户定制的处理器链
+ * 参数itemProcessors是用户定制的处理器链
  * 参数firstHttpReq代表首次请求。调度器会以此为起始点开始执行爬取流程。
  */
 func (schdl *Scheduler)Start(
 	httpClient *http.Client,
 	respAnalyzers []basic.AnalyzeResponseFunc,
-	entryProcessors []basic.ProcessEntryFunc,
+	itemProcessors []basic.ProcessItemFunc,
 	firstHttpReq *http.Request) (err error) {
 
 	//异常兜底
@@ -225,12 +225,12 @@ func (schdl *Scheduler)Start(
 	}()
 
 	//统一的参数校验
-	if err := schdl.checkParam(httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
+	if err := schdl.checkParam(httpClient, respAnalyzers, itemProcessors, firstHttpReq); err != nil {
 		return err
 	}
 
 	//初始化sheduler
-	if err := schdl.initScheduler(httpClient, respAnalyzers, entryProcessors, firstHttpReq); err != nil {
+	if err := schdl.initScheduler(httpClient, respAnalyzers, itemProcessors, firstHttpReq); err != nil {
 		return err
 	}
 
@@ -293,8 +293,8 @@ func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
 func (schdl *Scheduler) IsIdle() bool {
 	idleDlPool := schdl.getDownloaderPool().Used() == 0
 	idleAnalyzerPool := schdl.getAnalyzerPool().Used() == 0
-	idleEntryPipeline := schdl.processChain.ProcessingNumber() == 0
-	if idleDlPool && idleAnalyzerPool && idleEntryPipeline {
+	idleItemPipeline := schdl.processChain.ProcessingNumber() == 0
+	if idleDlPool && idleAnalyzerPool && idleItemPipeline {
 		return true
 	}
 	return false
@@ -322,12 +322,12 @@ func (schdl *Scheduler) getResponseChan() basic.SpiderChannelIntfs {
 }
 
 // 获取通道管理器持有的条目通道。
-func (schdl *Scheduler) getEntryChan() basic.SpiderChannelIntfs {
-	entryChan, err := schdl.channelManager.GetChannel("entry")
+func (schdl *Scheduler) getItemChan() basic.SpiderChannelIntfs {
+	itemChan, err := schdl.channelManager.GetChannel("item")
 	if err != nil {
 		panic(err)
 	}
-	return entryChan
+	return itemChan
 }
 
 // 获取通道管理器持有的错误通道。
@@ -376,7 +376,7 @@ func (schdl *Scheduler) sendError(err error, mouduleCode string) bool {
 	case ANALYZER_CODE:
 		errorType = basic.ANALYZER_ERROR
 	case PROCESS_CHAIN_CODE:
-		errorType = basic.ENTRY_PROCESSOR_ERROR
+		errorType = basic.PROCESSOR_ERROR
 	}
 
 	cError := basic.NewSpiderErr(errorType, err.Error())

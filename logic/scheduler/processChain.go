@@ -8,7 +8,7 @@ import (
 
 /*
  * 激活Item处理器
- * 一个独立的goroutine，循环从Entry通道中取出Entry
+ * 一个独立的goroutine，循环从Item通道中取出Item
  * 然后交给独立的goroutine利用process chain去处理
  */
 func (schdl *Scheduler) activateProcessChain() {
@@ -16,25 +16,25 @@ func (schdl *Scheduler) activateProcessChain() {
         schdl.processChain.SetFailFast(true)
         //对一个channel进行range操作，就是循环<-操作，并且在channel关闭之后能够自动结束
         for {
-            entry, ok := schdl.getEntryChan().Get()
+            item, ok := schdl.getItemChan().Get()
             if !ok {
                 break //通道关闭
             }
-            e, ok := entry.(basic.Entry)
+            e, ok := item.(basic.Item)
             if !ok {
                 continue
             }
-            //每次从entry通道中取出一个entry，然后扔给一个独立的gorouting处理
-            go schdl.processOneEntry(e)
+            //每次从item通道中取出一个item，然后扔给一个独立的gorouting处理
+            go schdl.processOneItem(e)
         }
     }()
 }
 
-//将一个entry扔到processChain中去处理
-func (schdl *Scheduler) processOneEntry(e basic.Entry) {
+//将一个item扔到processChain中去处理
+func (schdl *Scheduler) processOneItem(e basic.Item) {
     defer func() {
         if p := recover(); p != nil {
-            msg := fmt.Sprintf("Fatal entry Processing Error: %s\n", p)
+            msg := fmt.Sprintf("Fatal item Processing Error: %s\n", p)
             log.Warn(msg)
         }
     }()

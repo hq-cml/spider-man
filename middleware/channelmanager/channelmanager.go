@@ -2,7 +2,7 @@ package channelmanager
 
 /*
  * channel管理器
- * 框架用到四种类型的数据需要管道传递：请求、响应、Entry、Error
+ * 框架用到四种类型的数据需要管道传递：请求、响应、Item、Error
  * 均是SpiderChannelIntfs接口的实现类型
  */
 import (

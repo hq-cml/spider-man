@@ -55,8 +55,7 @@ func (resp *Response) Depth() int {
 }
 
 /*************************** 条目相关 ***************************/
-//实现EntryIntfs接口
-func (e Entry) Valid() bool {
+func (e Item) Valid() bool {
 	return e != nil
 }
 

@@ -14,7 +14,7 @@ import (
 /***********************************分析器**********************************/
 /*
  * 分析器的作用是根据给定的分析规则链，分析指定网页内容，最终输出请求和条目：
- * 1. 条目entry，是分析的最终产出结果，应该存下这个entry
+ * 1. 条目item，是分析的最终产出结果，应该存下这个item
  * 2. 一个新的请求，如果这样的话，框架应该能够自动继续进行探测
  */
 // 分析器接口的实现类型
@@ -45,7 +45,7 @@ func (analyzer *Analyzer) Id() uint64 {
 //返回值请求、条目、error的slice
 func (analyzer *Analyzer) Analyze(
 	respAnalyzeFuncs []basic.AnalyzeResponseFunc,
-	resp basic.Response) ([]*basic.Entry, []*basic.Request, []error) {
+	resp basic.Response) ([]*basic.Item, []*basic.Request, []error) {
 	//参数校验
 	if respAnalyzeFuncs == nil {
 		return nil, nil,[]error{errors.New("The response parser list is invalid!")}
@@ -64,7 +64,7 @@ func (analyzer *Analyzer) Analyze(
 	respDepth := resp.Depth()
 
 	//解析http响应，respAnalyzers，利用每一个分析函数进行分析
-	entryList := []*basic.Entry{}
+	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errorList := []error{}
 	for i, analyzeFunc := range respAnalyzeFuncs {
@@ -76,7 +76,7 @@ func (analyzer *Analyzer) Analyze(
 		eList, rList, errList := analyzeFunc(httpResp, respDepth)
 
 		if eList != nil && len(eList) > 0 {
-			entryList = append(entryList, eList...)
+			itemList = append(itemList, eList...)
 		}
 
 		if rList != nil && len(rList) > 0 {
@@ -94,7 +94,7 @@ func (analyzer *Analyzer) Analyze(
 		}
 	}
 
-	return entryList, requestList, errorList
+	return itemList, requestList, errorList
 }
 
 /**********************************分析器池**********************************/

@@ -66,34 +66,34 @@ func (c *ResponseChannel) Close() {
 }
 
 /*************************** 结果通道相关 ***************************/
-func NewEntryChannel(capacity int) SpiderChannelIntfs {
-	return &EntryChannel{
+func NewItemChannel(capacity int) SpiderChannelIntfs {
+	return &ItemChannel{
 		capacity: capacity,
-		entryCh:  make(chan Entry, capacity),
+		itemCh:  make(chan Item, capacity),
 	}
 }
 //实现SpiderChannelIntfs接口
-func (c *EntryChannel) Put(data interface{}) error {
-	req, ok := data.(Entry)
+func (c *ItemChannel) Put(data interface{}) error {
+	req, ok := data.(Item)
 	if !ok {
 		return errors.New("Wrong type")
 	}
 
-	c.entryCh <- req
+	c.itemCh <- req
 	return nil
 }
-func (c *EntryChannel) Get() (interface{}, bool) {
-	req, ok := <-c.entryCh
+func (c *ItemChannel) Get() (interface{}, bool) {
+	req, ok := <-c.itemCh
 	return interface{}(req), ok
 }
-func (c *EntryChannel) Len() int {
-	return len(c.entryCh)
+func (c *ItemChannel) Len() int {
+	return len(c.itemCh)
 }
-func (c *EntryChannel) Cap() int {
+func (c *ItemChannel) Cap() int {
 	return c.capacity
 }
-func (c *EntryChannel) Close() {
-	close(c.entryCh)
+func (c *ItemChannel) Close() {
+	close(c.itemCh)
 }
 
 /*************************** 错误通道相关 ***************************/

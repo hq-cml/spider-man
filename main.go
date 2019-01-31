@@ -64,7 +64,7 @@ func main() {
 	if err := schdl.Start (
 		spiderPlugin.GenHttpClient(),
 		spiderPlugin.GenResponseAnalysers(),
-		spiderPlugin.GenEntryProcessors(),
+		spiderPlugin.GenItemProcessors(),
 		firstHttpReq); err != nil {
 		panic("Scheduler Start error:" + err.Error())
 	}

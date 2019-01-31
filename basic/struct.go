@@ -2,7 +2,6 @@ package basic
 
 /*
  * 基本数据类型的定义
- * *Request, *Response, Entry都是DataIntfs的实现
  */
 import (
 	"net/http"
@@ -25,7 +24,7 @@ type Response struct {
 /*************************************** 条目 *****************************************/
 //条目：一条Response经过分析之后的结果（golang中map是引用类型）
 //因为处理链是定制的,所以这个结构会尽量灵活以保证能够存储任意的分析结果
-type Entry map[string]interface{}
+type Item map[string]interface{}
 
 /************************************** 错误类型 ***************************************/
 //错误类型
@@ -35,7 +34,7 @@ type ErrorType string
 const (
 	DOWNLOADER_ERROR      ErrorType = "Downloader Error"
 	ANALYZER_ERROR        ErrorType = "Analyzer Error"
-	ENTRY_PROCESSOR_ERROR ErrorType = "Entry Processor Error"
+	PROCESSOR_ERROR 	  ErrorType = "Processor Error"
 )
 
 //错误类型
@@ -67,9 +66,9 @@ type ResponseChannel struct {
 }
 
 //结果通道
-type EntryChannel struct {
+type ItemChannel struct {
 	capacity int
-	entryCh  chan Entry
+	itemCh   chan Item
 }
 
 //错误通道
@@ -86,7 +85,7 @@ type SpiderConf struct {
 
 	RequestChanCapcity  int    //请求通道容量
 	ResponseChanCapcity int    //响应通道容量
-	EntryChanCapcity    int    //条目通道容量
+	ItemChanCapcity     int    //条目通道容量
 	ErrorChanCapcity    int    //错误通道容量
 
 	DownloaderPoolSize  int    //下载器池大小
@@ -98,8 +97,8 @@ type SpiderConf struct {
 	SummaryDetail       bool   //是否打印详细Url
 	SummaryInterval     int    //打印summary的间隔，单位：秒
 
-	LogPath  string            //日志路径
-	LogLevel string            //日志级别
+	LogPath             string //日志路径
+	LogLevel            string //日志级别
 }
 
 /************************************ 全局Conf变量 **********************************/
