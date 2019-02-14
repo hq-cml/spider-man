@@ -92,6 +92,7 @@ func main() {
 	summary := scheduler.NewSchedSummary(schdl, "    ")
 	log.Infoln("The Spider Finish. check times:", cnt)
 	log.Infoln("Final summary:\n", summary.Detail())
+
 }
 
 //检查状态，并在满足持续空闲时间的条件时采取必要措施。
