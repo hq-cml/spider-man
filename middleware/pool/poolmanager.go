@@ -9,6 +9,7 @@ import (
     "errors"
     "fmt"
     "sync"
+    "github.com/hq-cml/spider-go/basic"
 )
 
 //通道管理器的状态的类型。
@@ -29,16 +30,16 @@ var statusNameMap = map[PoolManagerStatus]string {
 
 //Pool管理器实现类型
 type PoolManager struct {
-    pools   map[string]PoolIntfs //池子容器
-    status  PoolManagerStatus    //管理器状态
-    rwmutex sync.RWMutex         //读写锁
+    pools   map[string]basic.SpiderPool //池子容器
+    status  PoolManagerStatus     //管理器状态
+    rwmutex sync.RWMutex          //读写锁
 }
 
 //New
 func NewPoolManager() *PoolManager {
     pm := &PoolManager{
         status:  POOL_MANAGER_STATUS_INITIALIZED,
-        pools: make(map[string]PoolIntfs),
+        pools: make(map[string]basic.SpiderPool),
     }
     return pm
 }
@@ -64,7 +65,7 @@ func (pm *PoolManager) Close() bool {
 }
 
 //注册一个新的通道进入管理器
-func (pm *PoolManager) RegisterPool(name string, c PoolIntfs) error {
+func (pm *PoolManager) RegisterPool(name string, c basic.SpiderPool) error {
     //写锁保护
     pm.rwmutex.Lock()
     defer pm.rwmutex.Unlock()
@@ -78,7 +79,7 @@ func (pm *PoolManager) RegisterPool(name string, c PoolIntfs) error {
 }
 
 //获取request通道
-func (pm *PoolManager) GetPool(name string) (PoolIntfs, error) {
+func (pm *PoolManager) GetPool(name string) (basic.SpiderPool, error) {
     //读锁保护
     pm.rwmutex.RLock()
     defer pm.rwmutex.RUnlock()

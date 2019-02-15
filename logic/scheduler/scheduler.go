@@ -121,7 +121,7 @@ func (schdl *Scheduler) initScheduler(
 	//middleware生成: 池管理器, 注册2种池子
 	schdl.poolManager = pool.NewPoolManager()
 	if dp, err := downloader.NewDownloaderPool(basic.Conf.DownloaderPoolSize,
-		func() pool.EntityIntfs {
+		func() basic.SpiderEntity {
 			//这里是一个闭包, 包了一层是因为NewDownloader有一个参数client
 			//这个和NewAnalyzer是不一样的, NewAnalyzer没有参数, 所以直接作为参数传入
 			//这种用法是的所有的donwloader都公用同一个httpClient, 这符合golang的推荐用法
@@ -132,14 +132,14 @@ func (schdl *Scheduler) initScheduler(
 		return err
 	} else {
 		//注册进入池管理器
-		schdl.poolManager.RegisterPool("downloader", dp)
+		schdl.poolManager.RegisterPool(DOWNLOADER_CODE, dp)
 	}
 	if ap, err := analyzer.NewAnalyzerPool(basic.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
 		//注册进入池管理器
-		schdl.poolManager.RegisterPool("analyzer", ap)
+		schdl.poolManager.RegisterPool(ANALYZER_CODE, ap)
 	}
 
 	//middleware生成；stopSign

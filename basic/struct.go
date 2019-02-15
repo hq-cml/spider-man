@@ -53,6 +53,21 @@ type SpiderChannel interface {
 	Close()
 }
 
+/************************************** 池子相关 *************************************/
+//实体接口类型, 池中的元素
+type SpiderEntity interface {
+	Id() uint64 // ID获取方法
+}
+
+//实体池的接口类型
+type SpiderPool interface {
+	Get() (SpiderEntity, error) //从池子中获取实体
+	Put(e SpiderEntity) error   //归还实体到池子
+	Total() int                //池子总容量
+	Used() int                 //池子中已使用的数量
+	Close()                    //关闭池子的载体Channel
+}
+
 /************************************** 配置相关 *************************************/
 type SpiderConf struct {
 	GrabMaxDepth        int    //抓取最大深度

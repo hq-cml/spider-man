@@ -3,14 +3,14 @@ package channel
 /*
  * channel管理器
  * 框架用到四种类型的数据需要管道传递：请求、响应、Item、Error
- * 均是SpiderChannelIntfs接口的实现类型
+ * 均是SpiderChannel接口的实现类型
  */
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/hq-cml/spider-go/basic"
 	"sync"
+	"github.com/hq-cml/spider-go/basic"
 )
 
 //通道管理器的状态的类型。

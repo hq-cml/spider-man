@@ -5,7 +5,6 @@ import (
     "errors"
     "github.com/hq-cml/spider-go/basic"
     "github.com/hq-cml/spider-go/helper/log"
-    "github.com/hq-cml/spider-go/middleware/pool"
     "github.com/hq-cml/spider-go/logic/downloader"
 )
 
@@ -81,8 +80,8 @@ func (schdl *Scheduler) download(request basic.Request) {
 }
 
 //获取Pool管理器持有的下载器Pool。
-func (schdl *Scheduler) getDownloaderPool() pool.PoolIntfs {
-    p, err := schdl.poolManager.GetPool("downloader")
+func (schdl *Scheduler) getDownloaderPool() basic.SpiderPool {
+    p, err := schdl.poolManager.GetPool(DOWNLOADER_CODE)
     if err != nil {
         panic(err)
     }

@@ -10,42 +10,29 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"github.com/hq-cml/spider-go/basic"
 )
-
-//实体接口类型
-type EntityIntfs interface {
-	Id() uint64 // ID获取方法
-}
-
-//实体池的接口类型
-type PoolIntfs interface {
-	Get() (EntityIntfs, error) //从池子中获取实体
-	Put(e EntityIntfs) error   //归还实体到池子
-	Total() int                //池子总容量
-	Used() int                 //池子中已使用的数量
-	Close()                    //关闭池子的载体Channel
-}
 
 //实体池类型，*Pool实现PoolIntfs接口
 //用一个channel和一个map配合使用实现池子的抽象功能
-type Pool struct {
-	total       int                //池容量
-	etype       reflect.Type       //池子中实体的类型
-	genEntity   func() EntityIntfs //池中实体的生成函数
-	container   chan EntityIntfs   //实体的容器，以channel为载体
-	idContainer map[uint64]bool    //实体id识别器，用于辨别一个实体有效性（是否从该池子取出，true表示在池子中，false表示不在）
-	mutex       sync.Mutex         //针对IDContainer的保护锁
+type CommonPool struct {
+	total       int                 		//池容量
+	etype       reflect.Type        		//池子中实体的类型
+	genEntity   func() basic.SpiderEntity   //池中实体的生成函数
+	container   chan basic.SpiderEntity     //实体的容器，以channel为载体
+	idContainer map[uint64]bool     		//实体id识别器，用于辨别一个实体有效性（是否从该池子取出，true表示在池子中，false表示不在）
+	mutex       sync.Mutex                  //针对IDContainer的保护锁
 }
 
 //惯例New函数，创建实体池
-func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (PoolIntfs, error) {
+func NewCommonPool(total int, entityType reflect.Type, genEntity func() basic.SpiderEntity) (basic.SpiderPool, error) {
 	//参数校验
 	if total == 0 {
 		return nil, errors.New(fmt.Sprintf("NewPool failed.(total=%d)\n", total))
 	}
 
 	//初始化容器载体channel
-	container := make(chan EntityIntfs, total)
+	container := make(chan basic.SpiderEntity, total)
 	idContainer := make(map[uint64]bool)
 	for i := 0; i < total; i++ {
 		newEntity := genEntity()
@@ -57,7 +44,7 @@ func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (
 		idContainer[newEntity.Id()] = true //占用标记
 	}
 
-	pool := &Pool{
+	pool := &CommonPool{
 		total:       total,
 		etype:       entityType,
 		genEntity:   genEntity,
@@ -69,7 +56,7 @@ func NewPool(total int, entityType reflect.Type, genEntity func() EntityIntfs) (
 }
 
 //*Pool实现PoolIntfs接口
-func (pool *Pool) Get() (EntityIntfs, error) {
+func (pool *CommonPool) Get() (basic.SpiderEntity, error) {
 	//channel是并发安全的，无需也不能用锁保护
 	entity, ok := <-pool.container
 	if !ok {
@@ -85,7 +72,7 @@ func (pool *Pool) Get() (EntityIntfs, error) {
 }
 
 //用一个乐观锁保护了IdContainer, 其功能简单说就是一个实体,不能被放入池子两次
-func (pool *Pool) Put(entity EntityIntfs) error {
+func (pool *CommonPool) Put(entity basic.SpiderEntity) error {
 	//入参check：entiy不能为空
 	if entity == nil {
 		return errors.New("The returning entity is invalid!")
@@ -114,7 +101,7 @@ func (pool *Pool) Put(entity EntityIntfs) error {
 //       -1：表示键值对不存在。
 //        0：表示操作失败。其他的goroutine可能已经操作过了
 //        1：表示操作成功。
-func (pool *Pool) compareAndSetIdContainer(entityId uint64, oldValue bool, newValue bool) int8 {
+func (pool *CommonPool) compareAndSetIdContainer(entityId uint64, oldValue bool, newValue bool) int8 {
 	pool.mutex.Lock()
 	defer pool.mutex.Unlock()
 
@@ -129,14 +116,14 @@ func (pool *Pool) compareAndSetIdContainer(entityId uint64, oldValue bool, newVa
 	return 1 //成功获得了操作权
 }
 
-func (pool *Pool) Total() int {
+func (pool *CommonPool) Total() int {
 	return pool.total
 }
 
-func (pool *Pool) Used() int {
+func (pool *CommonPool) Used() int {
 	return pool.total - len(pool.container)
 }
 
-func (pool *Pool) Close() {
+func (pool *CommonPool) Close() {
 	close(pool.container)
 }

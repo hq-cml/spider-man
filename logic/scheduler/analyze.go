@@ -5,7 +5,6 @@ import (
     "errors"
     "github.com/hq-cml/spider-go/basic"
     "github.com/hq-cml/spider-go/helper/log"
-    "github.com/hq-cml/spider-go/middleware/pool"
     "github.com/hq-cml/spider-go/logic/analyzer"
     "github.com/hq-cml/spider-go/helper/util"
     "strings"
@@ -104,8 +103,8 @@ func (schdl *Scheduler) sendToItemChan(item basic.Item, moduleCode string) bool 
 }
 
 //获取Pool管理器持有的分析器Pool。
-func (schdl *Scheduler) getAnalyzerPool() pool.PoolIntfs {
-    p, err := schdl.poolManager.GetPool("analyzer")
+func (schdl *Scheduler) getAnalyzerPool() basic.SpiderPool {
+    p, err := schdl.poolManager.GetPool(ANALYZER_CODE)
     if err != nil {
         panic(err)
     }

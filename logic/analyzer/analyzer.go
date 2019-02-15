@@ -23,13 +23,13 @@ type Analyzer struct {
 }
 
 // 生成分析器的函数类型。
-type GenAnalyzerFunc func() pool.EntityIntfs
+type GenAnalyzerFunc func() basic.SpiderEntity
 
 //下载器专用的id生成器
 var analyzerIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
 //New, 创建分析器
-func NewAnalyzer() pool.EntityIntfs {
+func NewAnalyzer() basic.SpiderEntity {
 	id := analyzerIdGenerator.GetId()
 	return &Analyzer{
 		id: id,
@@ -101,13 +101,13 @@ func (analyzer *Analyzer) Analyze(
 //分析器池子，AnalyzerPool嵌套了一个PoolIntfs成员
 //并且，*AnalyzerPool实现了接口PoolIntfs
 type AnalyzerPool struct {
-	pool  pool.PoolIntfs // 实体池。
+	pool  basic.SpiderPool // 实体池。
 }
 
-func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
+func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (basic.SpiderPool, error) {
 	etype := reflect.TypeOf(gen())
 
-	pool, err := pool.NewPool(total, etype, gen)
+	pool, err := pool.NewCommonPool(total, etype, gen)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (pool.PoolIntfs, error) {
 	return alpool, nil
 }
 
-func (alpool *AnalyzerPool) Get() (pool.EntityIntfs, error) {
+func (alpool *AnalyzerPool) Get() (basic.SpiderEntity, error) {
 	entity, err := alpool.pool.Get()
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (alpool *AnalyzerPool) Get() (pool.EntityIntfs, error) {
 	return entity, nil
 }
 
-func (alpool *AnalyzerPool) Put(analyzer pool.EntityIntfs) error {
+func (alpool *AnalyzerPool) Put(analyzer basic.SpiderEntity) error {
 	return alpool.pool.Put(analyzer)
 }
 

@@ -16,13 +16,13 @@ type Downloader struct {
 }
 
 //生成网页下载器的函数的类型
-type GenDownloaderFunc func() pool.EntityIntfs
+type GenDownloaderFunc func() basic.SpiderEntity
 
 //下载器专用的id生成器
 var downloaderIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
 //New
-func NewDownloader(client *http.Client) pool.EntityIntfs {
+func NewDownloader(client *http.Client) basic.SpiderEntity {
 	id := downloaderIdGenerator.GetId()
 
 	if client == nil {
@@ -57,15 +57,15 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
  * DownloaderPool封装了pool.PoolIntfs！！
  */
 type DownloaderPool struct {
-	pool  pool.PoolIntfs
+	pool  basic.SpiderPool
 }
 
 //New,创建网页下载器
-func NewDownloaderPool(total int, gen GenDownloaderFunc) (pool.PoolIntfs, error) {
+func NewDownloaderPool(total int, gen GenDownloaderFunc) (basic.SpiderPool, error) {
 	//直接调用gen()，利用反射获取类型
 	etype := reflect.TypeOf(gen())
 
-	pool, err := pool.NewPool(total, etype, gen)
+	pool, err := pool.NewCommonPool(total, etype, gen)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func NewDownloaderPool(total int, gen GenDownloaderFunc) (pool.PoolIntfs, error)
 }
 
 //*DownloaderPool实现PoolIntfs
-func (dlpool *DownloaderPool) Get() (pool.EntityIntfs, error) {
+func (dlpool *DownloaderPool) Get() (basic.SpiderEntity, error) {
 	entity, err := dlpool.pool.Get()
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (dlpool *DownloaderPool) Get() (pool.EntityIntfs, error) {
 	return entity, nil
 }
 
-func (dlpool *DownloaderPool) Put(dl pool.EntityIntfs) error {
+func (dlpool *DownloaderPool) Put(dl basic.SpiderEntity) error {
 	return dlpool.pool.Put(dl)
 }
 
