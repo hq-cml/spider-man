@@ -109,10 +109,14 @@ func (schdl *Scheduler) initScheduler(
 
 	//middleware生成: 通道管理器, 注册4个通道
 	schdl.channelManager = chanman.NewChannelManager()
-	schdl.channelManager.RegisterChannel("request", chanman.NewRequestChannel(basic.Conf.RequestChanCapcity))
-	schdl.channelManager.RegisterChannel("response", chanman.NewResponseChannel(basic.Conf.ResponseChanCapcity))
-	schdl.channelManager.RegisterChannel("item", chanman.NewItemChannel(basic.Conf.ItemChanCapcity))
-	schdl.channelManager.RegisterChannel("error", chanman.NewErrorChannel(basic.Conf.ErrorChanCapcity))
+	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_REQUEST,
+		chanman.NewCommonChannel(basic.Conf.RequestChanCapcity, CHANNEL_FLAG_REQUEST))
+	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_RESPONSE,
+		chanman.NewCommonChannel(basic.Conf.ResponseChanCapcity, CHANNEL_FLAG_RESPONSE))
+	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_ITEM,
+		chanman.NewCommonChannel(basic.Conf.ItemChanCapcity, CHANNEL_FLAG_ITEM))
+	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_ERROR,
+		chanman.NewCommonChannel(basic.Conf.ErrorChanCapcity, CHANNEL_FLAG_ERROR))
 
 	//middleware生成: 池管理器, 注册2种池子
 	schdl.poolManager = pool.NewPoolManager()
@@ -305,7 +309,7 @@ func (schdl *Scheduler) IsIdle() bool {
  */
 // 获取通道管理器持有的请求通道。
 func (schdl *Scheduler) getReqestChan() basic.SpiderChannel {
-	requestChan, err := schdl.channelManager.GetChannel("request")
+	requestChan, err := schdl.channelManager.GetChannel(CHANNEL_FLAG_REQUEST)
 	if err != nil {
 		panic(err)
 	}
@@ -314,7 +318,7 @@ func (schdl *Scheduler) getReqestChan() basic.SpiderChannel {
 
 // 获取通道管理器持有的响应通道。
 func (schdl *Scheduler) getResponseChan() basic.SpiderChannel {
-	respChan, err := schdl.channelManager.GetChannel("response")
+	respChan, err := schdl.channelManager.GetChannel(CHANNEL_FLAG_RESPONSE)
 	if err != nil {
 		panic(err)
 	}
@@ -323,7 +327,7 @@ func (schdl *Scheduler) getResponseChan() basic.SpiderChannel {
 
 // 获取通道管理器持有的条目通道。
 func (schdl *Scheduler) getItemChan() basic.SpiderChannel {
-	itemChan, err := schdl.channelManager.GetChannel("item")
+	itemChan, err := schdl.channelManager.GetChannel(CHANNEL_FLAG_ITEM)
 	if err != nil {
 		panic(err)
 	}
@@ -332,7 +336,7 @@ func (schdl *Scheduler) getItemChan() basic.SpiderChannel {
 
 // 获取通道管理器持有的错误通道。
 func (schdl *Scheduler) getErrorChan() basic.SpiderChannel {
-	errorChan, err := schdl.channelManager.GetChannel("error")
+	errorChan, err := schdl.channelManager.GetChannel(CHANNEL_FLAG_ERROR)
 	if err != nil {
 		panic(err)
 	}

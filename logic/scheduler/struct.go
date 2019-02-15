@@ -52,3 +52,11 @@ const (
 	RUNNING_STATUS_RUNNING        = 1
 	RUNNING_STATUS_STOP           = 2
 )
+
+// 通道标志
+const (
+	CHANNEL_FLAG_REQUEST  = "request"
+	CHANNEL_FLAG_RESPONSE = "response"
+	CHANNEL_FLAG_ITEM     = "item"
+	CHANNEL_FLAG_ERROR    = "error"
+)
