@@ -1,18 +1,44 @@
-package basic
+package channel
 
-import "errors"
+import (
+	"errors"
+	"github.com/hq-cml/spider-go/basic"
+)
 
-//TODO 位置要移动到logic中
+//请求通道
+type RequestChannel struct {
+	capacity int
+	reqCh    chan basic.Request
+}
+
+//响应通道
+type ResponseChannel struct {
+	capacity int
+	respCh   chan basic.Response
+}
+
+//结果通道
+type ItemChannel struct {
+	capacity int
+	itemCh   chan basic.Item
+}
+
+//错误通道
+type ErrorChannel struct {
+	capacity int
+	errorCh  chan basic.SpiderError
+}
+
 /*************************** 请求通道相关 ***************************/
-func NewRequestChannel(capacity int) SpiderChannelIntfs {
+func NewRequestChannel(capacity int) basic.SpiderChannel {
 	return &RequestChannel{
 		capacity: capacity,
-		reqCh:    make(chan Request, capacity),
+		reqCh:    make(chan basic.Request, capacity),
 	}
 }
 //实现SpiderChannelIntfs接口
 func (c *RequestChannel) Put(data interface{}) error {
-	req, ok := data.(Request)
+	req, ok := data.(basic.Request)
 	if !ok {
 		return errors.New("Wrong type")
 	}
@@ -35,15 +61,15 @@ func (c *RequestChannel) Close() {
 }
 
 /*************************** 响应通道相关 ***************************/
-func NewResponseChannel(capacity int) SpiderChannelIntfs {
+func NewResponseChannel(capacity int) basic.SpiderChannel {
 	return &ResponseChannel{
 		capacity: capacity,
-		respCh:   make(chan Response, capacity),
+		respCh:   make(chan basic.Response, capacity),
 	}
 }
 //实现SpiderChannelIntfs接口
 func (r *ResponseChannel) Put(data interface{}) error {
-	req, ok := data.(Response)
+	req, ok := data.(basic.Response)
 	if !ok {
 		return errors.New("Wrong type")
 	}
@@ -66,15 +92,15 @@ func (c *ResponseChannel) Close() {
 }
 
 /*************************** 结果通道相关 ***************************/
-func NewItemChannel(capacity int) SpiderChannelIntfs {
+func NewItemChannel(capacity int) basic.SpiderChannel {
 	return &ItemChannel{
 		capacity: capacity,
-		itemCh:  make(chan Item, capacity),
+		itemCh:  make(chan basic.Item, capacity),
 	}
 }
 //实现SpiderChannelIntfs接口
 func (c *ItemChannel) Put(data interface{}) error {
-	req, ok := data.(Item)
+	req, ok := data.(basic.Item)
 	if !ok {
 		return errors.New("Wrong type")
 	}
@@ -97,15 +123,15 @@ func (c *ItemChannel) Close() {
 }
 
 /*************************** 错误通道相关 ***************************/
-func NewErrorChannel(capacity int) SpiderChannelIntfs {
+func NewErrorChannel(capacity int) basic.SpiderChannel {
 	return &ErrorChannel{
 		capacity: capacity,
-		errorCh:  make(chan SpiderError, capacity),
+		errorCh:  make(chan basic.SpiderError, capacity),
 	}
 }
 //实现SpiderChannelIntfs接口
 func (c *ErrorChannel) Put(data interface{}) error {
-	req, ok := data.(SpiderError)
+	req, ok := data.(basic.SpiderError)
 	if !ok {
 		return errors.New("Wrong type")
 	}

@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"github.com/hq-cml/spider-go/logic/processchain"
-	"github.com/hq-cml/spider-go/middleware/channelmanager"
+	chanman "github.com/hq-cml/spider-go/middleware/channel"
 	"github.com/hq-cml/spider-go/middleware/requestcache"
 	"github.com/hq-cml/spider-go/middleware/stopsign"
 	"github.com/hq-cml/spider-go/middleware/pool"
@@ -15,7 +15,7 @@ import (
 type Scheduler struct {
 	grabMaxDepth   int                            // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                         // 起始域名。
-	channelManager *channelmanager.ChannelManager // 通道管理器。
+	channelManager *chanman.ChannelManager // 通道管理器。
 	poolManager    *pool.PoolManager              // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
 	processChain   *processchain.ProcessChain     // 条目处理管道。

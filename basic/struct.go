@@ -45,36 +45,12 @@ type SpiderError struct {
 }
 
 /************************************** 通道相关 *************************************/
-type SpiderChannelIntfs interface {
+type SpiderChannel interface {
 	Put(data interface{}) error
 	Get() (interface{}, bool)
 	Len() int
 	Cap() int
 	Close()
-}
-
-//请求通道
-type RequestChannel struct {
-	capacity int
-	reqCh    chan Request
-}
-
-//响应通道
-type ResponseChannel struct {
-	capacity int
-	respCh   chan Response
-}
-
-//结果通道
-type ItemChannel struct {
-	capacity int
-	itemCh   chan Item
-}
-
-//错误通道
-type ErrorChannel struct {
-	capacity int
-	errorCh  chan SpiderError
 }
 
 /************************************** 配置相关 *************************************/

@@ -13,7 +13,7 @@ import (
 	"github.com/hq-cml/spider-go/logic/analyzer"
 	"github.com/hq-cml/spider-go/logic/downloader"
 	"github.com/hq-cml/spider-go/logic/processchain"
-	"github.com/hq-cml/spider-go/middleware/channelmanager"
+	chanman "github.com/hq-cml/spider-go/middleware/channel"
 	"github.com/hq-cml/spider-go/middleware/requestcache"
 	"github.com/hq-cml/spider-go/middleware/stopsign"
 	"github.com/hq-cml/spider-go/middleware/pool"
@@ -108,11 +108,11 @@ func (schdl *Scheduler) initScheduler(
 	schdl.grabMaxDepth = basic.Conf.GrabMaxDepth
 
 	//middleware生成: 通道管理器, 注册4个通道
-	schdl.channelManager = channelmanager.NewChannelManager()
-	schdl.channelManager.RegisterChannel("request", basic.NewRequestChannel(basic.Conf.RequestChanCapcity))
-	schdl.channelManager.RegisterChannel("response", basic.NewResponseChannel(basic.Conf.ResponseChanCapcity))
-	schdl.channelManager.RegisterChannel("item", basic.NewItemChannel(basic.Conf.ItemChanCapcity))
-	schdl.channelManager.RegisterChannel("error", basic.NewErrorChannel(basic.Conf.ErrorChanCapcity))
+	schdl.channelManager = chanman.NewChannelManager()
+	schdl.channelManager.RegisterChannel("request", chanman.NewRequestChannel(basic.Conf.RequestChanCapcity))
+	schdl.channelManager.RegisterChannel("response", chanman.NewResponseChannel(basic.Conf.ResponseChanCapcity))
+	schdl.channelManager.RegisterChannel("item", chanman.NewItemChannel(basic.Conf.ItemChanCapcity))
+	schdl.channelManager.RegisterChannel("error", chanman.NewErrorChannel(basic.Conf.ErrorChanCapcity))
 
 	//middleware生成: 池管理器, 注册2种池子
 	schdl.poolManager = pool.NewPoolManager()
@@ -280,9 +280,9 @@ func (schdl *Scheduler)IsRunning() bool {
 
 //获得错误通道。调度器以及各个处理模块运行过程中出现的所有错误都会被发送到该通道。
 //若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
-func (schdl *Scheduler) ErrorChan() basic.SpiderChannelIntfs {
+func (schdl *Scheduler) ErrorChan() basic.SpiderChannel {
 	//TODO 曾经出过panic地址为空的段错误
-	if schdl.channelManager.Status() != channelmanager.CHANNEL_MANAGER_STATUS_INITIALIZED ||
+	if schdl.channelManager.Status() != chanman.CHANNEL_MANAGER_STATUS_INITIALIZED ||
 	   schdl.poolManager.Status() != pool.POOL_MANAGER_STATUS_INITIALIZED {
 		return nil
 	}
@@ -304,7 +304,7 @@ func (schdl *Scheduler) IsIdle() bool {
  * 一些公共的函数
  */
 // 获取通道管理器持有的请求通道。
-func (schdl *Scheduler) getReqestChan() basic.SpiderChannelIntfs {
+func (schdl *Scheduler) getReqestChan() basic.SpiderChannel {
 	requestChan, err := schdl.channelManager.GetChannel("request")
 	if err != nil {
 		panic(err)
@@ -313,7 +313,7 @@ func (schdl *Scheduler) getReqestChan() basic.SpiderChannelIntfs {
 }
 
 // 获取通道管理器持有的响应通道。
-func (schdl *Scheduler) getResponseChan() basic.SpiderChannelIntfs {
+func (schdl *Scheduler) getResponseChan() basic.SpiderChannel {
 	respChan, err := schdl.channelManager.GetChannel("response")
 	if err != nil {
 		panic(err)
@@ -322,7 +322,7 @@ func (schdl *Scheduler) getResponseChan() basic.SpiderChannelIntfs {
 }
 
 // 获取通道管理器持有的条目通道。
-func (schdl *Scheduler) getItemChan() basic.SpiderChannelIntfs {
+func (schdl *Scheduler) getItemChan() basic.SpiderChannel {
 	itemChan, err := schdl.channelManager.GetChannel("item")
 	if err != nil {
 		panic(err)
@@ -331,7 +331,7 @@ func (schdl *Scheduler) getItemChan() basic.SpiderChannelIntfs {
 }
 
 // 获取通道管理器持有的错误通道。
-func (schdl *Scheduler) getErrorChan() basic.SpiderChannelIntfs {
+func (schdl *Scheduler) getErrorChan() basic.SpiderChannel {
 	errorChan, err := schdl.channelManager.GetChannel("error")
 	if err != nil {
 		panic(err)

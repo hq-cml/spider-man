@@ -1,4 +1,4 @@
-package channelmanager
+package channel
 
 /*
  * channel管理器
@@ -31,16 +31,16 @@ var statusNameMap = map[ChannelManagerStatus]string {
 
 //通道管理器实现类型
 type ChannelManager struct {
-	channels map[string]basic.SpiderChannelIntfs //通道容器
-	status   ChannelManagerStatus                //channel管理器状态
-	rwmutex  sync.RWMutex                        //读写锁
+	channels map[string]basic.SpiderChannel //通道容器
+	status   ChannelManagerStatus           //channel管理器状态
+	rwmutex  sync.RWMutex                   //读写锁
 }
 
 //New
 func NewChannelManager() *ChannelManager {
 	chm := &ChannelManager {
 		status:  CHANNEL_MANAGER_STATUS_INITIALIZED,
-		channels: make(map[string]basic.SpiderChannelIntfs),
+		channels: make(map[string]basic.SpiderChannel),
 	}
 	return chm
 }
@@ -66,7 +66,7 @@ func (chm *ChannelManager) Close() bool {
 }
 
 //注册一个新的通道进入管理器
-func (chm *ChannelManager) RegisterChannel(name string, c basic.SpiderChannelIntfs) error {
+func (chm *ChannelManager) RegisterChannel(name string, c basic.SpiderChannel) error {
 	//写锁保护
 	chm.rwmutex.Lock()
 	defer chm.rwmutex.Unlock()
@@ -80,7 +80,7 @@ func (chm *ChannelManager) RegisterChannel(name string, c basic.SpiderChannelInt
 }
 
 //获取request通道
-func (chm *ChannelManager) GetChannel(name string) (basic.SpiderChannelIntfs, error) {
+func (chm *ChannelManager) GetChannel(name string) (basic.SpiderChannel, error) {
 	//读锁保护
 	chm.rwmutex.RLock()
 	defer chm.rwmutex.RUnlock()
