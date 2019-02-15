@@ -13,7 +13,7 @@ import (
 	"github.com/hq-cml/spider-go/basic"
 )
 
-//实体池类型，*Pool实现PoolIntfs接口
+//实体池类型，*CommonPool实现SpiderPool接口
 //用一个channel和一个map配合使用实现池子的抽象功能
 type CommonPool struct {
 	total       int                 		//池容量

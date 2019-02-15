@@ -7,8 +7,6 @@ import (
 	"github.com/hq-cml/spider-go/helper/idgen"
 	"github.com/hq-cml/spider-go/helper/log"
 	"net/url"
-	"github.com/hq-cml/spider-go/middleware/pool"
-	"reflect"
 )
 
 /***********************************分析器**********************************/
@@ -17,13 +15,13 @@ import (
  * 1. 条目item，是分析的最终产出结果，应该存下这个item
  * 2. 一个新的请求，如果这样的话，框架应该能够自动继续进行探测
  */
-// 分析器接口的实现类型
+// *Analyzer实现pool.SpiderEntity接口
 type Analyzer struct {
 	id uint64 // ID
 }
-
-// 生成分析器的函数类型。
-type GenAnalyzerFunc func() basic.SpiderEntity
+func (analyzer *Analyzer) Id() uint64 {
+	return analyzer.id
+}
 
 //下载器专用的id生成器
 var analyzerIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
@@ -34,11 +32,6 @@ func NewAnalyzer() basic.SpiderEntity {
 	return &Analyzer{
 		id: id,
 	}
-}
-
-//*Analyzer实现pool.EntityIntfs接口
-func (analyzer *Analyzer) Id() uint64 {
-	return analyzer.id
 }
 
 //AnalyzeResponseFunc是一个分析器的链，每个response都会被链上的每一个分析器分析
@@ -95,48 +88,4 @@ func (analyzer *Analyzer) Analyze(
 	}
 
 	return itemList, requestList, errorList
-}
-
-/**********************************分析器池**********************************/
-//分析器池子，AnalyzerPool嵌套了一个PoolIntfs成员
-//并且，*AnalyzerPool实现了接口PoolIntfs
-type AnalyzerPool struct {
-	pool  basic.SpiderPool // 实体池。
-}
-
-func NewAnalyzerPool(total int, gen GenAnalyzerFunc) (basic.SpiderPool, error) {
-	etype := reflect.TypeOf(gen())
-
-	pool, err := pool.NewCommonPool(total, etype, gen)
-	if err != nil {
-		return nil, err
-	}
-
-	alpool := &AnalyzerPool {
-		pool: pool,
-	}
-	return alpool, nil
-}
-
-func (alpool *AnalyzerPool) Get() (basic.SpiderEntity, error) {
-	entity, err := alpool.pool.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return entity, nil
-}
-
-func (alpool *AnalyzerPool) Put(analyzer basic.SpiderEntity) error {
-	return alpool.pool.Put(analyzer)
-}
-
-func (alpool *AnalyzerPool) Total() int {
-	return alpool.pool.Total()
-}
-func (alpool *AnalyzerPool) Used() int {
-	return alpool.pool.Used()
-}
-func (dlpool *AnalyzerPool) Close() {
-	dlpool.pool.Close()
 }

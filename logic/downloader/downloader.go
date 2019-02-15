@@ -3,20 +3,23 @@ package downloader
 import (
 	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/helper/idgen"
-	"github.com/hq-cml/spider-go/middleware/pool"
+	//"github.com/hq-cml/spider-go/middleware/pool"
 	"net/http"
-	"reflect"
+	//"reflect"
 )
 
 /***********************************下载器**********************************/
-//网页下载器，*Downloader实现EntityIntfs接口
+//网页下载器，*Downloader实现SpiderEntity接口
 type Downloader struct {
 	id         uint64 //ID
 	httpClient http.Client
 }
+func (dl *Downloader) Id() uint64 {
+	return dl.id
+}
 
 //生成网页下载器的函数的类型
-type GenDownloaderFunc func() basic.SpiderEntity
+//type GenDownloaderFunc func() basic.SpiderEntity
 
 //下载器专用的id生成器
 var downloaderIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
@@ -35,11 +38,6 @@ func NewDownloader(client *http.Client) basic.SpiderEntity {
 	}
 }
 
-//*Downloader实现pool.EntityIntfs接口
-func (dl *Downloader) Id() uint64 {
-	return dl.id
-}
-
 //实际下载的工作，将http的返回结果，封装到basic.Response中
 func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	httpReq := req.HttpReq()
@@ -49,56 +47,4 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	}
 	//TODO close? 这个地方感觉稍显怪异
 	return basic.NewResponse(httpResp, req.Depth()), nil
-}
-
-/**********************************下载器池**********************************/
-/*
- * 网页下载器存在于下载器池中，每个下载器有自己的Id
- * DownloaderPool封装了pool.PoolIntfs！！
- */
-type DownloaderPool struct {
-	pool  basic.SpiderPool
-}
-
-//New,创建网页下载器
-func NewDownloaderPool(total int, gen GenDownloaderFunc) (basic.SpiderPool, error) {
-	//直接调用gen()，利用反射获取类型
-	etype := reflect.TypeOf(gen())
-
-	pool, err := pool.NewCommonPool(total, etype, gen)
-	if err != nil {
-		return nil, err
-	}
-
-	dl := &DownloaderPool {
-		pool:  pool,
-	}
-
-	return dl, nil
-}
-
-//*DownloaderPool实现PoolIntfs
-func (dlpool *DownloaderPool) Get() (basic.SpiderEntity, error) {
-	entity, err := dlpool.pool.Get()
-	if err != nil {
-		return nil, err
-	}
-
-	return entity, nil
-}
-
-func (dlpool *DownloaderPool) Put(dl basic.SpiderEntity) error {
-	return dlpool.pool.Put(dl)
-}
-
-func (dlpool *DownloaderPool) Total() int {
-	return dlpool.pool.Total()
-}
-
-func (dlpool *DownloaderPool) Used() int {
-	return dlpool.pool.Used()
-}
-
-func (dlpool *DownloaderPool) Close() {
-	dlpool.pool.Close()
 }

@@ -21,6 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 	"strings"
+	"reflect"
 )
 
 //New
@@ -118,9 +119,13 @@ func (schdl *Scheduler) initScheduler(
 	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_ERROR,
 		chanman.NewCommonChannel(basic.Conf.ErrorChanCapcity, CHANNEL_FLAG_ERROR))
 
-	//middleware生成: 池管理器, 注册2种池子
+	//middleware生成: 池管理器
 	schdl.poolManager = pool.NewPoolManager()
-	if dp, err := downloader.NewDownloaderPool(basic.Conf.DownloaderPoolSize,
+
+	//生成并注册downloader池子
+	if dp, err := pool.NewCommonPool(
+		basic.Conf.DownloaderPoolSize,
+		reflect.TypeOf(downloader.Downloader{}),
 		func() basic.SpiderEntity {
 			//这里是一个闭包, 包了一层是因为NewDownloader有一个参数client
 			//这个和NewAnalyzer是不一样的, NewAnalyzer没有参数, 所以直接作为参数传入
@@ -134,7 +139,13 @@ func (schdl *Scheduler) initScheduler(
 		//注册进入池管理器
 		schdl.poolManager.RegisterPool(DOWNLOADER_CODE, dp)
 	}
-	if ap, err := analyzer.NewAnalyzerPool(basic.Conf.AnalyzerPoolSize, analyzer.NewAnalyzer); err != nil {
+
+	//生成并注册analyzer池子
+	if ap, err := pool.NewCommonPool(
+		basic.Conf.AnalyzerPoolSize,
+		reflect.TypeOf(analyzer.Analyzer{}),
+		analyzer.NewAnalyzer,
+	); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
 		return err
 	} else {
