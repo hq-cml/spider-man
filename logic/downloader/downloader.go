@@ -18,9 +18,6 @@ func (dl *Downloader) Id() uint64 {
 	return dl.id
 }
 
-//生成网页下载器的函数的类型
-//type GenDownloaderFunc func() basic.SpiderEntity
-
 //下载器专用的id生成器
 var downloaderIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 

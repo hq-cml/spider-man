@@ -7,7 +7,7 @@ import (
 )
 
 //从错误通道中接收和报告错误。
-func (schdl *Scheduler)activateProcessError() {
+func (schdl *Scheduler)activateErrorProcessor() {
     go func() {
         defer func() {
             if p := recover(); p != nil {

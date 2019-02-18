@@ -7,9 +7,8 @@ import (
 	"sync/atomic"
 )
 
-//TODO 重命名processChain
 /*
- * Item处理处理链，每个item都会被处理链进行流式处理
+ * Item处理处理链，每个item都会被处理链上的处理器"流式"处理一遍
  * 具体的处理逻辑就是这些链中的每个函数，交由用户自定制
  */
 // 条目处理链类型。
@@ -44,7 +43,7 @@ func NewProcessChain(itemProcessors []basic.ProcessItemFunc) *ProcessChain {
 }
 
 //向处理链发送item，调用处理链自动进行处理
-func (pc *ProcessChain) SendAndProcess(item basic.Item) []error {
+func (pc *ProcessChain) DoProcess(item basic.Item) []error {
 	atomic.AddUint64(&pc.processingNumber, 1)                //原子加1
 	defer atomic.AddUint64(&pc.processingNumber, ^uint64(0)) //原子减1
 	atomic.AddUint64(&pc.sent, 1)

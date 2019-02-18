@@ -56,6 +56,8 @@ func NewCommonPool(total int, entityType reflect.Type, genEntity func() basic.Sp
 }
 
 //*Pool实现PoolIntfs接口
+
+//取出
 func (pool *CommonPool) Get() (basic.SpiderEntity, error) {
 	//channel是并发安全的，无需也不能用锁保护
 	entity, ok := <-pool.container
@@ -71,6 +73,7 @@ func (pool *CommonPool) Get() (basic.SpiderEntity, error) {
 	return entity, nil
 }
 
+//归还
 //用一个乐观锁保护了IdContainer, 其功能简单说就是一个实体,不能被放入池子两次
 func (pool *CommonPool) Put(entity basic.SpiderEntity) error {
 	//入参check：entiy不能为空

@@ -256,10 +256,10 @@ func (schdl *Scheduler)Start(
 	schdl.activateAnalyzers(respAnalyzers)
 
 	//处理链激活
-	schdl.activateProcessChain()
+	schdl.activateItemProcessor()
 
 	//Error处理器激活
-	schdl.activateProcessError()
+	schdl.activateErrorProcessor()
 
 	//Summary打印器激活：定期打印summray报告
 	schdl.activateRecordSummary()
