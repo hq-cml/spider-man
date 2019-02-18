@@ -13,13 +13,13 @@ import (
  * 创建调度器摘要信息。
  * 汇总各个模块的summary，得到整体的摘要
  */
-func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
+func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary {
 	if schdl == nil {
 		return nil
 	}
 	urlCount := len(schdl.urlMap)
 	var urlDetail string
-	if urlCount > 0 {
+	if detail && urlCount > 0 {
 		var buffer bytes.Buffer
 		buffer.WriteByte('\n')
 		for k, _ := range schdl.urlMap {
@@ -35,7 +35,7 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	return &SchedSummary{
 		prefix:              prefix,
 		running:             schdl.running,
-		grabMaxDepth:           schdl.grabMaxDepth,
+		grabMaxDepth:        schdl.grabMaxDepth,
 		chanmanSummary:      schdl.channelManager.Summary(prefix),
 		reqCacheSummary:     schdl.requestCache.Summary(prefix),
 		poolmanSummary:      schdl.poolManager.Summary(prefix),
@@ -46,16 +46,8 @@ func NewSchedSummary(schdl *Scheduler, prefix string) *SchedSummary {
 	}
 }
 
-func (ss *SchedSummary) String() string {
-	return ss.getSummary(false)
-}
-
-func (ss *SchedSummary) Detail() string {
-	return ss.getSummary(true)
-}
-
 // 获取摘要信息。
-func (ss *SchedSummary) getSummary(detail bool) string {
+func (ss *SchedSummary) GetSummary(detail bool) string {
 	//prefix := "* " + ss.prefix
 	template := "*********************************************************************\n"+
 	    "*                            SPIDER SUMMARY \n" +
@@ -110,27 +102,22 @@ func (schdl *Scheduler)activateRecordSummary() {
 				return
 			}
 
-			// 获取摘要信息的各组成部分
+			//获取摘要信息的各组成部分
 			currNumGoroutine := runtime.NumGoroutine()
-			currSchedSummary := NewSchedSummary(schdl, "    ")
-			schedSummaryStr := ""
-			if basic.Conf.SummaryDetail {
-				schedSummaryStr = currSchedSummary.Detail()
-			} else {
-				schedSummaryStr = currSchedSummary.String()
-			}
+			currSchedSummary := NewSchedSummary(schdl, "    ", basic.Conf.SummaryDetail)
+			schedSummaryStr := currSchedSummary.GetSummary(basic.Conf.SummaryDetail)
 
-			// 记录摘要信息
-			info := fmt.Sprintf(summaryForMonitoring,
+			//记录摘要信息
+			content := fmt.Sprintf(summaryForMonitoring,
 				recordCount,
 				currNumGoroutine,
 				time.Since(startTime).String(), //当前时间和startTime的时间间隔
 				schedSummaryStr,
 			)
-			log.Infoln(info)
+			log.Infoln(content)
 			recordCount++
 
-			//time.Sleep(time.Microsecond)
+			//等待
 			d := time.Duration(basic.Conf.SummaryInterval)
 			time.Sleep(d * time.Second)
 		}

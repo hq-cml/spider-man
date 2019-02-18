@@ -7,6 +7,7 @@ import (
 )
 
 //从错误通道中接收和报告错误。
+//目前对于Error处理是同步操作
 func (schdl *Scheduler)activateErrorProcessor() {
     go func() {
         defer func() {

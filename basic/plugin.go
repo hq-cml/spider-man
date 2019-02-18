@@ -20,9 +20,9 @@ type AnalyzeResponseFunc func(httpResp *http.Response, respDepth int) ([]*Item, 
 type ProcessItemFunc func(item Item) (result Item, err error)
 
 /*
- * SpiderPluginIntfs接口定义
+ * SpiderPlugin接口定义
  */
-type SpiderPluginIntfs interface {
+type SpiderPlugin interface {
 	//生成http的client
 	GenHttpClient() 		*http.Client
 	//生成分析函数链

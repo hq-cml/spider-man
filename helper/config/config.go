@@ -17,10 +17,6 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf grabDepth failed!")
 	}
 
-	if c.PluginKey, err = cfg.GetValue("spider", "pluginKey"); err != nil {
-		panic("Load conf pluginKey failed!")
-	}
-
 	if c.RequestChanCapcity, err = cfg.Int("spider", "requestChanCapcity"); err != nil {
 		panic("Load conf requestChanCapcity failed!")
 	}
@@ -61,8 +57,20 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf summaryInterval failed!")
 	}
 
+	if c.PluginKey, err = cfg.GetValue("plugin", "pluginKey"); err != nil {
+		panic("Load conf pluginKey failed!")
+	}
+
 	if c.LogPath, err = cfg.GetValue("log", "logPath"); err != nil {
 		panic("Load conf logPath failed!")
+	}
+
+	if c.Pprof, err = cfg.Bool("pprof", "pprof"); err != nil {
+		panic("Load conf pprof failed!" + err.Error())
+	}
+
+	if c.PprofPort, err = cfg.GetValue("pprof", "pprofPort"); err != nil {
+		panic("Load conf maxIdleCount failed!")
 	}
 
 	return c, nil

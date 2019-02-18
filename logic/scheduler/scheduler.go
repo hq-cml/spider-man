@@ -68,8 +68,8 @@ func (schdl *Scheduler) checkParam (
 	if respAnalyzers == nil {
 		return errors.New("The response Analyzer list is invalid!")
 	}
-	for i, ip := range respAnalyzers {
-		if ip == nil {
+	for i, ra := range respAnalyzers {
+		if ra == nil {
 			return errors.New(fmt.Sprintf("The %dth item analyzer is invalid!", i))
 		}
 	}
@@ -108,7 +108,9 @@ func (schdl *Scheduler) initScheduler(
 	//GrabDepth赋值
 	schdl.grabMaxDepth = basic.Conf.GrabMaxDepth
 
-	//middleware生成: 通道管理器, 注册4个通道
+	//middleware生成: 通道管理器
+
+	//注册4个通道
 	schdl.channelManager = chanman.NewChannelManager()
 	schdl.channelManager.RegisterChannel(CHANNEL_FLAG_REQUEST,
 		chanman.NewCommonChannel(basic.Conf.RequestChanCapcity, CHANNEL_FLAG_REQUEST))
@@ -185,7 +187,7 @@ func (schdl *Scheduler) initScheduler(
  * 整个框架最有可能阻塞的是request通道，因为无法预知分析出的页面会产出多少新的request
  * 如果request通道被打满阻塞，可能会导致整个框架的阻塞，所以利用request缓冲区来避免
  */
-func (schdl *Scheduler)beginToSchedule(interval time.Duration) {
+func (schdl *Scheduler)doSchedule(interval time.Duration) {
 	go func() {
 		for {
 			if schdl.stopSign.Signed() {
@@ -265,7 +267,7 @@ func (schdl *Scheduler)Start(
 	schdl.activateRecordSummary()
 
 	//开始调度
-	schdl.beginToSchedule(10 * time.Millisecond)
+	schdl.doSchedule(10 * time.Millisecond)
 
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。
 	//一切的开始。。。。
@@ -291,17 +293,6 @@ func (schdl *Scheduler)Stop() bool {
 //判断调度器是否正在运行。
 func (schdl *Scheduler)IsRunning() bool {
 	return atomic.LoadUint32(&schdl.running) == RUNNING_STATUS_RUNNING
-}
-
-//获得错误通道。调度器以及各个处理模块运行过程中出现的所有错误都会被发送到该通道。
-//若该方法的结果值为nil，则说明错误通道不可用或调度器已被停止。
-func (schdl *Scheduler) ErrorChan() basic.SpiderChannel {
-	//TODO 曾经出过panic地址为空的段错误
-	if schdl.channelManager.Status() != chanman.CHANNEL_MANAGER_STATUS_INITIALIZED ||
-	   schdl.poolManager.Status() != pool.POOL_MANAGER_STATUS_INITIALIZED {
-		return nil
-	}
-	return schdl.getErrorChan()
 }
 
 //判断所有处理模块是否都处于空闲状态。

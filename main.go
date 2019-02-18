@@ -11,13 +11,16 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+	_ "net/http/pprof"
+	"syscall"
+	"os/signal"
+	"os"
 )
-//TODO 加入pprof
 
 //全局配置
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
 var firstUrl *string = flag.String("f", "http://www.baidu.com", "first url")
-var pluginName *string = flag.String("f", "base", "plugin name")
+var pluginName *string = flag.String("p", "base", "plugin name")
 //var userArgu *string = flag.String("u", "http://www.sogou.com", "user argument")
 
 /*
@@ -27,6 +30,7 @@ var pluginName *string = flag.String("f", "base", "plugin name")
  */
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	//解析参数
 	flag.Parse()
 
@@ -37,9 +41,15 @@ func main() {
 	}
 	basic.Conf = conf
 
+	//启动调试器
+	if conf.Pprof {
+		go func() {
+			http.ListenAndServe("localhost:" + conf.PprofPort, nil)
+		}()
+	}
+
 	//插件列表, 加载所有的支持插件
-	//TODO 这块不太合理
-	var plugins = map[string]basic.SpiderPluginIntfs {
+	var plugins = map[string]basic.SpiderPlugin{
 		"base": plugin.NewBaseSpider(),
 		//....
 	}
@@ -54,13 +64,15 @@ func main() {
 		panic("Not found plugin:" + conf.PluginKey)
 	}
 
-	//创建并启动调度器
-	schdl := scheduler.NewScheduler()
+	//创建首个请求
 	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
 	if err != nil {
 		log.Warnln(err.Error())
 		return
 	}
+
+	//创建并启动调度器
+	schdl := scheduler.NewScheduler()
 	if err := schdl.Start (
 		spiderPlugin.GenHttpClient(),
 		spiderPlugin.GenResponseAnalysers(),
@@ -69,16 +81,7 @@ func main() {
 		panic("Scheduler Start error:" + err.Error())
 	}
 
-	// 监控停止通知器
-	//stopNotifier := make(chan byte, 1)
-
-	//异步得从错误通道中接收和报告错误。
-	//AsyncReportError(schdl, record, stopNotifier)
-
-	//记录摘要信息
-	//AsyncRecordSummary(schdl, false, record, stopNotifier)
-
-	//主协程同步等待，检查空闲状态
+	//主协程同步阻塞轮训，检查空闲状态或第三方信号
 	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
 	if intervalNs < 10 * time.Millisecond { //防止过小的参数值对爬取流程的影响
 		intervalNs = 10 * time.Millisecond
@@ -86,17 +89,18 @@ func main() {
 	if conf.MaxIdleCount < 5 {
 		conf.MaxIdleCount = 5
 	}
-	cnt := loopCheckStatus(schdl, intervalNs, conf.MaxIdleCount)
+	cnt := loopWait(schdl, intervalNs, conf.MaxIdleCount)
 
 	//程序结束, 生成最终报告
-	summary := scheduler.NewSchedSummary(schdl, "    ")
+	summary := scheduler.NewSchedSummary(schdl, "    ", true)
 	log.Infoln("The Spider Finish. check times:", cnt)
-	log.Infoln("Final summary:\n", summary.Detail())
+	log.Infoln("Final summary:\n", summary.GetSummary(true))
 }
 
-//检查状态，并在满足持续空闲时间的条件时采取必要措施。
-//TODO 信号处理
-func loopCheckStatus(schdl *scheduler.Scheduler, intervalNs time.Duration,	maxIdleCount int) uint64{
+//检查状态，并在满足条件时采取必要退出措施。
+//1. 达到了持续空闲时间
+//2. 接收到了结束的信号
+func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount int) uint64{
 	var checkCount uint64
 
 	//等待调度器开启
@@ -104,10 +108,33 @@ func loopCheckStatus(schdl *scheduler.Scheduler, intervalNs time.Duration,	maxId
 		time.Sleep(time.Microsecond)
 	}
 
+	//创建监听退出chan
+	c := make(chan os.Signal)
+	//监听指定信号 ctrl+c kill
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+
 	var idleCount int
 	var firstIdleTime time.Time
+
+	QUIT:
 	for {
-		// 检查调度器的空闲状态
+		//检查信号, 如果收到结束信号, 则退出
+		select {
+		case s := <-c:
+			switch s {
+			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+				log.Infoln("Recv signal: ", s, "Begin To Stop")
+				result := schdl.Stop()
+				log.Infoln("Stop scheduler...", result)
+				break QUIT
+			default:
+				log.Infoln("Recv signal: ", s)
+			}
+		default:
+			//do nothing
+		}
+
+		//检查调度器的空闲状态, 如果满足长时间空闲阈值, 则退出
 		if schdl.IsIdle() {
 			idleCount++
 			if idleCount == 1 {
@@ -116,19 +143,14 @@ func loopCheckStatus(schdl *scheduler.Scheduler, intervalNs time.Duration,	maxId
 			if idleCount >= maxIdleCount {
 				log.Infoln(fmt.Sprintf("The scheduler has been idle for a period of time (about %s). \n" +
 					"Now it will stop!", time.Since(firstIdleTime).String()))
-				//再次检查调度器的空闲状态，确保它已经可以被停止
-				var result string
-				if schdl.Stop() {
-					result = "success"
-				} else {
-					result = "failing"
-				}
-				log.Infoln(fmt.Sprintf("Stop scheduler...%s.", result))
-				break
+				result := schdl.Stop()
+				log.Infoln("Stop scheduler...", result)
+				break QUIT
 			}
 		} else {
 			idleCount = 0
 		}
+
 		checkCount++
 		time.Sleep(intervalNs)
 	}

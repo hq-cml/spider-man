@@ -52,6 +52,7 @@ func (rc *RequestCache) Put(req *basic.Request) bool {
 }
 
 //从请求缓存获取最早被放入且仍在其中的请求。
+//如果cache是空, 则返回nil
 func (rc *RequestCache) Get() *basic.Request {
 	if rc.Length() == 0 {
 		return nil

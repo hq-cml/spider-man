@@ -90,6 +90,9 @@ type SpiderConf struct {
 
 	LogPath             string //日志路径
 	LogLevel            string //日志级别
+
+	Pprof				bool   //是否启动pprof
+	PprofPort			string //pprof端口
 }
 
 /************************************ 全局Conf变量 **********************************/

@@ -18,7 +18,7 @@ type BaseSpider struct {
 }
 
 //New
-func NewBaseSpider() basic.SpiderPluginIntfs {
+func NewBaseSpider() basic.SpiderPlugin {
 	return &BaseSpider{}
 }
 

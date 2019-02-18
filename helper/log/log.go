@@ -28,7 +28,7 @@ func Infoln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Info(format string, v ...interface{}) {
+func Info(v ...interface{}) {
 	v1 := []interface{}{"[INFO]"}
 	v1 = append(v1, v...)
 	spiderLog.Print(v1...)
@@ -44,7 +44,7 @@ func Warnln(v ...interface{}) {
 	spiderLog.Println(v1...)
 }
 
-func Warn(format string, v ...interface{}) {
+func Warn(v ...interface{}) {
 	v1 := []interface{}{"[WARN]"}
 	v1 = append(v1, v...)
 	spiderLog.Print(v1...)
@@ -54,13 +54,13 @@ func Fatalf(format string, v ...interface{}) {
 	spiderLog.Fatalf("[WARN] "+format, v...)
 }
 
-func Fatalln(format string, v ...interface{}) {
+func Fatalln(v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
 	spiderLog.Fatalln(v1...)
 }
 
-func Fatal(format string, v ...interface{}) {
+func Fatal(v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
 	spiderLog.Fatal(v1...)
