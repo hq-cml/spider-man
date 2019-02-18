@@ -148,7 +148,7 @@ func (schdl *Scheduler) initScheduler(
 		reflect.TypeOf(analyzer.Analyzer{}),
 		analyzer.NewAnalyzer,
 	); err != nil {
-		err = errors.New(fmt.Sprintf("Occur error when gen downloader pool: %s\n", err))
+		err = errors.New(fmt.Sprintf("Occur error when gen analyzer pool: %s\n", err))
 		return err
 	} else {
 		//注册进入池管理器
