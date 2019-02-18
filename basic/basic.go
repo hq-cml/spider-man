@@ -15,7 +15,7 @@ func NewRequest(httpReq *http.Request, depth int) *Request {
 	}
 }
 
-//*Request实现DataIntfs接口
+//*Request实现Data接口
 func (req *Request) Valid() bool {
 	return req.httpReq != nil && req.httpReq.URL != nil
 }
@@ -39,7 +39,7 @@ func NewResponse(httpResp *http.Response, depth int) *Response {
 	}
 }
 
-//*Request实现DataIntfs接口
+//*Request实现Data接口
 func (resp *Response) Valid() bool {
 	return resp.httpResp != nil && resp.httpResp.Body != nil
 }

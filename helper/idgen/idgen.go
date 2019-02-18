@@ -17,7 +17,7 @@ func NewIdGenerator() *IdGenerator {
 	return &IdGenerator{}
 }
 
-//*IdGenerator实现IdGeneratorIntfs接口
+//*IdGenerator实现IdGenerator接口
 func (gen *IdGenerator) GetId() uint64 {
 	gen.mutex.Lock()
 	defer gen.mutex.Unlock()

@@ -1,8 +1,8 @@
 package pool
 /*
  * Pool管理器实现
- * 框架用到两种类型的pool：分析器池 & 下载器池
- * 他们均是PoolIntfs接口的实现类型
+ * 框架用到两种pool：分析器池 & 下载器池
+ * 他们均是SpiderPool接口的实现类型
  */
 import (
     "bytes"

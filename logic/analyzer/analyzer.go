@@ -49,6 +49,11 @@ func (analyzer *Analyzer) Analyze(
 	if httpResp == nil {
 		return nil, nil,[]error{errors.New("The http response is invalid!")}
 	}
+	defer func() { //TODO 移动到此处关掉, 这里还需要再确认一下
+		if httpResp.Body != nil {
+			httpResp.Body.Close()
+		}
+	}()
 
 	//日志记录
 	var reqUrl *url.URL = httpResp.Request.URL

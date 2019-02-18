@@ -3,7 +3,7 @@ package pool
 /*
  * 一个简单池子的实现
  * 实体池：池操作的抽象
- * 实体池中的实体的类需要实现EntityIntfs接口
+ * 实体池中的实体的类需要实现Entity接口
  */
 import (
 	"errors"
@@ -55,7 +55,7 @@ func NewCommonPool(total int, entityType reflect.Type, genEntity func() basic.Sp
 	return pool, nil
 }
 
-//*Pool实现PoolIntfs接口
+//*Pool实现Pool接口
 
 //取出
 func (pool *CommonPool) Get() (basic.SpiderEntity, error) {

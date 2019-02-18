@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-//*BaseSpider实现BaseSpiderIntfs接口
+//*BaseSpider实现SpiderPlugin接口
 type BaseSpider struct {
 }
 
@@ -54,11 +54,11 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 	//对响应做一些处理
 	var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
 	var httpRespBody io.ReadCloser = httpResp.Body
-	defer func() { //TODO 这一块应该放到框架中去？？？？
-		if httpRespBody != nil {
-			httpRespBody.Close()
-		}
-	}()
+	//defer func() { //TODO 这一块应该放到框架中去？？？？
+	//	if httpRespBody != nil {
+	//		httpRespBody.Close()
+	//	}
+	//}()
 
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}

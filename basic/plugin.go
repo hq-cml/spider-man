@@ -2,7 +2,7 @@ package basic
 
 /*
  * Plugin定义
- * 定义SpiderPluginIntfs接口，实现了这个接口的结构即可作为插件，嵌入Spider框架
+ * 定义SpiderPlugin接口，实现了这个接口的结构即可作为插件，嵌入Spider框架
  */
 
 import (
