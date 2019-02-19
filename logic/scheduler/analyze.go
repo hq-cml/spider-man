@@ -43,6 +43,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
         }
     }()
 
+    //申请分析令牌
     entity, err := schdl.getAnalyzerPool().Get()
     if err != nil {
         msg := fmt.Sprintf("Analyzer pool error: %s", err)

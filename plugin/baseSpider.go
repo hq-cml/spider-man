@@ -70,6 +70,7 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 		return nil, nil, errs
 	}
 
+	uniqUrl := map[string]bool{}
 	//查找“A”标签并提取链接地址
 	doc.Find("a").Each(func(index int, sel *goquery.Selection) {
 		href, exists := sel.Attr("href")
@@ -90,6 +91,11 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 			if !aUrl.IsAbs() {
 				aUrl = reqUrl.ResolveReference(aUrl)
 			}
+
+			if _, ok := uniqUrl[aUrl.String()]; ok {  //去除重复的url
+				return
+			}
+			uniqUrl[aUrl.String()] = true
 			httpReq, err := http.NewRequest("GET", aUrl.String(), nil)
 			if err != nil {
 				errs = append(errs, err)

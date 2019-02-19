@@ -71,15 +71,15 @@ func (analyzer *Analyzer) Analyze(
 			continue
 		}
 
-		eList, rList, errList := analyzeFunc(httpResp, respDepth)
+		iList, rList, errList := analyzeFunc(httpResp, respDepth)
 
-		if eList != nil && len(eList) > 0 {
-			itemList = append(itemList, eList...)
+		if iList != nil && len(iList) > 0 {
+			itemList = append(itemList, iList...)
 		}
 
 		if rList != nil && len(rList) > 0 {
 			for _, req := range rList {
-				newDepth := respDepth + 1
+				newDepth := respDepth + 1    //TODO 这个+1应该放到plugin中去
 				if req.Depth() != newDepth { //TODO 从插件的实现来看,这个地方是不可能出现==的情况的...
 					req = basic.NewRequest(req.HttpReq(), newDepth)
 				}

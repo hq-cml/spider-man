@@ -73,5 +73,9 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf maxIdleCount failed!")
 	}
 
+	if c.Step, err = cfg.Bool("debug", "step"); err != nil {
+		panic("Load conf step failed!" + err.Error())
+	}
+
 	return c, nil
 }

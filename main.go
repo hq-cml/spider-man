@@ -19,7 +19,7 @@ import (
 
 //全局配置
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
-var firstUrl *string = flag.String("f", "http://www.baidu.com", "first url")
+var firstUrl *string = flag.String("f", "http://www.360.cn", "first url")
 var pluginName *string = flag.String("p", "base", "plugin name")
 //var userArgu *string = flag.String("u", "http://www.sogou.com", "user argument")
 
@@ -100,7 +100,7 @@ func main() {
 //检查状态，并在满足条件时采取必要退出措施。
 //1. 达到了持续空闲时间
 //2. 接收到了结束的信号
-func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount int) uint64{
+func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount int) uint64 {
 	var checkCount uint64
 
 	//等待调度器开启
@@ -108,10 +108,11 @@ func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount
 		time.Sleep(time.Microsecond)
 	}
 
-	//创建监听退出chan
-	c := make(chan os.Signal)
-	//监听指定信号 ctrl+c kill
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	//创建监听退出chan, 这里遇到一个坑
+	//通过查阅Notify源码注释看到, 如果chan长度是0, 则select不能有defalut分支
+	//因为这里有default分支,则长度不能为0, , 否则会丢失signal
+	c := make(chan os.Signal, 10)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT) //监听指定信号
 
 	var idleCount int
 	var firstIdleTime time.Time
@@ -123,7 +124,7 @@ func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount
 		case s := <-c:
 			switch s {
 			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-				log.Infoln("Recv signal: ", s, "Begin To Stop")
+				log.Infoln("Recv signal:", s, ". Begin To Stop")
 				result := schdl.Stop()
 				log.Infoln("Stop scheduler...", result)
 				break QUIT
@@ -131,7 +132,8 @@ func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount
 				log.Infoln("Recv signal: ", s)
 			}
 		default:
-			log.Infoln("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ")
+			//do nothing
+			//因为存在default分支, 保证程序不会阻塞在此, 但是也要求chan os.Signal长度不能为0
 		}
 
 		//检查调度器的空闲状态, 如果满足长时间空闲阈值, 则退出

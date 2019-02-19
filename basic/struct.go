@@ -93,6 +93,8 @@ type SpiderConf struct {
 
 	Pprof				bool   //是否启动pprof
 	PprofPort			string //pprof端口
+
+	Step                bool   //调试用, 一步步的走
 }
 
 /************************************ 全局Conf变量 **********************************/

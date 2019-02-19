@@ -207,6 +207,10 @@ func (schdl *Scheduler)doSchedule(interval time.Duration) {
 					return
 				}
 
+				//调试模式, 则每5秒执行一次
+				if basic.Conf.Step {
+					time.Sleep(100 * time.Second)
+				}
 				schdl.getReqestChan().Put(*temp)
 				remainder--
 			}
