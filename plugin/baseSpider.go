@@ -43,7 +43,9 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
 	return itemProcessors
 }
 
-//响应解析函数。只解析“A”标签。
+//分析函数
+//分析出“A”标签,作为新的request
+//分析出满足条件的
 func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
@@ -109,13 +111,19 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 		//将新分析出来的Item，放入dataList
 		if text != "" {
 			imap := make(map[string]interface{})
-			imap["parent_url"] = reqUrl
-			imap["a.text"] = text
-			imap["a.index"] = index
+			imap["href"] = href
+			imap["text"] = text
+			imap["index"] = index
 			item := basic.Item(imap)
 			itemList = append(itemList, &item)
 		}
 	})
+
+	imap := make(map[string]interface{})
+	imap["body"] = doc.Find("body").Text()
+	item := basic.Item(imap)
+	itemList = append(itemList, &item)
+
 	return itemList, requestList, errs
 }
 
@@ -137,5 +145,5 @@ func processItem(item basic.Item) (result basic.Item, err error) {
 	time.Sleep(10 * time.Millisecond)
 	s, _ := json.Marshal(result)
 	fmt.Println("RRRRRRRRRRRRRRRRR", string(s))
-	return result, nil
+	return
 }
