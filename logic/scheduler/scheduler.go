@@ -21,7 +21,6 @@ import (
 	"sync/atomic"
 	"time"
 	"strings"
-	"reflect"
 )
 
 //New
@@ -127,11 +126,9 @@ func (schdl *Scheduler) initScheduler(
 	//生成并注册downloader池子
 	if dp, err := pool.NewCommonPool(
 		basic.Conf.DownloaderPoolSize,
-		reflect.TypeOf(downloader.Downloader{}),
 		func() basic.SpiderEntity {
-			//这里是一个闭包, 包了一层是因为NewDownloader有一个参数client
-			//这个和NewAnalyzer是不一样的, NewAnalyzer没有参数, 所以直接作为参数传入
-			//这种用法是的所有的donwloader都公用同一个httpClient, 这符合golang的推荐用法
+			//这里是一个闭包, NewDownloader有一个参数client
+			//所有的donwloader都公用同一个httpClient, 这符合golang的推荐用法
 			return downloader.NewDownloader(httpClient)
 		},
 	); err != nil {
@@ -145,8 +142,9 @@ func (schdl *Scheduler) initScheduler(
 	//生成并注册analyzer池子
 	if ap, err := pool.NewCommonPool(
 		basic.Conf.AnalyzerPoolSize,
-		reflect.TypeOf(analyzer.Analyzer{}),
-		analyzer.NewAnalyzer,
+		func() basic.SpiderEntity {
+			return analyzer.NewAnalyzer()
+		},
 	); err != nil {
 		err = errors.New(fmt.Sprintf("Occur error when gen analyzer pool: %s\n", err))
 		return err

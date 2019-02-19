@@ -111,7 +111,7 @@ func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount
 	//创建监听退出chan
 	c := make(chan os.Signal)
 	//监听指定信号 ctrl+c kill
-	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
+	signal.Notify(c, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	var idleCount int
 	var firstIdleTime time.Time
@@ -131,7 +131,7 @@ func loopWait(schdl *scheduler.Scheduler, intervalNs time.Duration, maxIdleCount
 				log.Infoln("Recv signal: ", s)
 			}
 		default:
-			//do nothing
+			log.Infoln("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ")
 		}
 
 		//检查调度器的空闲状态, 如果满足长时间空闲阈值, 则退出

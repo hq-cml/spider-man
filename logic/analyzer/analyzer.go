@@ -27,7 +27,7 @@ func (analyzer *Analyzer) Id() uint64 {
 var analyzerIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
 //New, 创建分析器
-func NewAnalyzer() basic.SpiderEntity {
+func NewAnalyzer() *Analyzer {
 	id := analyzerIdGenerator.GetId()
 	return &Analyzer{
 		id: id,

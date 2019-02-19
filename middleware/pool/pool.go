@@ -25,7 +25,7 @@ type CommonPool struct {
 }
 
 //惯例New函数，创建实体池
-func NewCommonPool(total int, entityType reflect.Type, genEntity func() basic.SpiderEntity) (basic.SpiderPool, error) {
+func NewCommonPool(total int, genEntity func() basic.SpiderEntity) (basic.SpiderPool, error) {
 	//参数校验
 	if total == 0 {
 		return nil, errors.New(fmt.Sprintf("NewPool failed.(total=%d)\n", total))
@@ -36,17 +36,13 @@ func NewCommonPool(total int, entityType reflect.Type, genEntity func() basic.Sp
 	idContainer := make(map[uint64]bool)
 	for i := 0; i < total; i++ {
 		newEntity := genEntity()
-		if entityType != reflect.TypeOf(newEntity) {
-			errMsg := fmt.Sprintf("New Pool failed. genEntity() is not %s\n", entityType)
-			return nil, errors.New(errMsg)
-		}
 		container <- newEntity 			   //实体入池
 		idContainer[newEntity.Id()] = true //占用标记
 	}
 
 	pool := &CommonPool{
 		total:       total,
-		etype:       entityType,
+		etype:       reflect.TypeOf(genEntity()),
 		genEntity:   genEntity,
 		container:   container,
 		idContainer: idContainer,

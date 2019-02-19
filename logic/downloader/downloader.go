@@ -22,7 +22,7 @@ func (dl *Downloader) Id() uint64 {
 var downloaderIdGenerator *idgen.IdGenerator = idgen.NewIdGenerator()
 
 //New
-func NewDownloader(client *http.Client) basic.SpiderEntity {
+func NewDownloader(client *http.Client) *Downloader {
 	id := downloaderIdGenerator.GetId()
 
 	if client == nil {
