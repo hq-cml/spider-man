@@ -274,7 +274,7 @@ func (schdl *Scheduler)Start(
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。
 	//一切的开始。。。。
 	firstReq := basic.NewRequest(firstHttpReq, 0) //深度0
-	schdl.requestCache.Put(firstReq)
+	schdl.sendRequestToCache(*firstReq, SCHEDULER_CODE)
 
 	return nil
 }

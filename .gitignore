@@ -2,4 +2,5 @@
 spider-go.iml
 test.go
 spider-go
-log/
+log/spider.log
+s.log

@@ -21,7 +21,7 @@ import (
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
 var firstUrl *string = flag.String("f", "http://www.360.cn", "first url")
 var pluginName *string = flag.String("p", "base", "plugin name")
-//var userArgu *string = flag.String("u", "http://www.sogou.com", "user argument")
+var userData *string = flag.String("u", "老周", "user argument")
 
 /*
  * 主函数：
@@ -50,12 +50,12 @@ func main() {
 
 	//插件列表, 加载所有的支持插件
 	var plugins = map[string]basic.SpiderPlugin{
-		"base": plugin.NewBaseSpider(),
+		"base": plugin.NewBaseSpider(*userData),
 		//....
 	}
 
 	//创建日志文件并初始化日志句柄
-	log.InitLog(conf.LogPath)
+	log.InitLog(conf.LogPath, conf.LogLevel)
 	log.Infof("------------Spider Begin To Run------------")
 
 	//插件指定加载

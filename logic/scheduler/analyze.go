@@ -7,7 +7,6 @@ import (
     "github.com/hq-cml/spider-go/helper/log"
     "github.com/hq-cml/spider-go/logic/analyzer"
     "github.com/hq-cml/spider-go/helper/util"
-    "strings"
 )
 
 /*
@@ -78,10 +77,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
     //将分析出的request放到request缓冲
     if requestList != nil {
         for _, req := range requestList {
-            if b := schdl.sendRequestToCache(*req, moudleCode); b {
-                //标记URL已经扫过
-                schdl.urlMap[req.HttpReq().URL.String()] = true
-            }
+            schdl.sendRequestToCache(*req, moudleCode)
         }
     }
 
@@ -127,6 +123,7 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
     }
 
     schdl.requestCache.Put(&request)
+    schdl.urlMap[request.HttpReq().URL.String()] = true
     return true
 }
 
@@ -144,10 +141,11 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
         return false
     }
 
-    if strings.ToLower(requestUrl.Scheme) != "http" {
-        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
-        return false
-    }
+    //TODO 大坑....
+    //if strings.ToLower(requestUrl.Scheme) != "http" {
+    //    log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
+    //    return false
+    //}
 
     //已经处理过的URL不再处理
     if _, ok := schdl.urlMap[requestUrl.String()]; ok {
@@ -155,12 +153,13 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
         return false
     }
 
-    //只有主域名相同的URL才是合法的
-    //TODO 这个地方可以不一定
-    if pd, _ := util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
-        log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
-            httpRequest.Host, schdl.primaryDomain, requestUrl)
-        return false
+    //如果配置只能在站内爬取, 则只有主域名相同的URL才是合法的
+    if !basic.Conf.CrossSite {
+        if pd, _ := util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
+            log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
+                httpRequest.Host, schdl.primaryDomain, requestUrl)
+            return false
+        }
     }
 
     //请求深度不能超过阈值

@@ -8,50 +8,102 @@ import (
 	"os"
 )
 
-var spiderLog *log.Logger
+type SpiderLog struct {
+	*log.Logger
+	level   int
+}
 
-func InitLog(path string) {
+const (
+	SPIDER_LOG_LEVEL_DEBUG = iota
+	SPIDER_LOG_LEVEL_INFO
+	SPIDER_LOG_LEVEL_WARN
+	SPIDER_LOG_LEVEL_FATAL
+)
+
+var spiderLog SpiderLog
+
+func InitLog(path string, level string) {
 	f, err := os.OpenFile(path, os.O_RDWR | os.O_CREATE | os.O_APPEND , 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
-	spiderLog = log.New(f, "", log.LstdFlags)
+
+	levelInt := SPIDER_LOG_LEVEL_DEBUG
+	switch level {
+	case "debug", "Debug", "DEBUG":
+		levelInt = SPIDER_LOG_LEVEL_DEBUG
+	case "info", "Info", "INFO":
+		levelInt = SPIDER_LOG_LEVEL_INFO
+	case "warn", "Warn", "WARN":
+		levelInt = SPIDER_LOG_LEVEL_WARN
+	case "fatal", "Fatal", "FATAL":
+		levelInt = SPIDER_LOG_LEVEL_FATAL
+	}
+	spiderLog = SpiderLog {
+		Logger:log.New(f, "", log.LstdFlags),
+		level: levelInt,
+	}
+}
+
+func Debugf(format string, v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
+	spiderLog.Printf("[DEBUG] "+format, v...)
+}
+
+func Debugln(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
+	v1 := []interface{}{"[DEBUG]"}
+	v1 = append(v1, v...)
+	spiderLog.Println(v1...)
+}
+
+func Debug(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_DEBUG {return}
+	v1 := []interface{}{"[DEBUG]"}
+	v1 = append(v1, v...)
+	spiderLog.Print(v1...)
 }
 
 func Infof(format string, v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	spiderLog.Printf("[INFO] "+format, v...)
 }
 
 func Infoln(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	v1 := []interface{}{"[INFO]"}
 	v1 = append(v1, v...)
 	spiderLog.Println(v1...)
 }
 
 func Info(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_INFO {return}
 	v1 := []interface{}{"[INFO]"}
 	v1 = append(v1, v...)
 	spiderLog.Print(v1...)
 }
 
 func Warnf(format string, v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	spiderLog.Printf("[WARN] "+format, v...)
 }
 
 func Warnln(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	v1 := []interface{}{"[WARN]"}
 	v1 = append(v1, v...)
 	spiderLog.Println(v1...)
 }
 
 func Warn(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	v1 := []interface{}{"[WARN]"}
 	v1 = append(v1, v...)
 	spiderLog.Print(v1...)
 }
 
 func Fatalf(format string, v ...interface{}) {
-	spiderLog.Fatalf("[WARN] "+format, v...)
+	spiderLog.Fatalf("[FATAL] "+format, v...)
 }
 
 func Fatalln(v ...interface{}) {

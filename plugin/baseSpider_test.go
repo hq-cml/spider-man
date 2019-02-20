@@ -8,25 +8,28 @@ import (
 )
 
 func TestParseATag(t *testing.T) {
-	resp, err := http.DefaultClient.Get("https://www.360.cn")
+	resp, err := http.DefaultClient.Get("https://www.jianshu.com/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	items, reqs, _ := parseForATag(resp, 0)
+	items, _, errors := parseForATag(resp, 0)
 
 	t.Log("分析出的URL列表:")
-	for _, req := range reqs {
-		t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
-	}
+	//for _, req := range reqs {
+	//	t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
+	//}
 
 	t.Log("分析出的Item列表:")
 	for _, item := range items {
-		t.Log(*item)
+		t.Log((*item)["url"])
+		t.Log((*item)["contentType"])
 	}
 
-	//t.Log(errs)
-
+	t.Log("分析出的Error列表:")
+	for _, err := range errors {
+		t.Log(err)
+	}
 }
 
 func TestGoQuery(t *testing.T) {
@@ -52,4 +55,13 @@ func TestGoQuery(t *testing.T) {
 	dom.Find("body").Each(func(i int, selection *goquery.Selection) {
 		t.Log(i, selection.Text())
 	})
+}
+
+func TestHttpRequest(t *testing.T) {
+	firstHttpReq, err := http.NewRequest("GET", "https://www.360.cn/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(firstHttpReq.URL.Scheme)
 }

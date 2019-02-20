@@ -9,15 +9,19 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	iconv "github.com/djimenez/iconv-go"
 )
 
 //*BaseSpider实现SpiderPlugin接口
 type BaseSpider struct {
+	userData interface{}
 }
 
 //New
-func NewBaseSpider() basic.SpiderPlugin {
-	return &BaseSpider{}
+func NewBaseSpider(v interface{}) basic.SpiderPlugin {
+	return &BaseSpider{
+		userData: v,
+	}
 }
 
 //生成HTTP客户端
@@ -27,8 +31,12 @@ func (b *BaseSpider) GenHttpClient() *http.Client {
 
 //获得响应解析函数的序列
 func (b *BaseSpider) GenResponseAnalysers() []basic.AnalyzeResponseFunc {
-	analyzers := []basic.AnalyzeResponseFunc{
-		parseForATag,
+	analyzers := []basic.AnalyzeResponseFunc {
+		//闭包
+		func(httpResp *http.Response, respDepth int) ([]*basic.Item, []*basic.Request, []error) {
+			items, reqs, errs :=  parseForATag(httpResp, respDepth, b.userData)
+			return items, reqs, errs
+		},
 	}
 	return analyzers
 }
@@ -44,7 +52,7 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
 //分析函数
 //分析出“A”标签,作为新的request
 //分析出满足条件的
-func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*basic.Request, []error) {
+func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
 		err := errors.New(fmt.Sprintf("Unsupported status code %d. (httpResponse=%v)", httpResp))
@@ -53,7 +61,8 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 
 	//对响应做一些处理
 	var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
-	var httpRespBody io.ReadCloser = httpResp.Body
+	var httpRespBody io.Reader
+	var err error
 	//defer func() { //TODO 这一块应该放到框架中去？？？？
 	//	if httpRespBody != nil {
 	//		httpRespBody.Close()
@@ -64,16 +73,28 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 	requestList := []*basic.Request{}
 	errs := make([]error, 0)
 
-	//TODO 增加编码智能判断
-	//utfBody, err := iconv.NewReader(httpRespBody, "gb2312", "utf-8")
-	//if err != nil {
-	//	errs = append(errs, err)
-	//	return nil, nil, errs
-	//}
+	//网页编码智能判断, 非utf8 => utf8
+	contentType := httpResp.Header.Get("content-type")
+	switch {
+	case strings.Contains(strings.ToLower(contentType), "utf8"),
+		 strings.Contains(strings.ToLower(contentType), "utf-8"):
+		httpRespBody = httpResp.Body
+
+	case strings.Contains(strings.ToLower(contentType), "gb2312"):
+		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
+		if err != nil {
+			errs = append(errs, err)
+			return nil, nil, errs
+		}
+
+	default:
+		err := errors.New(fmt.Sprintf("Unsupported charset=%v", contentType))
+		return nil, nil, []error{err}
+	}
+
 
 	//开始解析
 	doc, err := goquery.NewDocumentFromReader(httpRespBody)
-	//doc, err := goquery.NewDocumentFromReader(utfBody)
 	if err != nil {
 		errs = append(errs, err)
 		return nil, nil, errs
@@ -126,11 +147,18 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 		//}
 	})
 
+	//关键字查找, 记录符合条件的body作为item
 	body := doc.Find("body").Text()
-	if strings.Contains(body, "周鸿祎") {
+	searchContent, ok := userData.(string)
+	if !ok {
+		err := errors.New(fmt.Sprintf("Unsupported userData=%v", userData))
+		return nil, nil, []error{err}
+	}
+	if strings.Contains(body, searchContent) {
 		imap := make(map[string]interface{})
 		imap["body"] = body
 		imap["url"] = reqUrl.String()
+		imap["contentType"] = contentType
 		item := basic.Item(imap)
 		itemList = append(itemList, &item)
 	}

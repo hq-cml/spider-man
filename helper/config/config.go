@@ -53,6 +53,10 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf summaryDetail failed!" + err.Error())
 	}
 
+	if c.CrossSite, err = cfg.Bool("spider", "crossSite"); err != nil {
+		panic("Load conf crossSite failed!" + err.Error())
+	}
+
 	if c.SummaryInterval, err = cfg.Int("spider", "summaryInterval"); err != nil {
 		panic("Load conf summaryInterval failed!")
 	}
