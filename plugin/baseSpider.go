@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -10,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 //*BaseSpider实现SpiderPlugin接口
@@ -65,8 +63,17 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errs := make([]error, 0)
+
+	//TODO 增加编码智能判断
+	//utfBody, err := iconv.NewReader(httpRespBody, "gb2312", "utf-8")
+	//if err != nil {
+	//	errs = append(errs, err)
+	//	return nil, nil, errs
+	//}
+
 	//开始解析
 	doc, err := goquery.NewDocumentFromReader(httpRespBody)
+	//doc, err := goquery.NewDocumentFromReader(utfBody)
 	if err != nil {
 		errs = append(errs, err)
 		return nil, nil, errs
@@ -98,7 +105,7 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 				return
 			}
 			uniqUrl[aUrl.String()] = true
-			httpReq, err := http.NewRequest("GET", aUrl.String(), nil)
+			httpReq, err := http.NewRequest(http.MethodGet, aUrl.String(), nil)
 			if err != nil {
 				errs = append(errs, err)
 			} else {
@@ -107,22 +114,26 @@ func parseForATag(httpResp *http.Response, grabDepth int) ([]*basic.Item, []*bas
 				requestList = append(requestList, req)
 			}
 		}
-		text := strings.TrimSpace(sel.Text())
-		//将新分析出来的Item，放入dataList
-		if text != "" {
-			imap := make(map[string]interface{})
-			imap["href"] = href
-			imap["text"] = text
-			imap["index"] = index
-			item := basic.Item(imap)
-			itemList = append(itemList, &item)
-		}
+		//text := strings.TrimSpace(sel.Text())
+		////将新分析出来的Item，放入dataList
+		//if text != "" {
+		//	imap := make(map[string]interface{})
+		//	imap["href"] = href
+		//	imap["text"] = text
+		//	imap["index"] = index
+		//	item := basic.Item(imap)
+		//	itemList = append(itemList, &item)
+		//}
 	})
 
-	imap := make(map[string]interface{})
-	imap["body"] = doc.Find("body").Text()
-	item := basic.Item(imap)
-	itemList = append(itemList, &item)
+	body := doc.Find("body").Text()
+	if strings.Contains(body, "周鸿祎") {
+		imap := make(map[string]interface{})
+		imap["body"] = body
+		imap["url"] = reqUrl.String()
+		item := basic.Item(imap)
+		itemList = append(itemList, &item)
+	}
 
 	return itemList, requestList, errs
 }
@@ -138,12 +149,7 @@ func processItem(item basic.Item) (result basic.Item, err error) {
 	for k, v := range item {
 		result[k] = v
 	}
-	if _, ok := result["number"]; !ok {
-		result["number"] = len(result)
-	}
-	//TODO 延时查看效果 ？？？
-	time.Sleep(10 * time.Millisecond)
-	s, _ := json.Marshal(result)
-	fmt.Println("RRRRRRRRRRRRRRRRR", string(s))
+
+	fmt.Println("结果：", result["url"])
 	return
 }
