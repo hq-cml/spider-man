@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	iconv "github.com/djimenez/iconv-go"
+	"github.com/djimenez/iconv-go"
+	"io/ioutil"
+	"bytes"
 )
 
 //*BaseSpider实现SpiderPlugin接口
@@ -49,9 +51,11 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
 	return itemProcessors
 }
 
-//分析函数
-//分析出“A”标签,作为新的request
-//分析出满足条件的
+/*
+ * 分析函数
+ * 分析出“A”标签,作为新的request
+ * 分析出满足条件的结果作为item
+ */
 func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
@@ -63,35 +67,16 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 	var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
 	var httpRespBody io.Reader
 	var err error
-	//defer func() { //TODO 这一块应该放到框架中去？？？？
-	//	if httpRespBody != nil {
-	//		httpRespBody.Close()
-	//	}
-	//}()
 
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errs := make([]error, 0)
 
 	//网页编码智能判断, 非utf8 => utf8
-	contentType := httpResp.Header.Get("content-type")
-	switch {
-	case strings.Contains(strings.ToLower(contentType), "utf8"),
-		 strings.Contains(strings.ToLower(contentType), "utf-8"):
-		httpRespBody = httpResp.Body
-
-	case strings.Contains(strings.ToLower(contentType), "gb2312"):
-		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
-		if err != nil {
-			errs = append(errs, err)
-			return nil, nil, errs
-		}
-
-	default:
-		err := errors.New(fmt.Sprintf("Unsupported charset=%v", contentType))
+	httpRespBody, contentType, err := convertCharset(httpResp)
+	if err != nil {
 		return nil, nil, []error{err}
 	}
-
 
 	//开始解析
 	doc, err := goquery.NewDocumentFromReader(httpRespBody)
@@ -158,12 +143,58 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 		imap := make(map[string]interface{})
 		imap["body"] = body
 		imap["url"] = reqUrl.String()
-		imap["contentType"] = contentType
+		imap["charset"] = contentType
 		item := basic.Item(imap)
 		itemList = append(itemList, &item)
 	}
 
 	return itemList, requestList, errs
+}
+
+//识别编码并转换到utf8
+func convertCharset(httpResp *http.Response) (httpRespBody io.Reader, orgCharset string, err error) {
+	//先尝试从http header的content-type中直接猜测
+	contentType := httpResp.Header.Get("content-type")
+	switch {
+	case strings.Contains(strings.ToLower(contentType), "utf8"),
+		strings.Contains(strings.ToLower(contentType), "utf-8"):
+		httpRespBody = httpResp.Body
+		return httpRespBody, "utf8", nil
+
+	case strings.Contains(strings.ToLower(contentType), "gb2312"):
+		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
+		if err != nil {
+			return nil, "", err
+		}
+		return httpRespBody, "gb2312", nil
+	}
+
+	//这个地方是一个约定的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
+	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
+	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
+	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
+	p, _ := ioutil.ReadAll(httpResp.Body)
+	httpResp.Body.Close()
+	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+
+	guessType := http.DetectContentType(p)
+	switch {
+	case strings.Contains(strings.ToLower(guessType), "utf8"),
+		strings.Contains(strings.ToLower(guessType), "utf-8"):
+		httpRespBody = httpResp.Body
+		return httpRespBody, "utf8", nil
+
+	case strings.Contains(strings.ToLower(guessType), "gb2312"):
+		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
+		if err != nil {
+			return nil, "", err
+		}
+		return httpRespBody, "gb2312", nil
+	default:
+		err := errors.New(fmt.Sprintf("Unsupported charset. content-type=%v, guess-type: %v", contentType,
+			guessType))
+		return nil, "", err
+	}
 }
 
 // 条目处理器。
@@ -181,3 +212,5 @@ func processItem(item basic.Item) (result basic.Item, err error) {
 	fmt.Println("结果：", result["url"])
 	return
 }
+
+

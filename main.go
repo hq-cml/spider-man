@@ -21,7 +21,7 @@ import (
 var confPath *string = flag.String("c", "conf/spider.conf", "config file")
 var firstUrl *string = flag.String("f", "http://www.360.cn", "first url")
 var pluginName *string = flag.String("p", "base", "plugin name")
-var userData *string = flag.String("u", "老周", "user argument")
+var userData *string = flag.String("u", "周鸿祎", "user argument")
 
 /*
  * 主函数：
