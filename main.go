@@ -44,7 +44,7 @@ func main() {
 	//启动调试器
 	if conf.Pprof {
 		go func() {
-			http.ListenAndServe("localhost:" + conf.PprofPort, nil)
+			http.ListenAndServe(":" + conf.PprofPort, nil)
 		}()
 	}
 

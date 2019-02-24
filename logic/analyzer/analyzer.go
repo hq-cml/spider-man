@@ -2,7 +2,6 @@ package analyzer
 
 import (
 	"errors"
-	"fmt"
 	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/helper/idgen"
 	"github.com/hq-cml/spider-go/helper/log"
@@ -49,15 +48,10 @@ func (analyzer *Analyzer) Analyze(
 	if httpResp == nil {
 		return nil, nil,[]error{errors.New("The http response is invalid!")}
 	}
-	defer func() { //TODO 移动到此处关掉, 这里还需要再确认一下
-		if httpResp.Body != nil {
-			httpResp.Body.Close()
-		}
-	}()
 
 	//日志记录
 	var reqUrl *url.URL = httpResp.Request.URL
-	log.Infof("Parse the response (reqUrl=%s)... \n", reqUrl)
+	log.Infof("Parse the response (reqUrl=%s)... .Depth:%d \n", reqUrl, resp.Depth())
 
 	respDepth := resp.Depth()
 
@@ -65,26 +59,25 @@ func (analyzer *Analyzer) Analyze(
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errorList := []error{}
-	for i, analyzeFunc := range respAnalyzeFuncs {
-		if analyzeFunc == nil {
-			errorList = append(errorList, errors.New(fmt.Sprintf("The document parser [%d] is invalid!", i)))
-			continue
-		}
-
+	for _, analyzeFunc := range respAnalyzeFuncs {
+		//分析
 		iList, rList, errList := analyzeFunc(httpResp, respDepth)
 
+		//分别装载分析产出的Item，Request，Error
 		if iList != nil && len(iList) > 0 {
 			itemList = append(itemList, iList...)
 		}
 
 		if rList != nil && len(rList) > 0 {
-			for _, req := range rList {
-				newDepth := respDepth + 1    //TODO 这个+1应该放到plugin中去
-				if req.Depth() != newDepth { //TODO 从插件的实现来看,这个地方是不可能出现==的情况的...
-					req = basic.NewRequest(req.HttpReq(), newDepth)
-				}
-				requestList = append(requestList, req)
-			}
+			requestList = append(requestList, rList...)
+
+			//for _, req := range rList {
+			//	newDepth := respDepth + 1    //TODO 这个+1应该放到plugin中去
+			//	if req.Depth() != newDepth { //TODO 从插件的实现来看,这个地方是不可能出现==的情况的...
+			//		req = basic.NewRequest(req.HttpReq(), newDepth)
+			//	}
+			//	requestList = append(requestList, req)
+			//}
 		}
 
 		if errList != nil && len(errList) > 0 {

@@ -49,7 +49,8 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 // 获取摘要信息。
 func (ss *SchedSummary) GetSummary(detail bool) string {
 	//prefix := "* " + ss.prefix
-	template := "*********************************************************************\n"+
+	template :=
+		"*********************************************************************\n"+
 	    "*                            SPIDER SUMMARY \n" +
 		"*  \n" +
 		"* Running: %v \n" +

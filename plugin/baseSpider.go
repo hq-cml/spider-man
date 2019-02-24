@@ -124,8 +124,8 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 			if err != nil {
 				errs = append(errs, err)
 			} else {
-				req := basic.NewRequest(httpReq, grabDepth)
-				//将新分析出来的请求，放入dataList
+				//将新分析出来的请求，深度+1，放入dataList
+				req := basic.NewRequest(httpReq, grabDepth + 1)
 				requestList = append(requestList, req)
 			}
 		}
@@ -146,6 +146,7 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 	imap := make(map[string]interface{})
 	imap["url"] = reqUrl.String()
 	imap["charset"] = contentType
+	imap["depth"] = grabDepth
 	body := doc.Find("body").Text()
 	imap["body"] = body
 	item := basic.Item(imap)
@@ -206,13 +207,13 @@ func processItem(item basic.Item) (result basic.Item, err error) {
 		return nil, errors.New("Invalid item!")
 	}
 
-	// 生成结果
+	//生成结果
 	result = make(map[string]interface{})
 	for k, v := range item {
 		result[k] = v
 	}
 
-	fmt.Println("结果：", result["url"])
+	fmt.Println("深度: ", result["depth"], "结果：", result["url"])
 	return
 }
 
