@@ -6,6 +6,8 @@ import (
 	//"github.com/hq-cml/spider-go/middleware/pool"
 	"net/http"
 	//"reflect"
+	"io/ioutil"
+	"bytes"
 )
 
 /***********************************下载器**********************************/
@@ -42,6 +44,14 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	//TODO close? 这个地方感觉稍显怪异
+
+	//这个地方是一个go处理response的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
+	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
+	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
+	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
+	p, _ := ioutil.ReadAll(httpResp.Body)
+	httpResp.Body.Close()
+	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+
 	return basic.NewResponse(httpResp, req.Depth()), nil
 }

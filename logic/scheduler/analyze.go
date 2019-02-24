@@ -57,13 +57,14 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
         }
     }()
 
-    //断言转换
     ana, ok := entity.(*analyzer.Analyzer)
     if !ok {
         msg := fmt.Sprintf("Downloader pool Wrong type")
         schdl.sendError(errors.New(msg), SCHEDULER_CODE)
         return
     }
+
+    //分析
     moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
     itemList, requestList, errs := ana.Analyze(respAnalyzers, response)
 
@@ -127,7 +128,7 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
     return true
 }
 
-//对分析出来的请求做合法性校验
+//对分析出来的请求做合法性校验，不合法的会被过滤
 func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     httpRequest := request.HttpReq()
     //校验请求体本身
@@ -140,12 +141,6 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
         log.Warnln("Ignore the request! It's url is is invalid!")
         return false
     }
-
-    //TODO 大坑....
-    //if strings.ToLower(requestUrl.Scheme) != "http" {
-    //    log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
-    //    return false
-    //}
 
     //已经处理过的URL不再处理
     if _, ok := schdl.urlMap[requestUrl.String()]; ok {

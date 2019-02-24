@@ -66,10 +66,8 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 		return nil, nil, []error{err}
 	}
 
-	//这个地方是一个约定的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
-	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
-	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
-	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
+	//这个地方其实已经没必要这么处理，因为在downloader.go中已经关闭了真正的Body
+	//只是为了保证使用方式的统一，这也真是NopCloser需要的效果
 	p, _ := ioutil.ReadAll(httpResp.Body)
 	httpResp.Body.Close()
 	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
