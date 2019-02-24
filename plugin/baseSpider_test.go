@@ -5,28 +5,34 @@ import (
 	"net/http"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
+	"github.com/hq-cml/spider-go/helper/log"
 )
 
 func TestParseATag(t *testing.T) {
-	resp, err := http.DefaultClient.Get("https://www.jianshu.com/")
+	log.InitLog("", "debug")
+
+	//resp, err := http.DefaultClient.Get("https://www.360.cn/")       //360首页，UTF8编码，content-type: text/html，没有指明charset
+	//resp, err := http.DefaultClient.Get("http://www.dygang.net/")    //电影港首页，gbk编码，content-type: text/html，没有指明charset
+	resp, err := http.DefaultClient.Get("https://www.jianshu.com") //简书首页，UTF8编码，content-type: text/html; charset=utf-8
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	items, _, errors := parseForATag(resp, 0)
+	items, _, errors := parseForATag(resp, 0, nil)
 
-	t.Log("分析出的URL列表:")
+	//t.Log("分析出的URL列表:")
 	//for _, req := range reqs {
 	//	t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
 	//}
 
-	t.Log("分析出的Item列表:")
+	t.Log("分析出的Item列表:", len(items))
 	for _, item := range items {
 		t.Log((*item)["url"])
-		t.Log((*item)["contentType"])
+		t.Log((*item)["charset"])
+		t.Log((*item)["body"])
 	}
 
-	t.Log("分析出的Error列表:")
+	t.Log("分析出的Error列表:", len(errors))
 	for _, err := range errors {
 		t.Log(err)
 	}

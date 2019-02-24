@@ -9,9 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"github.com/djimenez/iconv-go"
 	"io/ioutil"
 	"bytes"
+	"github.com/hq-cml/spider-go/helper/log"
+	"golang.org/x/net/html/charset"
+	"bufio"
+	"golang.org/x/text/transform"
 )
 
 //*BaseSpider实现SpiderPlugin接口
@@ -59,9 +62,17 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
 func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Unsupported status code %d. (httpResponse=%v)", httpResp))
+		err := errors.New(fmt.Sprintf("Unsupported status code %d.", httpResp.StatusCode))
 		return nil, nil, []error{err}
 	}
+
+	//这个地方是一个约定的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
+	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
+	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
+	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
+	p, _ := ioutil.ReadAll(httpResp.Body)
+	httpResp.Body.Close()
+	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
 	//对响应做一些处理
 	var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
@@ -73,7 +84,7 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 	errs := make([]error, 0)
 
 	//网页编码智能判断, 非utf8 => utf8
-	httpRespBody, contentType, err := convertCharset(httpResp)
+	httpRespBody, contentType, err := convertCharset(httpResp, p)
 	if err != nil {
 		return nil, nil, []error{err}
 	}
@@ -133,18 +144,24 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 	})
 
 	//关键字查找, 记录符合条件的body作为item
+	//如果用户数据非空，则进行匹配校验，否则直接入item队列
+	imap := make(map[string]interface{})
+	imap["url"] = reqUrl.String()
+	imap["charset"] = contentType
 	body := doc.Find("body").Text()
-	searchContent, ok := userData.(string)
-	if !ok {
-		err := errors.New(fmt.Sprintf("Unsupported userData=%v", userData))
-		return nil, nil, []error{err}
-	}
-	if strings.Contains(body, searchContent) {
-		imap := make(map[string]interface{})
-		imap["body"] = body
-		imap["url"] = reqUrl.String()
-		imap["charset"] = contentType
-		item := basic.Item(imap)
+	imap["body"] = body
+	item := basic.Item(imap)
+	if userData != nil {
+		searchContent, ok := userData.(string)
+		if !ok {
+			err := errors.New(fmt.Sprintf("Unsupported userData=%v", userData))
+			return nil, nil, []error{err}
+		}
+
+		if strings.Contains(body, searchContent) {
+			itemList = append(itemList, &item)
+		}
+	} else {
 		itemList = append(itemList, &item)
 	}
 
@@ -152,48 +169,36 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 }
 
 //识别编码并转换到utf8
-func convertCharset(httpResp *http.Response) (httpRespBody io.Reader, orgCharset string, err error) {
+func convertCharset(httpResp *http.Response, body []byte) (httpRespBody io.Reader, orgCharset string, err error) {
 	//先尝试从http header的content-type中直接猜测
 	contentType := httpResp.Header.Get("content-type")
 	switch {
 	case strings.Contains(strings.ToLower(contentType), "utf8"),
 		strings.Contains(strings.ToLower(contentType), "utf-8"):
-		httpRespBody = httpResp.Body
+		httpRespBody = bytes.NewBuffer(body)
 		return httpRespBody, "utf8", nil
-
-	case strings.Contains(strings.ToLower(contentType), "gb2312"):
-		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
-		if err != nil {
-			return nil, "", err
-		}
-		return httpRespBody, "gb2312", nil
 	}
 
-	//这个地方是一个约定的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
-	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
-	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
-	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
-	p, _ := ioutil.ReadAll(httpResp.Body)
-	httpResp.Body.Close()
-	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+	//利用golang.org/x/net/html/charset包提供的方法开始猜
+	buf, err := bufio.NewReader(bytes.NewBuffer(body)).Peek(1024)
+	if err != nil {
+		panic(err)
+	}
+	encoding, charset, _ := charset.DetermineEncoding(buf, contentType)
 
-	guessType := http.DetectContentType(p)
+	//利用http.DetectContentType进行猜测
 	switch {
-	case strings.Contains(strings.ToLower(guessType), "utf8"),
-		strings.Contains(strings.ToLower(guessType), "utf-8"):
-		httpRespBody = httpResp.Body
+	case strings.Contains(strings.ToLower(charset), "utf8"),
+		strings.Contains(strings.ToLower(charset), "utf-8"):
+		httpRespBody = bytes.NewBuffer(body)
+		log.Debugln("Determine charset: utf8. Url:", httpResp.Request.URL.String(), ". Content-Type:", contentType)
 		return httpRespBody, "utf8", nil
 
-	case strings.Contains(strings.ToLower(guessType), "gb2312"):
-		httpRespBody, err = iconv.NewReader(httpResp.Body, "gb2312", "utf-8")
-		if err != nil {
-			return nil, "", err
-		}
-		return httpRespBody, "gb2312", nil
 	default:
-		err := errors.New(fmt.Sprintf("Unsupported charset. content-type=%v, guess-type: %v", contentType,
-			guessType))
-		return nil, "", err
+		//需要转码
+		log.Debugln("Guess charset:", charset,". Url:", httpResp.Request.URL.String(), ". Content-Type:", contentType)
+		utf8Body := transform.NewReader(bytes.NewBuffer(body), encoding.NewDecoder())
+		return utf8Body, "", nil
 	}
 }
 

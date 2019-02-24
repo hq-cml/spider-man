@@ -23,9 +23,15 @@ const (
 var spiderLog SpiderLog
 
 func InitLog(path string, level string) {
-	f, err := os.OpenFile(path, os.O_RDWR | os.O_CREATE | os.O_APPEND , 0755)
-	if err != nil {
-		log.Fatal(err)
+	var f *os.File
+	var err error
+	if path == "" { //如果没有文件路径，则用标准错误Stderr
+		f = os.Stderr
+	} else {
+		f, err = os.OpenFile(path, os.O_RDWR | os.O_CREATE | os.O_APPEND , 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	levelInt := SPIDER_LOG_LEVEL_DEBUG
