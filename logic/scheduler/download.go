@@ -6,6 +6,7 @@ import (
     "github.com/hq-cml/spider-go/basic"
     "github.com/hq-cml/spider-go/helper/log"
     "github.com/hq-cml/spider-go/logic/downloader"
+    "sync/atomic"
 )
 
 /*
@@ -39,6 +40,9 @@ func (schdl *Scheduler) activateDownloaders() {
  * 但是全部下载goroutine是受到下载器池子的约束的
  */
 func (schdl *Scheduler) download(request basic.Request) {
+    atomic.AddUint64(&schdl.downloaderCnt, 1)          //原子加1
+    defer atomic.AddUint64(&schdl.downloaderCnt, ^uint64(0)) //原子减1
+
     //panic错误兜底
     defer func() {
         if p := recover(); p != nil {
@@ -47,7 +51,7 @@ func (schdl *Scheduler) download(request basic.Request) {
         }
     }()
 
-    //下载器池中取票
+    //下载器池中取票，如果申请不到，就会阻塞等待在此处~
     entity, err := schdl.getDownloaderPool().Get()
     if err != nil {
         msg := fmt.Sprintf("Downloader pool error: %s", err)

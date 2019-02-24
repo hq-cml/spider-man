@@ -15,13 +15,16 @@ import (
 type Scheduler struct {
 	grabMaxDepth   int                            // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                         // 起始域名。
-	channelManager *chanman.ChannelManager // 通道管理器。
+	channelManager *chanman.ChannelManager        // 通道管理器。
 	poolManager    *pool.PoolManager              // Pool管理器。
 	stopSign       *stopsign.StopSign             // 停止信号。
-	processChain   *processchain.ProcessChain     // 条目处理管道。
-	requestCache   *requestcache.RequestCache     // 请求缓存。
+	processChain   *processchain.ProcessChain     // Item处理管道。
+	requestCache   *requestcache.RequestCache     // Request缓存
 	urlMap         map[string]bool                // 已请求的URL的字典。
 	running        uint32                         // 运行标记。0表示未运行，1表示已运行，2表示已停止。
+
+	downloaderCnt  uint64                         // 已启动的downloader协程数量
+	analyzerCnt    uint64                         // 已启动的analyzer协程数量
 }
 
 // 调度器摘要信息的实现类型。
@@ -36,6 +39,9 @@ type SchedSummary struct {
 	urlCount            int    // 已请求的URL的计数。
 	urlDetail           string // 已请求的URL的详细信息。
 	stopSignSummary     string // 停止信号的摘要信息。
+
+	downloaderCnt       uint64 // 已启动的downloader协程数量
+	analyzerCnt         uint64 // 已启动的analyzer协程数量
 }
 
 // 组件的统一代号。

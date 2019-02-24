@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"github.com/hq-cml/spider-go/helper/log"
 	"github.com/hq-cml/spider-go/basic"
+	"sync/atomic"
 )
 
 /*
@@ -31,7 +32,7 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 	} else {
 		urlDetail = "\n"
 	}
-	prefix = "* " + prefix
+	prefix = "    * " + prefix
 	return &SchedSummary{
 		prefix:              prefix,
 		running:             schdl.running,
@@ -43,26 +44,28 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 		urlCount:            urlCount,
 		urlDetail:           urlDetail,
 		stopSignSummary:     schdl.stopSign.Summary(prefix),
+		analyzerCnt:   		 atomic.LoadUint64(&schdl.analyzerCnt),
+		downloaderCnt:   	 atomic.LoadUint64(&schdl.downloaderCnt),
 	}
 }
+
 
 // 获取摘要信息。
 func (ss *SchedSummary) GetSummary(detail bool) string {
 	//prefix := "* " + ss.prefix
 	template :=
-		"*********************************************************************\n"+
-	    "*                            SPIDER SUMMARY \n" +
-		"*  \n" +
-		"* Running: %v \n" +
-		"* GrabDepth: %d \n" +
-		"* StopSigin:\n%s" +
-		"* ChannelManager:\n%s" +
-		"* PoolManager:\n%s" +
-		"* RequestCache:\n%s" +
-		"* ProcessChain:\n%s" +
-		"* Urls(%d): %s\n" +
-		"*  \n" +
-		"*********************************************************************\n "
+		"    *********************************************************************\n"+
+	    "    *                            SPIDER SUMMARY \n" +
+		"    * Running: %v " + ". GrabDepth: %d \n" +
+		"    * WorkerGoroutineNum:\n%s" +
+		"    * ChannelManager:\n%s" +
+		"    * PoolManager:\n%s" +
+		"    * RequestCache:\n%s" +
+		"    * ProcessChain:\n%s" +
+		"    * StopSigin:\n%s" +
+		"    * Urls(%d): %s\n" +
+		"    *  \n" +
+		"    *********************************************************************\n "
 
 	d := ""
 	if detail {
@@ -74,11 +77,12 @@ func (ss *SchedSummary) GetSummary(detail bool) string {
 	return fmt.Sprintf(template,
 		ss.running == 1,
 		ss.grabMaxDepth,
-		ss.stopSignSummary,
+		fmt.Sprintf("    *     Downloader: %d, Analyzer: %d\n", ss.downloaderCnt, ss.analyzerCnt),
 		ss.chanmanSummary,
 		ss.poolmanSummary,
 		ss.reqCacheSummary,
 		ss.processChainSummary,
+		ss.stopSignSummary,
 		ss.urlCount, d)
 }
 
@@ -86,10 +90,10 @@ func (ss *SchedSummary) GetSummary(detail bool) string {
 func (schdl *Scheduler)activateRecordSummary() {
 
 	// 摘要信息的模板。
-	var summaryForMonitoring = "\n    Monitor - Collected information[%d]:\n" +
-	"    Goroutine number: %d\n" +
-	"    Escaped time: %s\n" +
-	"    Scheduler Summary:\n%s"
+	var summaryForMonitoring = "\n" +
+	"    Monitor - Collected information[%d]:\n" +
+	"    Goroutine number: (%d)." +	" Escaped time: %s\n" +
+	"    Summary:\n%s"
 
 	go func() {
 		//准备

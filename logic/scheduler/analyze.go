@@ -7,6 +7,7 @@ import (
     "github.com/hq-cml/spider-go/helper/log"
     "github.com/hq-cml/spider-go/logic/analyzer"
     "github.com/hq-cml/spider-go/helper/util"
+    "sync/atomic"
 )
 
 /*
@@ -34,6 +35,9 @@ func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseF
 
 //实际分析工作
 func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, response basic.Response) {
+    atomic.AddUint64(&schdl.analyzerCnt, 1)          //原子加1
+    defer atomic.AddUint64(&schdl.analyzerCnt, ^uint64(0)) //原子减1
+
     //异常兜底
     defer func() {
         if p := recover(); p != nil {
@@ -42,7 +46,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
         }
     }()
 
-    //申请分析令牌
+    //申请分析令牌，如果申请不到，就会阻塞等待在此处~
     entity, err := schdl.getAnalyzerPool().Get()
     if err != nil {
         msg := fmt.Sprintf("Analyzer pool error: %s", err)
@@ -124,6 +128,8 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
     }
 
     schdl.requestCache.Put(&request)
+    log.Info("Send the req to Cache: ", request.HttpReq().URL.String(), "  ",
+        schdl.requestCache.Length(), schdl.requestCache.Capacity())
     schdl.urlMap[request.HttpReq().URL.String()] = true
     return true
 }
@@ -133,25 +139,25 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     httpRequest := request.HttpReq()
     //校验请求体本身
     if httpRequest == nil {
-        log.Warnln("Ignore the request! It's HTTP request is invalid!")
+        log.Debugln("Ignore the request! It's HTTP request is invalid!")
         return false
     }
     requestUrl := httpRequest.URL
     if requestUrl == nil {
-        log.Warnln("Ignore the request! It's url is is invalid!")
+        log.Debugln("Ignore the request! It's url is is invalid!")
         return false
     }
 
     //已经处理过的URL不再处理
     if _, ok := schdl.urlMap[requestUrl.String()]; ok {
-        log.Warnf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
+        log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
         return false
     }
 
     //如果配置只能在站内爬取, 则只有主域名相同的URL才是合法的
     if !basic.Conf.CrossSite {
         if pd, _ := util.GetPrimaryDomain(httpRequest.Host); pd != schdl.primaryDomain {
-            log.Warnf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
+            log.Debugf("Ignore the request! It's host '%s' not in primary domain '%s'. (requestUrl=%s)\n",
                 httpRequest.Host, schdl.primaryDomain, requestUrl)
             return false
         }
@@ -159,7 +165,7 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
 
     //请求深度不能超过阈值
     if request.Depth() > schdl.grabMaxDepth {
-        log.Warnf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
+        log.Debugf("Ignore the request! It's depth %d greater than %d. (requestUrl=%s)\n",
             request.Depth(), schdl.grabMaxDepth, requestUrl)
         return false
     }

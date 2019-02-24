@@ -5,7 +5,6 @@ import (
 	"github.com/hq-cml/spider-go/basic"
 	"github.com/hq-cml/spider-go/helper/idgen"
 	"github.com/hq-cml/spider-go/helper/log"
-	"net/url"
 )
 
 /***********************************分析器**********************************/
@@ -49,9 +48,9 @@ func (analyzer *Analyzer) Analyze(
 		return nil, nil,[]error{errors.New("The http response is invalid!")}
 	}
 
-	//日志记录
-	var reqUrl *url.URL = httpResp.Request.URL
-	log.Infof("Parse the response (reqUrl=%s)... .Depth:%d \n", reqUrl, resp.Depth())
+	//日志
+	log.Infof("Analyze the response (reqUrl=%s)... Depth: (%d) \n",
+		resp.HttpResp().Request.URL.String(), resp.Depth())
 
 	respDepth := resp.Depth()
 
@@ -67,19 +66,9 @@ func (analyzer *Analyzer) Analyze(
 		if iList != nil && len(iList) > 0 {
 			itemList = append(itemList, iList...)
 		}
-
 		if rList != nil && len(rList) > 0 {
 			requestList = append(requestList, rList...)
-
-			//for _, req := range rList {
-			//	newDepth := respDepth + 1    //TODO 这个+1应该放到plugin中去
-			//	if req.Depth() != newDepth { //TODO 从插件的实现来看,这个地方是不可能出现==的情况的...
-			//		req = basic.NewRequest(req.HttpReq(), newDepth)
-			//	}
-			//	requestList = append(requestList, req)
-			//}
 		}
-
 		if errList != nil && len(errList) > 0 {
 			errorList = append(errorList, errList...)
 		}

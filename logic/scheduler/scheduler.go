@@ -195,6 +195,7 @@ func (schdl *Scheduler)doSchedule(interval time.Duration) {
 
 			//请求通道的空闲数量（请求通道的容量 - 长度）
 			remainder := schdl.getReqestChan().Cap() - schdl.getReqestChan().Len()
+			//log.Info("remainder: ", remainder)
 			var temp *basic.Request
 			for remainder > 0 {
 				temp = schdl.requestCache.Get()
@@ -269,6 +270,7 @@ func (schdl *Scheduler)Start(
 	schdl.activateRecordSummary()
 
 	//开始调度
+	//TODO 10 * time.Millisecond
 	schdl.doSchedule(10 * time.Millisecond)
 
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。

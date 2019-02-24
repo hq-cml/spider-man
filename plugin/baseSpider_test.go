@@ -18,18 +18,18 @@ func TestParseATag(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	items, _, errors := parseForATag(resp, 0, nil)
+	items, reqs, errors := parseForATag(resp, 0, nil)
 
-	//t.Log("分析出的URL列表:")
-	//for _, req := range reqs {
-	//	t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
-	//}
+	t.Logf("分析出的URL列表(%d):\n", len(reqs))
+	for _, req := range reqs {
+		t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
+	}
 
 	t.Log("分析出的Item列表:", len(items))
 	for _, item := range items {
 		t.Log((*item)["url"])
 		t.Log((*item)["charset"])
-		t.Log((*item)["body"])
+		//t.Log((*item)["body"])
 	}
 
 	t.Log("分析出的Error列表:", len(errors))

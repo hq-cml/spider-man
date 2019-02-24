@@ -69,6 +69,10 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf logPath failed!")
 	}
 
+	if c.LogLevel, err = cfg.GetValue("log", "logLevel"); err != nil {
+		panic("Load conf logLevel failed!")
+	}
+
 	if c.Pprof, err = cfg.Bool("pprof", "pprof"); err != nil {
 		panic("Load conf pprof failed!" + err.Error())
 	}

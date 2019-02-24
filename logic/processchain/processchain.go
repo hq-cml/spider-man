@@ -44,7 +44,7 @@ func NewProcessChain(itemProcessors []basic.ProcessItemFunc) *ProcessChain {
 
 //向处理链发送item，调用处理链自动进行处理
 func (pc *ProcessChain) DoProcess(item basic.Item) []error {
-	atomic.AddUint64(&pc.processingNumber, 1)                //原子加1
+	atomic.AddUint64(&pc.processingNumber, 1)          //原子加1
 	defer atomic.AddUint64(&pc.processingNumber, ^uint64(0)) //原子减1
 	atomic.AddUint64(&pc.sent, 1)
 

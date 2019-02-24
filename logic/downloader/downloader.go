@@ -8,6 +8,7 @@ import (
 	//"reflect"
 	"io/ioutil"
 	"bytes"
+	"github.com/hq-cml/spider-go/helper/log"
 )
 
 /***********************************下载器**********************************/
@@ -40,6 +41,9 @@ func NewDownloader(client *http.Client) *Downloader {
 //实际下载的工作，将http的返回结果，封装到basic.Response中
 func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	httpReq := req.HttpReq()
+	log.Infof("Download the request (reqUrl=%s)... Depth: (%d) \n",
+		httpReq.URL.String(), req.Depth())
+
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, err
