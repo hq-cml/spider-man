@@ -301,10 +301,10 @@ func (schdl *Scheduler)IsRunning() bool {
 
 //判断所有处理模块是否都处于空闲状态。
 func (schdl *Scheduler) IsIdle() bool {
-	idleDlPool := schdl.getDownloaderPool().Used() == 0
+	idleDownloaderPool := schdl.getDownloaderPool().Used() == 0
 	idleAnalyzerPool := schdl.getAnalyzerPool().Used() == 0
 	idleItemPipeline := schdl.processChain.ProcessingNumber() == 0
-	if idleDlPool && idleAnalyzerPool && idleItemPipeline {
+	if idleDownloaderPool && idleAnalyzerPool && idleItemPipeline {
 		return true
 	}
 	return false

@@ -128,7 +128,7 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
     }
 
     schdl.requestCache.Put(&request)
-    log.Info("Send the req to Cache: ", request.HttpReq().URL.String(), "  ",
+    log.Debug("Send the req to Cache: ", request.HttpReq().URL.String(), "  ",
         schdl.requestCache.Length(), schdl.requestCache.Capacity())
     schdl.urlMap[request.HttpReq().URL.String()] = true
     return true

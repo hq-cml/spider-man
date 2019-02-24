@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"bytes"
 	"github.com/hq-cml/spider-go/helper/log"
+	"errors"
+	"fmt"
 )
 
 /***********************************下载器**********************************/
@@ -46,6 +48,12 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
+		return nil, err
+	}
+
+	//仅支持返回码200的响应
+	if httpResp.StatusCode != 200 {
+		err := errors.New(fmt.Sprintf("Unsupported status code %d.", httpResp.StatusCode))
 		return nil, err
 	}
 

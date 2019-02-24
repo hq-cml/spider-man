@@ -60,12 +60,6 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
  * 分析出满足条件的结果作为item
  */
 func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
-	//仅支持返回码200的响应
-	if httpResp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Unsupported status code %d.", httpResp.StatusCode))
-		return nil, nil, []error{err}
-	}
-
 	//这个地方其实已经没必要这么处理，因为在downloader.go中已经关闭了真正的Body
 	//只是为了保证使用方式的统一，这也真是NopCloser需要的效果
 	p, _ := ioutil.ReadAll(httpResp.Body)

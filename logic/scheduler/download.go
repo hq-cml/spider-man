@@ -77,6 +77,7 @@ func (schdl *Scheduler) download(request basic.Request) {
     response, err := dl.Download(request)
     if err != nil {
         schdl.sendError(err, moudleCode)
+		return
     }
     if response != nil {
         schdl.sendToRespChan(*response, moudleCode)
