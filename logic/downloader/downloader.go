@@ -7,7 +7,6 @@ import (
 	"net/http"
 	//"reflect"
 	"io/ioutil"
-	"bytes"
 	"github.com/hq-cml/spider-go/helper/log"
 	"errors"
 	"fmt"
@@ -61,9 +60,15 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	//Body内部有读取位置指针，一般的处理都是先close掉真实的body（释放连接），然后在利用NopCloser封装
 	//一个伪造的ReaderCloser接口变量，然后赋值给Body，此时的Body已经篡改，但是这应该不会有什么问题
 	//因为主要就是Body本身也是ReaderCloser实现类型，就只有read和close操作
-	p, _ := ioutil.ReadAll(httpResp.Body)
-	httpResp.Body.Close()
-	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+	//p, _ := ioutil.ReadAll(httpResp.Body)
+	//httpResp.Body.Close()
+	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
-	return basic.NewResponse(httpResp, req.Depth()), nil
+	body, _ := ioutil.ReadAll(httpResp.Body)
+	defer httpResp.Body.Close()
+
+	return basic.NewResponse(body,
+		req.Depth(),
+		httpResp.Header.Get("content-type"),
+		req.HttpReq().URL.String()), nil
 }

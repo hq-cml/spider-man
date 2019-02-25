@@ -32,26 +32,18 @@ func (req *Request) Depth() int {
 
 /************************** 响应体相关 **************************/
 //New，创建响应
-func NewResponse(httpResp *http.Response, depth int) *Response {
+func NewResponse(body []byte, depth int, ct, url string) *Response {
 	return &Response{
-		httpResp: httpResp,
-		depth:    depth,
+		Body        :body,
+		Depth       :depth,
+		ContentType :ct,
+		ReqUrl      :url,
 	}
 }
 
 //*Request实现Data接口
 func (resp *Response) Valid() bool {
-	return resp.httpResp != nil && resp.httpResp.Body != nil
-}
-
-//获取响应体指针
-func (resp *Response) HttpResp() *http.Response {
-	return resp.httpResp
-}
-
-//获取响应的深度
-func (resp *Response) Depth() int {
-	return resp.depth
+	return true
 }
 
 /*************************** 条目相关 ***************************/

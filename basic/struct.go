@@ -17,8 +17,10 @@ type Request struct {
 /**************************************** 响应 ****************************************/
 //响应体结构
 type Response struct {
-	httpResp *http.Response //HTTP响应的指针
-	depth    int            //深度
+	Body     []byte         //Http: ResponseBody
+	Depth    int            //深度
+	ContentType string      //HttpHeader: content-type
+	ReqUrl   string         //对应的请求url
 }
 
 /*************************************** 条目 *****************************************/

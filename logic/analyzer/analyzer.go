@@ -43,16 +43,16 @@ func (analyzer *Analyzer) Analyze(
 	}
 
 	//获取到实际的响应内容，并做校验
-	httpResp := resp.HttpResp()
-	if httpResp == nil {
-		return nil, nil,[]error{errors.New("The http response is invalid!")}
-	}
+	//httpResp := resp.HttpResp()
+	//if httpResp == nil {
+	//	return nil, nil,[]error{errors.New("The http response is invalid!")}
+	//}
 
 	//日志
 	log.Infof("Analyze the response (reqUrl=%s)... Depth: (%d) \n",
-		resp.HttpResp().Request.URL.String(), resp.Depth())
+		resp.ReqUrl, resp.Depth)
 
-	respDepth := resp.Depth()
+	//respDepth := resp.Depth()
 
 	//解析http响应，respAnalyzers，利用每一个分析函数进行分析
 	itemList := []*basic.Item{}
@@ -60,7 +60,7 @@ func (analyzer *Analyzer) Analyze(
 	errorList := []error{}
 	for _, analyzeFunc := range respAnalyzeFuncs {
 		//分析
-		iList, rList, errList := analyzeFunc(httpResp, respDepth)
+		iList, rList, errList := analyzeFunc(httpResp, resp.Depth)
 
 		//分别装载分析产出的Item，Request，Error
 		if iList != nil && len(iList) > 0 {
