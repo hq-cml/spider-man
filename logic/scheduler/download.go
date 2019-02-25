@@ -29,8 +29,17 @@ func (schdl *Scheduler) activateDownloaders() {
             if !ok {
                 continue
             }
+
+            //下载器池中取令牌，如果申请不到，就会阻塞等待在此处~
+            entity, err := schdl.getDownloaderPool().Get()
+            if err != nil {
+                msg := fmt.Sprintf("Downloader pool error: %s", err)
+                schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+                return
+            }
+
             //每个请求都交给一个独立的goroutine来处理
-            go schdl.download(req)
+            go schdl.download(req, entity)
         }
     }()
 }
@@ -39,7 +48,7 @@ func (schdl *Scheduler) activateDownloaders() {
  * 实际下载工作，下载goroutine的逻辑
  * 但是全部下载goroutine是受到下载器池子的约束的
  */
-func (schdl *Scheduler) download(request basic.Request) {
+func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntity) {
     atomic.AddUint64(&schdl.downloaderCnt, 1)          //原子加1
     defer atomic.AddUint64(&schdl.downloaderCnt, ^uint64(0)) //原子减1
 
@@ -51,15 +60,9 @@ func (schdl *Scheduler) download(request basic.Request) {
         }
     }()
 
-    //下载器池中取票，如果申请不到，就会阻塞等待在此处~
-    entity, err := schdl.getDownloaderPool().Get()
-    if err != nil {
-        msg := fmt.Sprintf("Downloader pool error: %s", err)
-        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
-        return
-    }
-    defer func() { //注册延时归还
-        err = schdl.getDownloaderPool().Put(entity)
+    //注册延时归还令牌
+    defer func() {
+        err := schdl.getDownloaderPool().Put(entity)
         if err != nil {
             msg := fmt.Sprintf("Downloader pool error: %s", err)
             schdl.sendError(errors.New(msg), SCHEDULER_CODE)
