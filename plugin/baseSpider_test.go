@@ -6,6 +6,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"strings"
 	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-go/basic"
+	"io/ioutil"
 )
 
 func TestParseATag(t *testing.T) {
@@ -17,8 +19,16 @@ func TestParseATag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	body, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
 
-	items, reqs, errors := parseForATag(resp, 0, nil)
+	httpResp := basic.NewResponse(
+		body,
+		0,
+		resp.Header.Get("content-type"),
+		resp.Request.URL.String(),
+	)
+	items, reqs, errors := parseForATag(httpResp, nil)
 
 	t.Logf("分析出的URL列表(%d):\n", len(reqs))
 	for _, req := range reqs {

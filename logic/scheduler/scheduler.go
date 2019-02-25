@@ -163,11 +163,15 @@ func (schdl *Scheduler) initScheduler(
 	//middleware生成；requestCache
 	schdl.requestCache = requestcache.NewRequestCache()
 
+	//请求分析器
+	schdl.analyzeFuncs = respAnalyzers
+
 	//processChain生成
 	schdl.processChain = processchain.NewProcessChain(itemProcessors)
 
 	//初始化已请求的URL的字典
-	schdl.urlMap = make(map[string]bool)
+	//改为sync.Map开箱即用
+	//schdl.urlMap = make(map[string]bool)
 
 	//主域名初始化
 	if schdl.primaryDomain, err = util.GetPrimaryDomain(firstHttpReq.Host); err != nil {
@@ -258,7 +262,7 @@ func (schdl *Scheduler)Start(
 	schdl.activateDownloaders()
 
 	//分析器激活
-	schdl.activateAnalyzers(respAnalyzers)
+	schdl.activateAnalyzers()
 
 	//处理链激活
 	schdl.activateItemProcessor()
@@ -270,7 +274,6 @@ func (schdl *Scheduler)Start(
 	schdl.activateRecordSummary()
 
 	//开始调度
-	//TODO 10 * time.Millisecond
 	schdl.doSchedule(10 * time.Millisecond)
 
 	//生成第一个请求，放入请求缓冲，调度器会自动进行后续的调度。。。

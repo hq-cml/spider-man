@@ -14,7 +14,7 @@ import (
 //1.是Item的slice
 //2.新的request的slice
 //3.第二个是错误的slice
-type AnalyzeResponseFunc func(httpResp *http.Response, respDepth int) ([]*Item, []*Request, []error)
+type AnalyzeResponseFunc func(httpResp *Response) ([]*Item, []*Request, []error)
 
 // 被用来处理item的函数的类型
 type ProcessItemFunc func(item Item) (result Item, err error)

@@ -18,22 +18,23 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 	if schdl == nil {
 		return nil
 	}
-	urlCount := len(schdl.urlMap)
+
 	var urlDetail string
-	if detail && urlCount > 0 {
+	if detail && atomic.LoadUint64(&schdl.urlCnt) > 0 {
 		var buffer bytes.Buffer
 		buffer.WriteByte('\n')
-		for k, _ := range schdl.urlMap {
+		schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
 			buffer.WriteString(prefix)
-			buffer.WriteString(k)
+			buffer.WriteString(k.(string))
 			buffer.WriteByte('\n')
-		}
+			return true
+		})
 		urlDetail = buffer.String()
 	} else {
 		urlDetail = "\n"
 	}
 	prefix = "    * " + prefix
-	return &SchedSummary{
+	return &SchedSummary {
 		prefix:              prefix,
 		running:             schdl.running,
 		grabMaxDepth:        schdl.grabMaxDepth,
@@ -41,7 +42,7 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 		reqCacheSummary:     schdl.requestCache.Summary(prefix),
 		poolmanSummary:      schdl.poolManager.Summary(prefix),
 		processChainSummary: schdl.processChain.Summary(prefix),
-		urlCount:            urlCount,
+		urlCount:            atomic.LoadUint64(&schdl.urlCnt),
 		urlDetail:           urlDetail,
 		stopSignSummary:     schdl.stopSign.Summary(prefix),
 		analyzerCnt:   		 atomic.LoadUint64(&schdl.analyzerCnt),

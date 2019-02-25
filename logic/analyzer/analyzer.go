@@ -60,7 +60,7 @@ func (analyzer *Analyzer) Analyze(
 	errorList := []error{}
 	for _, analyzeFunc := range respAnalyzeFuncs {
 		//分析
-		iList, rList, errList := analyzeFunc(httpResp, resp.Depth)
+		iList, rList, errList := analyzeFunc(&resp)
 
 		//分别装载分析产出的Item，Request，Error
 		if iList != nil && len(iList) > 0 {

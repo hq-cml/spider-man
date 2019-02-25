@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"io/ioutil"
 	"bytes"
 	"github.com/hq-cml/spider-go/helper/log"
 	"golang.org/x/net/html/charset"
@@ -38,8 +37,8 @@ func (b *BaseSpider) GenHttpClient() *http.Client {
 func (b *BaseSpider) GenResponseAnalysers() []basic.AnalyzeResponseFunc {
 	analyzers := []basic.AnalyzeResponseFunc {
 		//闭包
-		func(httpResp *http.Response, respDepth int) ([]*basic.Item, []*basic.Request, []error) {
-			items, reqs, errs :=  parseForATag(httpResp, respDepth, b.userData)
+		func(httpResp *basic.Response) ([]*basic.Item, []*basic.Request, []error) {
+			items, reqs, errs :=  parseForATag(httpResp, b.userData)
 			return items, reqs, errs
 		},
 	}
@@ -59,24 +58,28 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
  * 分析出“A”标签,作为新的request
  * 分析出满足条件的结果作为item
  */
-func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
+func parseForATag(httpResp *basic.Response, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
 	//这个地方其实已经没必要这么处理，因为在downloader.go中已经关闭了真正的Body
 	//只是为了保证使用方式的统一，这也真是NopCloser需要的效果
-	p, _ := ioutil.ReadAll(httpResp.Body)
-	httpResp.Body.Close()
-	httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+	//p, _ := ioutil.ReadAll(httpResp.Body)
+	//httpResp.Body.Close()
+	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
 	//对响应做一些处理
-	var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
+
+	//var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
+	reqUrl, err := url.Parse(httpResp.ReqUrl) //记录下响应的请求（防止相对URL的问题）
+	if err != nil {
+		return nil, nil, []error{err}
+	}
 	var httpRespBody io.Reader
-	var err error
 
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
 	errs := make([]error, 0)
 
 	//网页编码智能判断, 非utf8 => utf8
-	httpRespBody, contentType, err := convertCharset(httpResp, p)
+	httpRespBody, contentType, err := convertCharset(httpResp)
 	if err != nil {
 		return nil, nil, []error{err}
 	}
@@ -119,7 +122,7 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 				errs = append(errs, err)
 			} else {
 				//将新分析出来的请求，深度+1，放入dataList
-				req := basic.NewRequest(httpReq, grabDepth + 1)
+				req := basic.NewRequest(httpReq, httpResp.Depth + 1)
 				requestList = append(requestList, req)
 			}
 		}
@@ -140,7 +143,7 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 	imap := make(map[string]interface{})
 	imap["url"] = reqUrl.String()
 	imap["charset"] = contentType
-	imap["depth"] = grabDepth
+	imap["depth"] = httpResp.Depth
 	body := doc.Find("body").Text()
 	imap["body"] = body
 	item := basic.Item(imap)
@@ -162,35 +165,35 @@ func parseForATag(httpResp *http.Response, grabDepth int, userData interface{}) 
 }
 
 //识别编码并转换到utf8
-func convertCharset(httpResp *http.Response, body []byte) (httpRespBody io.Reader, orgCharset string, err error) {
+func convertCharset(httpResp *basic.Response) (httpRespBody io.Reader, orgCharset string, err error) {
 	//先尝试从http header的content-type中直接猜测
-	contentType := httpResp.Header.Get("content-type")
+	//contentType := httpResp.Header.Get("content-type")
 	switch {
-	case strings.Contains(strings.ToLower(contentType), "utf8"),
-		strings.Contains(strings.ToLower(contentType), "utf-8"):
-		httpRespBody = bytes.NewBuffer(body)
+	case strings.Contains(strings.ToLower(httpResp.ContentType), "utf8"),
+		strings.Contains(strings.ToLower(httpResp.ContentType), "utf-8"):
+		httpRespBody = bytes.NewBuffer(httpResp.Body)
 		return httpRespBody, "utf8", nil
 	}
 
 	//利用golang.org/x/net/html/charset包提供的方法开始猜
-	buf, err := bufio.NewReader(bytes.NewBuffer(body)).Peek(1024)
+	buf, err := bufio.NewReader(bytes.NewBuffer(httpResp.Body)).Peek(1024)
 	if err != nil {
 		panic(err)
 	}
-	encoding, charset, _ := charset.DetermineEncoding(buf, contentType)
+	encoding, charset, _ := charset.DetermineEncoding(buf, httpResp.ContentType)
 
 	//利用http.DetectContentType进行猜测
 	switch {
 	case strings.Contains(strings.ToLower(charset), "utf8"),
 		strings.Contains(strings.ToLower(charset), "utf-8"):
-		httpRespBody = bytes.NewBuffer(body)
-		log.Debugln("Determine charset: utf8. Url:", httpResp.Request.URL.String(), ". Content-Type:", contentType)
+		httpRespBody = bytes.NewBuffer(httpResp.Body)
+		log.Debugln("Determine charset: utf8. Url:", httpResp.ReqUrl, ". Content-Type:", httpResp.ContentType)
 		return httpRespBody, "utf8", nil
 
 	default:
 		//需要转码
-		log.Debugln("Guess charset:", charset,". Url:", httpResp.Request.URL.String(), ". Content-Type:", contentType)
-		utf8Body := transform.NewReader(bytes.NewBuffer(body), encoding.NewDecoder())
+		log.Debugln("Guess charset:", charset,". Url:", httpResp.ReqUrl, ". Content-Type:", httpResp.ContentType)
+		utf8Body := transform.NewReader(bytes.NewBuffer(httpResp.Body), encoding.NewDecoder())
 		return utf8Body, "", nil
 	}
 }

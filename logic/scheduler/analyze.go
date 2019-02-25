@@ -15,7 +15,7 @@ import (
  * 每一个响应再交给独立的goroutine完成分析工作，但是goroutine并不一定能够立刻开始分析工作
  * 同时能够进行分析工作的goroutine数量, 受到分析器池容量的的制约
  */
-func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseFunc) {
+func (schdl *Scheduler) activateAnalyzers() {
     go func() {
         for { //无限循环
             response, ok := schdl.getResponseChan().Get()
@@ -28,13 +28,13 @@ func (schdl *Scheduler) activateAnalyzers(respAnalyzers []basic.AnalyzeResponseF
                 continue
             }
             //启动异步分析
-            go schdl.analyze(respAnalyzers, resp)
+            go schdl.analyze(resp)
         }
     }()
 }
 
 //实际分析工作
-func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, response basic.Response) {
+func (schdl *Scheduler) analyze(response basic.Response) {
     atomic.AddUint64(&schdl.analyzerCnt, 1)          //原子加1
     defer atomic.AddUint64(&schdl.analyzerCnt, ^uint64(0)) //原子减1
 
@@ -70,7 +70,7 @@ func (schdl *Scheduler) analyze(respAnalyzers []basic.AnalyzeResponseFunc, respo
 
     //分析
     moudleCode := generateModuleCode(ANALYZER_CODE, ana.Id())
-    itemList, requestList, errs := ana.Analyze(respAnalyzers, response)
+    itemList, requestList, errs := ana.Analyze(schdl.analyzeFuncs, response)
 
     //将分析出的item放到item通道里
     if itemList != nil {
@@ -130,7 +130,8 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
     schdl.requestCache.Put(&request)
     log.Debug("Send the req to Cache: ", request.HttpReq().URL.String(), "  ",
         schdl.requestCache.Length(), schdl.requestCache.Capacity())
-    schdl.urlMap[request.HttpReq().URL.String()] = true
+    schdl.urlMap.Store(request.HttpReq().URL.String(), true)
+    atomic.AddUint64(&schdl.urlCnt, 1)
     return true
 }
 
@@ -149,7 +150,7 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     }
 
     //已经处理过的URL不再处理
-    if _, ok := schdl.urlMap[requestUrl.String()]; ok {
+    if _, ok := schdl.urlMap.Load(requestUrl.String()); ok {
         log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
         return false
     }
