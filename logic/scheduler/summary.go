@@ -26,6 +26,11 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 		schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
 			buffer.WriteString(prefix)
 			buffer.WriteString(k.(string))
+			if v.(bool) {
+				buffer.WriteString("  true")
+			} else {
+				buffer.WriteString("  false")
+			}
 			buffer.WriteByte('\n')
 			return true
 		})

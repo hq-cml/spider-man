@@ -45,7 +45,7 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	log.Infof("Download the request (reqUrl=%s)... Depth: (%d) \n",
 		httpReq.URL.String(), req.Depth())
 
-	httpResp, err := dl.httpClient.Do(httpReq)
+	httpResp, err := dl.httpClient.Do(httpReq)   //TODO hang  9
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, error) {
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
-	body, _ := ioutil.ReadAll(httpResp.Body)
+	body, _ := ioutil.ReadAll(httpResp.Body)    //TODO hang  9
 	defer httpResp.Body.Close()
 
 	return basic.NewResponse(body,

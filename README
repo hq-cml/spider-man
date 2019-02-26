@@ -23,3 +23,11 @@
 
 开发说明：
 一. 概念说明
+
+//TODO
+1. 下载大文件的问题，比如
+    http://sd.360.cn/downloadoffline.html
+    http://sd.360.cn/download.html?type=full
+2. downloader开得大，就会大量阻塞在readAll上，导致无法结束
+3. urlMap细化，提供接口查询详情
+4. 深度加大之后，会出现内存堵塞，堵塞在readAll，怀疑和大文件有关

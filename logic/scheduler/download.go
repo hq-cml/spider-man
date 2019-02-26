@@ -76,12 +76,19 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
         schdl.sendError(errors.New(msg), SCHEDULER_CODE)
         return
     }
+
+    //实施下载
     moudleCode := generateModuleCode(DOWNLOADER_CODE, dl.Id())
     response, err := dl.Download(request)
     if err != nil {
         schdl.sendError(err, moudleCode)
 		return
     }
+
+    //url标记成功
+	schdl.urlMap.Store(request.HttpReq().URL.String(), true)
+
+    //将resp放入
     if response != nil {
         schdl.sendToRespChan(*response, moudleCode)
     }

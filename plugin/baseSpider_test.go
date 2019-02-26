@@ -8,20 +8,24 @@ import (
 	"github.com/hq-cml/spider-go/helper/log"
 	"github.com/hq-cml/spider-go/basic"
 	"io/ioutil"
+	"fmt"
 )
 
 func TestParseATag(t *testing.T) {
 	log.InitLog("", "debug")
 
-	resp, err := http.DefaultClient.Get("https://www.360.cn/")       //360首页，UTF8编码，content-type: text/html，没有指明charset
+	//resp, err := http.DefaultClient.Get("https://www.360.cn/")       //360首页，UTF8编码，content-type: text/html，没有指明charset
 	//resp, err := http.DefaultClient.Get("http://www.dygang.net/")    //电影港首页，gbk编码，content-type: text/html，没有指明charset
 	//resp, err := http.DefaultClient.Get("https://www.jianshu.com") //简书首页，UTF8编码，content-type: text/html; charset=utf-8
+
+	resp, err := http.DefaultClient.Get("http://sd.360.cn/downloadoffline.html") //大文件
 	if err != nil {
 		t.Fatal(err)
 	}
 	body, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-
+	fmt.Println("BBBBBBBBBBBBBBBBB----", resp.Header.Get("content-length"))
+	fmt.Println("AAAAAAAAAAAAAAAAAAAAA--", len(body))
 	httpResp := basic.NewResponse(
 		body,
 		0,
