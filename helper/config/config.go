@@ -85,5 +85,9 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf step failed!" + err.Error())
 	}
 
+	if c.SkipBinFile, err = cfg.Bool("skip", "skipBinFile"); err != nil {
+		panic("Load conf skipBinFile failed!" + err.Error())
+	}
+
 	return c, nil
 }

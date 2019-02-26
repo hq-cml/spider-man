@@ -43,6 +43,8 @@ func main() {
 
 	//启动调试器
 	if conf.Pprof {
+
+		http.HandleFunc("/", GetUrlMap)
 		go func() {
 			http.ListenAndServe(":" + conf.PprofPort, nil)
 		}()
@@ -95,6 +97,10 @@ func main() {
 	summary := scheduler.NewSchedSummary(schdl, "    ", true)
 	log.Infoln("The Spider Finish. check times:", cnt)
 	log.Infoln("Final summary:\n", summary.GetSummary(true))
+}
+
+func GetUrlMap(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(w, "hello")
 }
 
 //检查状态，并在满足条件时采取必要退出措施。

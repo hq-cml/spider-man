@@ -8,6 +8,7 @@ import (
     "github.com/hq-cml/spider-go/logic/analyzer"
     "github.com/hq-cml/spider-go/helper/util"
     "sync/atomic"
+    "strings"
 )
 
 /*
@@ -116,6 +117,8 @@ func (schdl *Scheduler) getAnalyzerPool() basic.SpiderPool {
 //把请求存放到请求缓存。
 func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode string) bool {
 
+    request.HttpReq().URL.String()
+
     //过滤掉非法的请求
     if schdl.filterInvalidRequest(&request) == false {
         return false
@@ -127,10 +130,16 @@ func (schdl *Scheduler) sendRequestToCache(request basic.Request, mouduleCode st
         return false
     }
 
+    //请求入缓存
     schdl.requestCache.Put(&request)
     log.Debug("Send the req to Cache: ", request.HttpReq().URL.String(), "  ",
         schdl.requestCache.Length(), schdl.requestCache.Capacity())
-    schdl.urlMap.Store(request.HttpReq().URL.String(), false)
+
+    //标记请求; 自增请求数量
+    uurl := request.HttpReq().URL.String()  //消除#和/的干扰
+    uurl = strings.Split(uurl, "#")[0]
+    uurl = strings.TrimRight(uurl, "/")
+    schdl.urlMap.Store(uurl, basic.URL_STATUS_DOWNLOADING)
     atomic.AddUint64(&schdl.urlCnt, 1)
     return true
 }
@@ -150,7 +159,10 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     }
 
     //已经处理过的URL不再处理
-    if _, ok := schdl.urlMap.Load(requestUrl.String()); ok {
+    uurl := requestUrl.String()  //消除#和/的干扰
+    uurl = strings.Split(uurl, "#")[0]
+    uurl = strings.TrimRight(uurl, "/")
+    if _, ok := schdl.urlMap.Load(uurl); ok {
         log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
         return false
     }

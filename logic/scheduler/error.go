@@ -27,7 +27,7 @@ func (schdl *Scheduler)activateErrorProcessor() {
                 continue
             }
 
-            errMsg := fmt.Sprintf("Received from error channel:ErrType: %s, Detail: %s", e.Type(), e.Error())
+            errMsg := fmt.Sprintf("Received Error. Type:(%s), Detail: %s", e.Type(), e.Error())
             log.Warn(errMsg)
         }
     }()

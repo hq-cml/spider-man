@@ -79,3 +79,26 @@ func (e *SpiderError) Error() string {
 	return e.fullErrMsg
 }
 
+/******************** 直接跳过的静态文件  ***********************/
+var SkipBinFileExt = map[string]bool {
+	"zip":true,
+	"rar":true,
+	"exe":true,
+	"rm":true,
+	"rmvb":true,
+	"pkg":true,
+	"wmv":true,
+	"avi":true,
+	"mkv":true,
+	"mp3":true,
+	"ogg":true,
+	"wma":true,
+	"jar":true,
+	"apk":true,
+	"png":true,
+	"jpg":true,
+	"jpeg":true,
+	"bmp":true,
+	"gif":true,
+	"tif":true,
+}

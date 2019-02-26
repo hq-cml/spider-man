@@ -113,11 +113,15 @@ func parseForATag(httpResp *basic.Response, userData interface{}) ([]*basic.Item
 				aUrl = reqUrl.ResolveReference(aUrl)
 			}
 
-			if _, ok := uniqUrl[aUrl.String()]; ok {  //去除重复的url
+			//去除本页面内部#干扰和重复的url
+			uurl := aUrl.String()
+			uurl = strings.Split(uurl, "#")[0]
+			uurl = strings.TrimRight(uurl, "/")
+			if _, ok := uniqUrl[uurl]; ok {
 				return
 			}
-			uniqUrl[aUrl.String()] = true
-			httpReq, err := http.NewRequest(http.MethodGet, aUrl.String(), nil)
+			uniqUrl[uurl] = true
+			httpReq, err := http.NewRequest(http.MethodGet, uurl, nil)
 			if err != nil {
 				errs = append(errs, err)
 			} else {

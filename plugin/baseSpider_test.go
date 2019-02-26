@@ -17,8 +17,10 @@ func TestParseATag(t *testing.T) {
 	//resp, err := http.DefaultClient.Get("https://www.360.cn/")       //360首页，UTF8编码，content-type: text/html，没有指明charset
 	//resp, err := http.DefaultClient.Get("http://www.dygang.net/")    //电影港首页，gbk编码，content-type: text/html，没有指明charset
 	//resp, err := http.DefaultClient.Get("https://www.jianshu.com") //简书首页，UTF8编码，content-type: text/html; charset=utf-8
+	//resp, err := http.DefaultClient.Get("http://sd.360.cn/downloadoffline.html") //大文件
 
-	resp, err := http.DefaultClient.Get("http://sd.360.cn/downloadoffline.html") //大文件
+	resp, err := http.DefaultClient.Get("http://www.360.cn/download") //这个里面有大量的二进制下载文件链接
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,8 +37,20 @@ func TestParseATag(t *testing.T) {
 	items, reqs, errors := parseForATag(httpResp, nil)
 
 	t.Logf("分析出的URL列表(%d):\n", len(reqs))
+	m := map[string]bool{}
+
 	for _, req := range reqs {
-		t.Logf("Depth: %d, URL: %s", req.Depth(), req.HttpReq().URL.String())
+		url := req.HttpReq().URL.String()
+		url = strings.Split(url, "#")[0]
+		url = strings.TrimRight(url, "/")
+		if _, ok := m[url]; ok {
+			continue
+		}
+		m[url] = true
+	}
+	t.Logf("去重后的URL列表(%d):\n", len(m))
+	for url,_ := range m {
+		t.Logf("URL: %s", url)
 	}
 
 	t.Log("分析出的Item列表:", len(items))

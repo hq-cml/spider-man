@@ -34,9 +34,9 @@ type ErrorType string
 
 //错误类型常量
 const (
-	DOWNLOADER_ERROR      ErrorType = "Downloader Error"
-	ANALYZER_ERROR        ErrorType = "Analyzer Error"
-	PROCESSOR_ERROR 	  ErrorType = "Processor Error"
+	DOWNLOADER_ERROR      ErrorType = "DownloaderErr"
+	ANALYZER_ERROR        ErrorType = "AnalyzerErr"
+	PROCESSOR_ERROR 	  ErrorType = "ProcessorErr"
 )
 
 //错误类型
@@ -99,7 +99,17 @@ type SpiderConf struct {
 	Step                bool   //调试用, 一步步的走
 
 	CrossSite			bool   //是否跨站爬取
+
+	SkipBinFile			bool   //抓取的时候跳过二进制下载文件, 否则会把spider撑挂了, 再大的内存也不够
 }
+
+//错误类型常量
+const (
+	URL_STATUS_DOWNLOADING  int8 = 0
+	URL_STATUS_SKIP         int8 = 1
+	URL_STATUS_DONE         int8 = 2
+	URL_STATUS_ERROR        int8 = 3
+)
 
 /************************************ 全局Conf变量 **********************************/
 var	Conf *SpiderConf
