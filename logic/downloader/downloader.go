@@ -41,18 +41,18 @@ func NewDownloader(client *http.Client) *Downloader {
 
 //实际下载的工作，将http的返回结果，封装到basic.Response中
 //bool返回值表示请求是否被skip
-func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error) {
+func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string, error) {
 	httpReq := req.HttpReq()
 
 	//跳过二进制文件下载
 	if basic.Conf.SkipBinFile {
-		skip, err := dl.skipBinFile(&req)
+		skip, msg, err := dl.skipBinFile(&req)
 		if err != nil {
-			return nil, false, errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
+			return nil, false, "", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 		}
 
 		if skip {
-			return nil, true, nil
+			return nil, true, msg, nil
 		}
 	}
 
@@ -60,14 +60,14 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 		httpReq.URL.String(), req.Depth())
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, false, errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
+		return nil, false, "", errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
 	}
 	defer httpResp.Body.Close()
 
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
 		err := errors.New(fmt.Sprintf("Unsupported status code %d.", httpResp.StatusCode))
-		return nil, false, err
+		return nil, false, "", err
 	}
 
 	//这个地方是一个go处理response的套路，读取了http.responseBody之后，如果不做处理则再次ReadAll的时候将出现空
@@ -83,13 +83,13 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 		//TODO 其实，这是一种有损策略，为了保证服务不被全部卡死，只能牺牲
 		//后续考虑将这些请求重新扔回队列中去
 		err := errors.New("Time out：("+ httpReq.URL.String() +")")
-		return nil, false, err
+		return nil, false, "", err
 	}
 
 	return basic.NewResponse(body,
 		req.Depth(),
 		httpResp.Header.Get("content-type"),
-		req.HttpReq().URL.String()), false, nil
+		req.HttpReq().URL.String()), false, "", nil
 }
 
 //运行中发现, 深度加大或者downloader数加大, 会发生内存暴涨
@@ -98,7 +98,7 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 // 先判断url扩展名, 静态文件直接略过
 // 如果扩展名不明显, 那只能发送一次HEAD方法的请求了, 但是这会导致多一次请求
 // 暂时没有更好的方法
-func (dl *Downloader)skipBinFile(req *basic.Request) (bool, error) {
+func (dl *Downloader)skipBinFile(req *basic.Request) (bool, string, error) {
 	url := req.HttpReq().URL.String()
 
 	//先通过扩展名来判断
@@ -106,27 +106,30 @@ func (dl *Downloader)skipBinFile(req *basic.Request) (bool, error) {
 	ext := tmp[len(tmp)-1]
 	if _, ok := basic.SkipBinFileExt[ext]; ok {
 		log.Infof("Skip Request(%s)... Depth:(%d). Reason: Ext Invalid \n", url, req.Depth())
-		return true, nil
+		return true, "Ext Invalid", nil
 	}
 
 	//TODO 这个地方可以继续优化，减少消耗，比如分析ext校验逃过的url的特点
 	//通过HEAD请求来判断
 	httpReq, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
-		return true, err
+		return true, "", err
 	}
 	resp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
-		return true, err
+		return true, "", err
 	}
 	defer resp.Body.Close()
 
 	contentType := resp.Header.Get("Content-Type")
+	contentLength := resp.Header.Get("Content-Length")
 	if !strings.Contains(contentType, "text/html") {
 		log.Infof("Skip Request(%s)... Depth:(%d). Reason: Content-Type Invalid \n", url, req.Depth())
-		return true, nil
+		return true,
+			   "Content-Type Invalid:" + contentType + ". Content-Length:" + contentLength,
+			   nil
 	}
-	return false, nil
+	return false, "", nil
 }
 
 //从http.Reosponse中取出Body，并且支持超时

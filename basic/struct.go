@@ -111,6 +111,13 @@ const (
 	URL_STATUS_ERROR        int8 = 3
 )
 
+type UrlInfo struct {
+	Status int8
+	Ref    string       //父Url
+	Msg    string       //一些信息, 比如错误原因, 跳过原因等等
+	Depth  int
+}
+
 /************************************ 全局Conf变量 **********************************/
 var	Conf *SpiderConf
 

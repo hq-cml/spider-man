@@ -26,7 +26,6 @@ type Scheduler struct {
 	urlMap         sync.Map              		  // 已请求的URL的字典。
 	urlCnt         uint64                         // sync.Map长度
 	running        uint32                         // 运行标记。0表示未运行，1表示已运行，2表示已停止。
-
 	downloaderCnt  uint64                         // 已启动的downloader协程数量
 	analyzerCnt    uint64                         // 已启动的analyzer协程数量
 }

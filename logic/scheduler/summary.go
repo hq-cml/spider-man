@@ -25,10 +25,10 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 		var buffer bytes.Buffer
 		buffer.WriteByte('\n')
 		schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
-			if v.(int8) != basic.URL_STATUS_DONE {
+			if v.(*basic.UrlInfo).Status != basic.URL_STATUS_DONE {
 				buffer.WriteString(prefix)
 				buffer.WriteString(k.(string))
-				buffer.WriteString("  " + convertStatus(v.(int8)))
+				buffer.WriteString("  " + convertStatus(v.(*basic.UrlInfo).Status))
 				buffer.WriteByte('\n')
 			}
 			return true
@@ -159,7 +159,7 @@ func (schdl *Scheduler)GetUrlMap() string {
 	var skipCount int64
 	var errCount int64
 	schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
-		switch v.(int8) {
+		switch v.(*basic.UrlInfo).Status {
 		case basic.URL_STATUS_DOWNLOADING:
 			downloadCount ++
 			bufferDownloading.WriteString("    " + k.(string))
@@ -170,11 +170,11 @@ func (schdl *Scheduler)GetUrlMap() string {
 			bufferDone.WriteByte('\n')
 		case basic.URL_STATUS_SKIP:
 			skipCount ++
-			bufferSkip.WriteString("    " + k.(string))
+			bufferSkip.WriteString("    " + k.(string) + ". Msg: " + v.(*basic.UrlInfo).Msg)
 			bufferSkip.WriteByte('\n')
 		case basic.URL_STATUS_ERROR:
 			errCount ++
-			bufferError.WriteString("    " + k.(string))
+			bufferError.WriteString("    " + k.(string) + ". Error: "+ v.(*basic.UrlInfo).Msg)
 			bufferError.WriteByte('\n')
 		}
 

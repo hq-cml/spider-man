@@ -72,16 +72,25 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     //断言转换
     dl, ok := entity.(*downloader.Downloader)
     if !ok {
-        msg := fmt.Sprintf("Downloader pool Wrong type")
+        msg := fmt.Sprint("Downloader pool Wrong type")
         schdl.sendError(errors.New(msg), DOWNLOADER_CODE)
         return
     }
 
     //实施下载
+    v, ok := schdl.urlMap.Load(request.HttpReq().URL.String());
+    if !ok {
+        msg := fmt.Sprint("Can't find the url in urlMap:" + request.HttpReq().URL.String())
+        schdl.sendError(errors.New(msg), DOWNLOADER_CODE)
+        return
+    }
+    pInfo := v.(*basic.UrlInfo)
+
     moudleCode := generateModuleCode(DOWNLOADER_CODE, dl.Id())
-    response, skip, err := dl.Download(request)
+    response, skip, msg, err := dl.Download(request)
     if err != nil {
-        schdl.urlMap.Store(request.HttpReq().URL.String(), basic.URL_STATUS_ERROR)
+        pInfo.Status = basic.URL_STATUS_ERROR
+        pInfo.Msg = err.Error()
         err = errors.New("(URL:" + request.HttpReq().URL.String() + ") " + err.Error())
         schdl.sendError(err, moudleCode)
 		return
@@ -89,9 +98,10 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
 
     //url标记成功
     if skip {
-        schdl.urlMap.Store(request.HttpReq().URL.String(), basic.URL_STATUS_SKIP)
+        pInfo.Status = basic.URL_STATUS_SKIP
+        pInfo.Msg = msg
     } else {
-        schdl.urlMap.Store(request.HttpReq().URL.String(), basic.URL_STATUS_DONE)
+        pInfo.Status = basic.URL_STATUS_DONE
     }
 
     //将resp放入
