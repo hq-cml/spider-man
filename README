@@ -31,3 +31,5 @@
 2. downloader开得大，就会大量阻塞在readAll上，导致无法结束
 3. urlMap细化，提供接口查询详情
 4. 深度加大之后，会出现内存堵塞，堵塞在readAll，怀疑和大文件有关
+5. 有一些url不支持http的HEAD方法，比如：
+    http://bang.360.cn

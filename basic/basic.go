@@ -68,11 +68,6 @@ func (e *SpiderError) Type() ErrorType {
 func (e *SpiderError) Error() string {
 	if e.fullErrMsg == "" {
 		var buffer bytes.Buffer
-		buffer.WriteString("Spider Error:")
-		if e.errType != "" {
-			buffer.WriteString(string(e.errType))
-			buffer.WriteString(": ")
-		}
 		buffer.WriteString(e.errMsg)
 		e.fullErrMsg = fmt.Sprintf("%s\n", buffer.String())
 	}

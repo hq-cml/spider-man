@@ -24,14 +24,12 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 		var buffer bytes.Buffer
 		buffer.WriteByte('\n')
 		schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
-			buffer.WriteString(prefix)
-			buffer.WriteString(k.(string))
-			if v.(bool) {
-				buffer.WriteString("  true")
-			} else {
-				buffer.WriteString("  false")
+			if v.(int8) != basic.URL_STATUS_DONE {
+				buffer.WriteString(prefix)
+				buffer.WriteString(k.(string))
+				buffer.WriteString("  " + convertStatus(v.(int8)))
+				buffer.WriteByte('\n')
 			}
-			buffer.WriteByte('\n')
 			return true
 		})
 		urlDetail = buffer.String()
@@ -55,6 +53,19 @@ func NewSchedSummary(schdl *Scheduler, prefix string, detail bool) *SchedSummary
 	}
 }
 
+func convertStatus(status int8) string {
+	switch status {
+	case basic.URL_STATUS_DOWNLOADING:
+		return "下载中"
+	case basic.URL_STATUS_SKIP:
+		return "已跳过"
+	case basic.URL_STATUS_DONE:
+		return "完成"
+	case basic.URL_STATUS_ERROR:
+		return "出错"
+	}
+	return "未知！！"
+}
 
 // 获取摘要信息。
 func (ss *SchedSummary) GetSummary(detail bool) string {

@@ -44,7 +44,7 @@ func main() {
 	//启动调试器
 	if conf.Pprof {
 
-		http.HandleFunc("/", GetUrlMap)
+		//http.HandleFunc("/", GetUrlMap)
 		go func() {
 			http.ListenAndServe(":" + conf.PprofPort, nil)
 		}()
@@ -99,9 +99,9 @@ func main() {
 	log.Infoln("Final summary:\n", summary.GetSummary(true))
 }
 
-func GetUrlMap(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(w, "hello")
-}
+//func GetUrlMap(w http.ResponseWriter, r *http.Request) {
+//	fmt.Println(w, "hello")
+//}
 
 //检查状态，并在满足条件时采取必要退出措施。
 //1. 达到了持续空闲时间

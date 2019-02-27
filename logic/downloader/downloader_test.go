@@ -32,3 +32,15 @@ func TestSkipUrl(t *testing.T) {
 	req = basic.NewRequest(u, 0)
 	t.Log(skipBinFile(req))
 }
+
+func TestSkipUrl2(t *testing.T) {
+	log.InitLog("", "debug")
+
+	u, err := http.NewRequest(http.MethodGet, "http://bang.360.cn", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := basic.NewRequest(u, 0)
+	t.Log(skipBinFile(req))
+}
+

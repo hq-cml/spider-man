@@ -33,8 +33,8 @@ func (schdl *Scheduler) activateDownloaders() {
             //下载器池中取令牌，如果申请不到，就会阻塞等待在此处~
             entity, err := schdl.getDownloaderPool().Get()
             if err != nil {
-                msg := fmt.Sprintf("Downloader pool error: %s", err)
-                schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+                //msg := fmt.Sprintf("Downloader pool error: %s", err)
+                schdl.sendError(err, DOWNLOADER_CODE)
                 return
             }
 
@@ -64,8 +64,8 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     defer func() {
         err := schdl.getDownloaderPool().Put(entity)
         if err != nil {
-            msg := fmt.Sprintf("Downloader pool error: %s", err)
-            schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+            //msg := fmt.Sprintf("Downloader pool error: %s", err)
+            schdl.sendError(err, DOWNLOADER_CODE)
         }
     }()
 
@@ -73,7 +73,7 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     dl, ok := entity.(*downloader.Downloader)
     if !ok {
         msg := fmt.Sprintf("Downloader pool Wrong type")
-        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        schdl.sendError(errors.New(msg), DOWNLOADER_CODE)
         return
     }
 
@@ -82,6 +82,7 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     response, skip, err := dl.Download(request)
     if err != nil {
         schdl.urlMap.Store(request.HttpReq().URL.String(), basic.URL_STATUS_ERROR)
+        err = errors.New("(URL:" + request.HttpReq().URL.String() + ") " + err.Error())
         schdl.sendError(err, moudleCode)
 		return
     }

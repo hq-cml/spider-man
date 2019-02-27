@@ -50,22 +50,22 @@ func (schdl *Scheduler) analyze(response basic.Response) {
     //申请分析令牌，如果申请不到，就会阻塞等待在此处~
     entity, err := schdl.getAnalyzerPool().Get()
     if err != nil {
-        msg := fmt.Sprintf("Analyzer pool error: %s", err)
-        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        //msg := fmt.Sprintf("Analyzer pool error: %s", err)
+        schdl.sendError(err, ANALYZER_CODE)
         return
     }
     defer func() { //注册延时归还
         err = schdl.getAnalyzerPool().Put(entity)
         if err != nil {
-            msg := fmt.Sprintf("Analyzer pool error: %s", err)
-            schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+            //msg := fmt.Sprintf("Analyzer pool error: %s", err)
+            schdl.sendError(err, ANALYZER_CODE)
         }
     }()
 
     ana, ok := entity.(*analyzer.Analyzer)
     if !ok {
         msg := fmt.Sprintf("Downloader pool Wrong type")
-        schdl.sendError(errors.New(msg), SCHEDULER_CODE)
+        schdl.sendError(errors.New(msg), ANALYZER_CODE)
         return
     }
 
