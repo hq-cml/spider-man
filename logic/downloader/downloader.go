@@ -109,6 +109,7 @@ func (dl *Downloader)skipBinFile(req *basic.Request) (bool, error) {
 		return true, nil
 	}
 
+	//TODO 这个地方可以继续优化，减少消耗，比如分析ext校验逃过的url的特点
 	//通过HEAD请求来判断
 	httpReq, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
