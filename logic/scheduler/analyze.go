@@ -43,7 +43,7 @@ func (schdl *Scheduler) analyze(response basic.Response) {
     defer func() {
         if p := recover(); p != nil {
             msg := fmt.Sprintf("Fatal Analysis Error: %s\n", p)
-            log.Warn(msg)
+            log.Err(msg)
         }
     }()
 

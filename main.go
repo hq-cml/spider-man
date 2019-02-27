@@ -60,7 +60,7 @@ func main() {
 	//创建首个请求
 	firstHttpReq, err := http.NewRequest("GET", *firstUrl, nil)
 	if err != nil {
-		log.Warnln(err.Error())
+		log.Errln(err.Error())
 		return
 	}
 

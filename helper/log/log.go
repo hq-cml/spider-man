@@ -17,6 +17,7 @@ const (
 	SPIDER_LOG_LEVEL_DEBUG = iota
 	SPIDER_LOG_LEVEL_INFO
 	SPIDER_LOG_LEVEL_WARN
+	SPIDER_LOG_LEVEL_ERR
 	SPIDER_LOG_LEVEL_FATAL
 )
 
@@ -42,6 +43,8 @@ func InitLog(path string, level string) {
 		levelInt = SPIDER_LOG_LEVEL_INFO
 	case "warn", "Warn", "WARN":
 		levelInt = SPIDER_LOG_LEVEL_WARN
+	case "err", "Err", "ERR":
+		levelInt = SPIDER_LOG_LEVEL_ERR
 	case "fatal", "Fatal", "FATAL":
 		levelInt = SPIDER_LOG_LEVEL_FATAL
 	}
@@ -104,6 +107,26 @@ func Warnln(v ...interface{}) {
 func Warn(v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_WARN {return}
 	v1 := []interface{}{"[WARN]"}
+	v1 = append(v1, v...)
+	spiderLog.Print(v1...)
+}
+
+
+func Errf(format string, v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
+	spiderLog.Printf("[ERROR] "+format, v...)
+}
+
+func Errln(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
+	v1 := []interface{}{"[ERROR]"}
+	v1 = append(v1, v...)
+	spiderLog.Println(v1...)
+}
+
+func Err(v ...interface{}) {
+	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
+	v1 := []interface{}{"[ERROR]"}
 	v1 = append(v1, v...)
 	spiderLog.Print(v1...)
 }

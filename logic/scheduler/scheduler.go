@@ -91,7 +91,7 @@ func (schdl *Scheduler) initScheduler(
 	defer func() {
 		if e := recover(); e != nil {
 			msg := fmt.Sprintf("Fatal Scheduler Error:%s\n", e)
-			log.Warn(msg)
+			log.Err(msg)
 			err = errors.New(msg)
 			return
 		}
@@ -242,7 +242,7 @@ func (schdl *Scheduler)Start(
 	defer func() {
 		if e := recover(); e != nil {
 			msg := fmt.Sprintf("Fatal Scheduler Error:%s\n", e)
-			log.Warn(msg)
+			log.Err(msg)
 			err = errors.New(msg)
 			return
 		}

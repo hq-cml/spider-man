@@ -35,7 +35,7 @@ func (schdl *Scheduler) processOneItem(e basic.Item) {
     defer func() {
         if p := recover(); p != nil {
             msg := fmt.Sprintf("Fatal item Processing Error: %s\n", p)
-            log.Warn(msg)
+            log.Err(msg)
         }
     }()
 

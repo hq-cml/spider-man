@@ -13,7 +13,7 @@ func (schdl *Scheduler)activateErrorProcessor() {
         defer func() {
             if p := recover(); p != nil {
                 msg := fmt.Sprintf("ProcessError panic: %s\n", p)
-                log.Warn(msg)
+                log.Err(msg)
             }
         }()
 
@@ -28,7 +28,7 @@ func (schdl *Scheduler)activateErrorProcessor() {
             }
 
             errMsg := fmt.Sprintf("Received Error. Type:(%s), Detail: %s", e.Type(), e.Error())
-            log.Warn(errMsg)
+            log.Err(errMsg)
         }
     }()
 }

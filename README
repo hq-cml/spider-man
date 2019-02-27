@@ -25,11 +25,10 @@
 一. 概念说明
 
 //TODO
-1. 下载大文件的问题，比如
+1. 暂时不支持文件的下载，比如
     http://sd.360.cn/downloadoffline.html
     http://sd.360.cn/download.html?type=full
-2. 深度加大之后，内存急剧消耗
-3.
-4. 深度加大之后，会出现内存堵塞，堵塞在readAll，怀疑和大文件有关
-5. 有一些url不支持http的HEAD方法，比如：
+    目前的办法是先通过uri扩展名快速判断, 如果没有则通过发送HEAD方法的请求判断
+2. 有一些url不支持http的HEAD方法，比如：
     http://bang.360.cn
+3. 深度加大之后，内存急剧消耗, 出现内存堵塞，堵塞在readAll，怀疑和大文件有关
