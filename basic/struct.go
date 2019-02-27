@@ -87,6 +87,8 @@ type SpiderConf struct {
 	MaxIdleCount        int    //当满足MaxIdleCount次空闲之后，程序结束
 	IntervalNs          int    //检查程序结束标志的轮训时间间隔，单位：毫秒
 
+	RequestTimeout      int    //Http请求超时时间(同时也用于readAll(body)的超时
+
 	SummaryDetail       bool   //是否打印详细Url
 	SummaryInterval     int    //打印summary的间隔，单位：秒
 
