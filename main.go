@@ -41,15 +41,6 @@ func main() {
 	}
 	basic.Conf = conf
 
-	//启动调试器
-	if conf.Pprof {
-
-		//http.HandleFunc("/", GetUrlMap)
-		go func() {
-			http.ListenAndServe(":" + conf.PprofPort, nil)
-		}()
-	}
-
 	//插件列表, 加载所有的支持插件
 	var plugins = map[string]basic.SpiderPlugin{
 		"base": plugin.NewBaseSpider(*userData),
@@ -83,6 +74,16 @@ func main() {
 		panic("Scheduler Start error:" + err.Error())
 	}
 
+	//启动调试器
+	if conf.Pprof {
+		go func() {
+			http.HandleFunc("/getUrlMap", func (w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, schdl.GetUrlMap())
+			})
+			http.ListenAndServe(":" + conf.PprofPort, nil)
+		}()
+	}
+
 	//主协程同步阻塞轮训，检查空闲状态或第三方信号
 	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
 	if intervalNs < 10 * time.Millisecond { //防止过小的参数值对爬取流程的影响
@@ -99,9 +100,7 @@ func main() {
 	log.Infoln("Final summary:\n", summary.GetSummary(true))
 }
 
-//func GetUrlMap(w http.ResponseWriter, r *http.Request) {
-//	fmt.Println(w, "hello")
-//}
+
 
 //检查状态，并在满足条件时采取必要退出措施。
 //1. 达到了持续空闲时间

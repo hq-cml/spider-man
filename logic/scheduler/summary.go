@@ -8,6 +8,7 @@ import (
 	"github.com/hq-cml/spider-go/helper/log"
 	"github.com/hq-cml/spider-go/basic"
 	"sync/atomic"
+	"strconv"
 )
 
 /*
@@ -144,4 +145,45 @@ func (schdl *Scheduler)activateRecordSummary() {
 			time.Sleep(d * time.Second)
 		}
 	}()
+}
+
+// 记录摘要信息。
+func (schdl *Scheduler)GetUrlMap() string {
+	var result bytes.Buffer
+	var bufferDownloading bytes.Buffer
+	var bufferDone bytes.Buffer
+	var bufferSkip bytes.Buffer
+	var bufferError bytes.Buffer
+	var downloadCount int64
+	var doneCount int64
+	var skipCount int64
+	var errCount int64
+	schdl.urlMap.Range(func(k, v interface{}) bool { //闭包
+		switch v.(int8) {
+		case basic.URL_STATUS_DOWNLOADING:
+			downloadCount ++
+			bufferDownloading.WriteString("    " + k.(string))
+			bufferDownloading.WriteByte('\n')
+		case basic.URL_STATUS_DONE:
+			doneCount ++
+			bufferDone.WriteString("    " + k.(string))
+			bufferDone.WriteByte('\n')
+		case basic.URL_STATUS_SKIP:
+			skipCount ++
+			bufferSkip.WriteString("    " + k.(string))
+			bufferSkip.WriteByte('\n')
+		case basic.URL_STATUS_ERROR:
+			errCount ++
+			bufferError.WriteString("    " + k.(string))
+			bufferError.WriteByte('\n')
+		}
+
+		return true
+	})
+	result.WriteString("出错(" + strconv.FormatInt(errCount, 10) + ")：\n" + bufferError.String())
+	result.WriteString("跳过(" + strconv.FormatInt(skipCount, 10) + ")：\n" + bufferSkip.String())
+	result.WriteString("下载中(" + strconv.FormatInt(downloadCount, 10) + ")：\n" + bufferDownloading.String())
+	result.WriteString("完成(" + strconv.FormatInt(doneCount, 10) + ")：\n" + bufferDone.String())
+
+	return result.String()
 }
