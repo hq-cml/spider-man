@@ -15,7 +15,7 @@ import (
 //网页下载器，*Downloader实现SpiderEntity接口
 type Downloader struct {
 	id         uint64 //ID
-	httpClient http.Client
+	httpClient *http.Client
 }
 func (dl *Downloader) Id() uint64 {
 	return dl.id
@@ -34,7 +34,7 @@ func NewDownloader(client *http.Client) *Downloader {
 
 	return &Downloader{
 		id:         id,
-		httpClient: *client,
+		httpClient: client,
 	}
 }
 
@@ -62,6 +62,7 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 	if err != nil {
 		return nil, false,  err
 	}
+	defer httpResp.Body.Close()
 
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
@@ -77,9 +78,8 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
-	body, _ := ioutil.ReadAll(httpResp.Body)    //TODO hang  9
-	defer httpResp.Body.Close()
 
+	body, _ := ioutil.ReadAll(httpResp.Body)    //TODO hang  9
 	return basic.NewResponse(body,
 		req.Depth(),
 		httpResp.Header.Get("content-type"),

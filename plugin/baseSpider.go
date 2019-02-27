@@ -30,7 +30,8 @@ func NewBaseSpider(v interface{}) basic.SpiderPlugin {
 
 //生成HTTP客户端
 func (b *BaseSpider) GenHttpClient() *http.Client {
-	return &http.Client{}
+	//return &http.Client{}
+	return http.DefaultClient
 }
 
 //获得响应解析函数的序列
