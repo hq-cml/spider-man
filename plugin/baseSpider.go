@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/html/charset"
 	"bufio"
 	"golang.org/x/text/transform"
+	"time"
 )
 
 //*BaseSpider实现SpiderPlugin接口
@@ -30,8 +31,10 @@ func NewBaseSpider(v interface{}) basic.SpiderPlugin {
 
 //生成HTTP客户端
 func (b *BaseSpider) GenHttpClient() *http.Client {
-	//return &http.Client{}
-	return http.DefaultClient
+	//客户端必须设置一个整体超时时间，否则随着时间推移，会把downloader全部卡死
+	return &http.Client{
+		Timeout: 60*time.Second,
+	}
 }
 
 //获得响应解析函数的序列

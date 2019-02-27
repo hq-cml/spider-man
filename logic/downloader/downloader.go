@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 /***********************************下载器**********************************/
@@ -45,10 +46,9 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 
 	//跳过二进制文件下载
 	if basic.Conf.SkipBinFile {
-		skip, err := skipBinFile(&req)
+		skip, err := dl.skipBinFile(&req)
 		if err != nil {
-			err := errors.New(fmt.Sprintf("skipBinFile Error: %s", err))
-			return nil, false, err
+			return nil, false, errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 		}
 
 		if skip {
@@ -58,9 +58,9 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 
 	log.Infof("Download the request (reqUrl=%s)... Depth: (%d) \n",
 		httpReq.URL.String(), req.Depth())
-	httpResp, err := dl.httpClient.Do(httpReq)   //TODO hang  9
+	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, false,  err
+		return nil, false, errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
 	}
 	defer httpResp.Body.Close()
 
@@ -78,8 +78,14 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
+	body, ok := getBodyTimeout(httpResp, 30 * time.Second)
+	if !ok {
+		//TODO 其实，这是一种有损策略，为了保证服务不被全部卡死，只能牺牲
+		//后续考虑将这些请求重新扔回队列中去
+		err := errors.New("Time out：("+ httpReq.URL.String() +")")
+		return nil, false, err
+	}
 
-	body, _ := ioutil.ReadAll(httpResp.Body)    //TODO hang  9
 	return basic.NewResponse(body,
 		req.Depth(),
 		httpResp.Header.Get("content-type"),
@@ -92,7 +98,7 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, error)
 // 先判断url扩展名, 静态文件直接略过
 // 如果扩展名不明显, 那只能发送一次HEAD方法的请求了, 但是这会导致多一次请求
 // 暂时没有更好的方法
-func skipBinFile(req *basic.Request) (bool, error) {
+func (dl *Downloader)skipBinFile(req *basic.Request) (bool, error) {
 	url := req.HttpReq().URL.String()
 
 	//先通过扩展名来判断
@@ -108,7 +114,7 @@ func skipBinFile(req *basic.Request) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	resp, err := http.DefaultClient.Do(httpReq)
+	resp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
 		return true, err
 	}
@@ -120,4 +126,25 @@ func skipBinFile(req *basic.Request) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+//从http.Reosponse中取出Body，并且支持超时
+//由于服务器端实现的差异，在高并发情况下，ioutil.ReadAll常会出现迷之超时（官方解释ReadAll必须遇到EOF或者error才能结束）
+//所以必须设置超时时间，防止downloader全部给卡死了
+//返回true表示正常取值，返回false表示出现超时
+func getBodyTimeout(resp *http.Response, timeout time.Duration) ([]byte, bool){
+	var body []byte
+	c := make(chan []byte)
+	go func() {
+		b, _ := ioutil.ReadAll(resp.Body)
+		c <- b
+	}()
+
+	select {
+	case <- time.After(timeout):
+		return nil, false
+	case body = <- c:
+	}
+
+	return body, true
 }
