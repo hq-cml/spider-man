@@ -63,15 +63,8 @@ func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
  * 分析出满足条件的结果作为item
  */
 func parseForATag(httpResp *basic.Response, userData interface{}) ([]*basic.Item, []*basic.Request, []error) {
-	//这个地方其实已经没必要这么处理，因为在downloader.go中已经关闭了真正的Body
-	//只是为了保证使用方式的统一，这也真是NopCloser需要的效果
-	//p, _ := ioutil.ReadAll(httpResp.Body)
-	//httpResp.Body.Close()
-	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
 	//对响应做一些处理
-
-	//var reqUrl *url.URL = httpResp.Request.URL //记录下响应的请求（防止相对URL的问题）
 	reqUrl, err := url.Parse(httpResp.ReqUrl) //记录下响应的请求（防止相对URL的问题）
 	if err != nil {
 		return nil, nil, []error{err}

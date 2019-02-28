@@ -118,15 +118,20 @@ func (schdl *Scheduler) getAnalyzerPool() basic.SpiderPool {
 //把请求存放到请求缓存。
 func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, refUrl string) bool {
 
-    //消除#和/的干扰, 重建一个请求
+    //消除#和/的干扰, 如有必要，则重建request
+    var req *basic.Request
     uurl := request.HttpReq().URL.String()
     uurl = strings.Split(uurl, "#")[0]
     uurl = strings.TrimRight(uurl, "/")
-    httpReq, err := http.NewRequest(http.MethodGet, uurl, nil)
-    if err != nil {
-        return false
+    if (uurl != request.HttpReq().URL.String()) { //
+        httpReq, err := http.NewRequest(http.MethodGet, uurl, nil)
+        if err != nil {
+            return false
+        }
+        req = basic.NewRequest(httpReq, request.Depth())
+    } else {
+        req = request
     }
-    req := basic.NewRequest(httpReq, request.Depth())
 
     //过滤掉非法的请求
     if schdl.filterInvalidRequest(req) == false {
@@ -145,7 +150,6 @@ func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, 
         schdl.requestCache.Length(), schdl.requestCache.Capacity())
 
     //标记请求; 自增请求数量
-
     schdl.urlMap.Store(uurl, &basic.UrlInfo{
         Status: basic.URL_STATUS_DOWNLOADING,
         Ref:refUrl,
