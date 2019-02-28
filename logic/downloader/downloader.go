@@ -66,7 +66,8 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string
 
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Unsupported status code %d.", httpResp.StatusCode))
+		err := errors.New(fmt.Sprintf("Unsupported status code %d. (ReqUrl=%s)",
+			httpResp.StatusCode, httpReq.URL.String()))
 		return nil, false, "", err
 	}
 
@@ -78,7 +79,8 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
-	body, ok := getBodyTimeout(httpResp, time.Duration(basic.Conf.RequestTimeout) * time.Second)
+	//body, ok := getBodyTimeout(httpResp, time.Duration(basic.Conf.RequestTimeout) * time.Second)
+	body, ok := getBodyTimeout(httpResp, 30 * time.Second)
 	if !ok {
 		//TODO 其实，这是一种有损策略，为了保证服务不被全部卡死，只能牺牲
 		//后续考虑将这些请求重新扔回队列中去

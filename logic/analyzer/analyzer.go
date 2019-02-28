@@ -49,8 +49,8 @@ func (analyzer *Analyzer) Analyze(
 	//}
 
 	//日志
-	log.Infof("Analyze the response (reqUrl=%s)... Depth: (%d) \n",
-		resp.ReqUrl, resp.Depth)
+	log.Infof("Analyze the response (reqUrl=%s)... Depth: (%d).  Body: (%d) \n",
+		resp.ReqUrl, resp.Depth, len(resp.Body))
 
 	//respDepth := resp.Depth()
 

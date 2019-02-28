@@ -33,7 +33,8 @@ func NewBaseSpider(v interface{}) basic.SpiderPlugin {
 func (b *BaseSpider) GenHttpClient() *http.Client {
 	//客户端必须设置一个整体超时时间，否则随着时间推移，会把downloader全部卡死
 	return &http.Client{
-		Timeout: time.Duration(basic.Conf.RequestTimeout) * time.Second,
+		//Timeout: time.Duration(basic.Conf.RequestTimeout) * time.Second,
+		Timeout: 60 * time.Second,
 	}
 }
 

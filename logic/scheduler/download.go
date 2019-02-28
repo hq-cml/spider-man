@@ -55,7 +55,7 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     //panic错误兜底
     defer func() {
         if p := recover(); p != nil {
-            msg := fmt.Sprintf("Fatal Download Error: %s\n", p)
+            msg := fmt.Sprintf("Fatal Download Error: %s. (ReqUrl=%s)\n", p, request.HttpReq().URL.String())
             log.Err(msg)
         }
     }()
