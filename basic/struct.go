@@ -88,6 +88,7 @@ type SpiderConf struct {
 	IntervalNs          int    //检查程序结束标志的轮训时间间隔，单位：毫秒
 
 	RequestTimeout      int    //Http请求超时时间(同时也用于readAll(body)的超时
+	RetryTimes          int    //重试次数, 请求超时的时候, 会将请求重新放入队列
 
 	SummaryDetail       bool   //是否打印详细Url
 	SummaryInterval     int    //打印summary的间隔，单位：秒
@@ -105,19 +106,23 @@ type SpiderConf struct {
 	SkipBinFile			bool   //抓取的时候跳过二进制下载文件, 否则会把spider撑挂了, 再大的内存也不够
 }
 
-//错误类型常量
+//URL请求状态常量
 const (
-	URL_STATUS_DOWNLOADING  int8 = 0
-	URL_STATUS_SKIP         int8 = 1
-	URL_STATUS_DONE         int8 = 2
-	URL_STATUS_ERROR        int8 = 3
+	URL_STATUS_DOWNLOADING  int8 = 0    //下载中
+	URL_STATUS_SKIP         int8 = 1    //请求跳过
+	URL_STATUS_DONE         int8 = 2    //请求完成
+	URL_STATUS_FATAL_ERROR  int8 = 3    //请求出现错误
+	URL_STATUS_HEAD_TIMEOUT int8 = 4    //HEAD请求超时
+	URL_STATUS_READ_TIMEOUT int8 = 5    //读取Body超时
+	URL_STATUS_GET_TIMEOUT  int8 = 6    //GET请求超时
 )
 
 type UrlInfo struct {
 	Status int8
-	Ref    string       //父Url
+	Ref    string       //父Url, 即从哪个Url分析出来的本Url
 	Msg    string       //一些信息, 比如错误原因, 跳过原因等等
 	Depth  int
+	Retry  int          //已经重试的次数
 }
 
 /************************************ 全局Conf变量 **********************************/

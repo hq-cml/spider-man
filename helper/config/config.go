@@ -53,6 +53,10 @@ func ParseConfig(confPath string) (*basic.SpiderConf, error) {
 		panic("Load conf requestTimeout failed!")
 	}
 
+	if c.RetryTimes, err = cfg.Int("spider", "retryTimes"); err != nil {
+		panic("Load conf retryTimes failed!")
+	}
+
 	if c.SummaryDetail, err = cfg.Bool("spider", "summaryDetail"); err != nil {
 		panic("Load conf summaryDetail failed!" + err.Error())
 	}

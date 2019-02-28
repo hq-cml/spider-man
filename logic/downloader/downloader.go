@@ -41,13 +41,16 @@ func NewDownloader(client *http.Client) *Downloader {
 
 //实际下载的工作，将http的返回结果，封装到basic.Response中
 //bool返回值表示请求是否被skip
-func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string, error) {
+func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, string, error) {
 	httpReq := req.HttpReq()
 
 	//跳过二进制文件下载
 	if basic.Conf.SkipBinFile {
-		skip, msg, err := dl.skipBinFile(&req)
+		skip, msg, err := dl.skipBinFile(req)
 		if err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "timeout") {
+				return nil, false, "head timeout", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
+			}
 			return nil, false, "", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 		}
 
@@ -60,6 +63,9 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string
 		httpReq.URL.String(), req.Depth())
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "timeout") {
+			return nil, false, "get timeout", errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
+		}
 		return nil, false, "", errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
 	}
 	defer httpResp.Body.Close()
@@ -79,13 +85,12 @@ func (dl *Downloader) Download(req basic.Request) (*basic.Response, bool, string
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
 
-	//body, ok := getBodyTimeout(httpResp, time.Duration(basic.Conf.RequestTimeout) * time.Second)
 	body, ok := getBodyTimeout(httpResp, 30 * time.Second)
 	if !ok {
 		//TODO 其实，这是一种有损策略，为了保证服务不被全部卡死，只能牺牲
 		//后续考虑将这些请求重新扔回队列中去
 		err := errors.New("Time out：("+ httpReq.URL.String() +")")
-		return nil, false, "", err
+		return nil, false, "read timeout", err
 	}
 
 	return basic.NewResponse(body,

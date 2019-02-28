@@ -149,13 +149,14 @@ func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, 
     log.Debug("Send the req to Cache: ", req.HttpReq().URL.String(), "  ",
         schdl.requestCache.Length(), schdl.requestCache.Capacity())
 
-    //标记请求; 自增请求数量
-    schdl.urlMap.Store(uurl, &basic.UrlInfo{
+    //标记请求; 如果是首次请求, 则自增请求数量, 否则啥也不干
+    if _, loaded := schdl.urlMap.LoadOrStore(uurl, &basic.UrlInfo{
         Status: basic.URL_STATUS_DOWNLOADING,
         Ref:refUrl,
         Depth:req.Depth(),
-    })
-    atomic.AddUint64(&schdl.urlCnt, 1)
+    }); !loaded {
+        atomic.AddUint64(&schdl.urlCnt, 1)
+    }
     return true
 }
 
@@ -173,8 +174,11 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
         return false
     }
 
-    //已经处理过的URL不再处理
-    if _, ok := schdl.urlMap.Load(request.HttpReq().URL.String()); ok {
+    //已经处理过的URL不再处理, 但是也有例外
+    v, ok := schdl.urlMap.Load(request.HttpReq().URL.String())
+    if ok &&
+        v.(*basic.UrlInfo).Status != basic.URL_STATUS_HEAD_TIMEOUT &&
+        v.(*basic.UrlInfo).Status != basic.URL_STATUS_GET_TIMEOUT {
         log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
         return false
     }

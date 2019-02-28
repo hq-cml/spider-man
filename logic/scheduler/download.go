@@ -87,9 +87,30 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
     pInfo := v.(*basic.UrlInfo)
 
     moudleCode := generateModuleCode(DOWNLOADER_CODE, dl.Id())
-    response, skip, msg, err := dl.Download(request)
+    response, skip, msg, err := dl.Download(&request)
     if err != nil {
-        pInfo.Status = basic.URL_STATUS_ERROR
+        //如果是HEAD或者GET请求超时, 且未达到最大重试次数, 那么进行重试
+        if msg == "head timeout" {
+            pInfo.Status = basic.URL_STATUS_HEAD_TIMEOUT
+            if pInfo.Retry < basic.Conf.RetryTimes {
+                fmt.Println("Retry HEAD: " + request.HttpReq().URL.String())
+                schdl.sendRequestToCache(&request, moudleCode, pInfo.Ref)
+                pInfo.Retry ++
+                return
+            }
+        } else if msg == "get timeout" {
+            pInfo.Status = basic.URL_STATUS_GET_TIMEOUT
+            if pInfo.Retry < basic.Conf.RetryTimes {
+                fmt.Println("Retry GET: " + request.HttpReq().URL.String())
+                schdl.sendRequestToCache(&request, moudleCode, pInfo.Ref)
+                pInfo.Retry ++
+                return
+            }
+        } else if msg == "read timeout"{
+            pInfo.Status = basic.URL_STATUS_READ_TIMEOUT
+        } else {
+            pInfo.Status = basic.URL_STATUS_FATAL_ERROR
+        }
         pInfo.Msg = err.Error()
         err = errors.New("(URL:" + request.HttpReq().URL.String() + ") " + err.Error())
         schdl.sendError(err, moudleCode)
