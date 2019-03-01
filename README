@@ -32,4 +32,5 @@
 2. 有一些url不支持http的HEAD方法，比如：
     http://bang.360.cn
 3. 细化详情http接口
-4. 超时偏多
+4. Dns超时偏多
+https://studygolang.com/resources/7740

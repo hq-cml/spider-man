@@ -30,6 +30,7 @@ func NewDownloader(client *http.Client) *Downloader {
 	id := downloaderIdGenerator.GetId()
 
 	if client == nil {
+		fmt.Println("BBBBBBBBBBBBBBBBBB----------")
 		client = &http.Client{}
 	}
 
@@ -43,11 +44,14 @@ func NewDownloader(client *http.Client) *Downloader {
 //bool返回值表示请求是否被skip
 func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, string, error) {
 	httpReq := req.HttpReq()
+	log.Infof("Start to Download the request (reqUrl=%s)... Depth: (%d) \n",
+		httpReq.URL.String(), req.Depth())
 
 	//跳过二进制文件下载
 	if basic.Conf.SkipBinFile {
 		skip, msg, err := dl.skipBinFile(req)
 		if err != nil {
+			log.Info("AAAAAAAAAAAAAAAAA----", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error()))
 			if strings.Contains(strings.ToLower(err.Error()), "timeout") {
 				return nil, false, "head timeout", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 			}
@@ -59,8 +63,6 @@ func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, strin
 		}
 	}
 
-	log.Infof("Download the request (reqUrl=%s)... Depth: (%d) \n",
-		httpReq.URL.String(), req.Depth())
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "timeout") {

@@ -32,10 +32,15 @@ func NewBaseSpider(v interface{}) basic.SpiderPlugin {
 //生成HTTP客户端
 func (b *BaseSpider) GenHttpClient() *http.Client {
 	//客户端必须设置一个整体超时时间，否则随着时间推移，会把downloader全部卡死
-	return &http.Client{
-		//Timeout: time.Duration(basic.Conf.RequestTimeout) * time.Second,
-		Timeout: 60 * time.Second,
+	fmt.Println("AAAAAAAAAAAAAAAAA----------", basic.Conf.RequestTimeout)
+	a := &http.Client{
+		Transport: http.DefaultTransport,
+		Timeout: 90 * time.Second,
 	}
+
+	//a.Transport.
+
+	return a
 }
 
 //获得响应解析函数的序列

@@ -93,17 +93,17 @@ func (schdl *Scheduler) download(request basic.Request, entity basic.SpiderEntit
         if msg == "head timeout" {
             pInfo.Status = basic.URL_STATUS_HEAD_TIMEOUT
             if pInfo.Retry < basic.Conf.RetryTimes {
-                fmt.Println("Retry HEAD: " + request.HttpReq().URL.String())
                 schdl.sendRequestToCache(&request, moudleCode, pInfo.Ref)
                 pInfo.Retry ++
+                log.Warnf("Retry HEAD(%d): %s\n" , pInfo.Retry, request.HttpReq().URL.String())
                 return
             }
         } else if msg == "get timeout" {
             pInfo.Status = basic.URL_STATUS_GET_TIMEOUT
             if pInfo.Retry < basic.Conf.RetryTimes {
-                fmt.Println("Retry GET: " + request.HttpReq().URL.String())
                 schdl.sendRequestToCache(&request, moudleCode, pInfo.Ref)
                 pInfo.Retry ++
+                log.Warnf("Retry GET(%d): %s\n" , pInfo.Retry, request.HttpReq().URL.String())
                 return
             }
         } else if msg == "read timeout"{
