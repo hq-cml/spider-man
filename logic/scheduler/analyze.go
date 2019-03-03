@@ -16,6 +16,13 @@ import (
  * 激活分析器，开始分析，分析工作由独立的goroutine进行负责，无限循环，从响应通道中获取响应
  * 每一个响应再交给独立的goroutine完成分析工作，但是goroutine并不一定能够立刻开始分析工作
  * 同时能够进行分析工作的goroutine数量, 受到分析器池容量的的制约
+ *
+ * 对于池子的使用，analyzer和downloader略有不同:
+ * Downloader将取令牌操作，放在新建goroutine之外，原因是大概率下，Request数都非常大，如果如果放在里面会导致产生大量的等待的goroutine
+ *      （因为Request Chan有Request Cache保护，所以不会出现全局阻塞，所以这么处理大面积降低了goroutine数量
+ *
+ * Analizer则不同，Response Chan没有特殊的保护，所以不能让其满了进而阻塞全局。并且由于通常Analyze程序是CPU型（DownLoader是IO型）
+ *      很快都能够结束，所以直接将取令牌操作放在了
  */
 func (schdl *Scheduler) activateAnalyzers() {
     go func() {
@@ -133,7 +140,7 @@ func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, 
         req = request
     }
 
-    //过滤掉非法的请求
+    //过滤掉非法的或者重复的请求
     if schdl.filterInvalidRequest(req) == false {
         return false
     }
@@ -144,11 +151,6 @@ func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, 
         return false
     }
 
-    //请求入缓存
-    schdl.requestCache.Put(req)
-    log.Debug("Send the req to Cache: ", req.HttpReq().URL.String(), "  ",
-        schdl.requestCache.Length(), schdl.requestCache.Capacity())
-
     //标记请求; 如果是首次请求, 则自增请求数量, 否则啥也不干
     if _, loaded := schdl.urlMap.LoadOrStore(uurl, &basic.UrlInfo{
         Status: basic.URL_STATUS_DOWNLOADING,
@@ -157,10 +159,18 @@ func (schdl *Scheduler) sendRequestToCache(request *basic.Request, mouduleCode, 
     }); !loaded {
         atomic.AddUint64(&schdl.urlCnt, 1)
     }
+
+    //请求入缓存
+    schdl.requestCache.Put(req)
+    log.Debug("Send the req to Cache: ", req.HttpReq().URL.String(), "  ",
+        schdl.requestCache.Length(), schdl.requestCache.Capacity())
+
     return true
 }
 
-//对分析出来的请求做合法性校验，不合法的会被过滤
+//对分析出来的请求做合法性校验，
+// 合法返回true
+// 不合法返回false
 func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
     httpRequest := request.HttpReq()
     //校验请求体本身
@@ -174,13 +184,19 @@ func (schdl *Scheduler) filterInvalidRequest(request *basic.Request) bool {
         return false
     }
 
-    //已经处理过的URL不再处理, 但是也有例外
+    //已经处理过的URL; 需要进一步判断不再处理
     v, ok := schdl.urlMap.Load(request.HttpReq().URL.String())
-    if ok &&
-        v.(*basic.UrlInfo).Status != basic.URL_STATUS_HEAD_TIMEOUT &&
-        v.(*basic.UrlInfo).Status != basic.URL_STATUS_GET_TIMEOUT {
-        log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
-        return false
+    if ok {
+        //如果深度不匹配，则是非法的
+        if v.(*basic.UrlInfo).Depth != request.Depth() {
+            log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
+            return false
+        }
+        //如果不是TimeOUT导致的重试，则也是非法的
+        if v.(*basic.UrlInfo).Status != basic.URL_STATUS_HEAD_TIMEOUT && v.(*basic.UrlInfo).Status != basic.URL_STATUS_GET_TIMEOUT {
+            log.Debugf("Ignore the request! It's url is repeated. (requestUrl=%s)\n", requestUrl)
+            return false
+        }
     }
 
     //如果配置只能在站内爬取, 则只有主域名相同的URL才是合法的

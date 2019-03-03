@@ -15,6 +15,7 @@ func TestParseATag(t *testing.T) {
 	log.InitLog("", "debug")
 
 	resp, err := http.DefaultClient.Get("https://www.360.cn/")       //360首页，UTF8编码，content-type: text/html，没有指明charset
+	//resp, err := http.DefaultClient.Get("http://www.360.cn/n/10274.html")
 	//resp, err := http.DefaultClient.Get("http://www.dygang.net/")    //电影港首页，gbk编码，content-type: text/html，没有指明charset
 	//resp, err := http.DefaultClient.Get("https://www.jianshu.com") //简书首页，UTF8编码，content-type: text/html; charset=utf-8
 	//resp, err := http.DefaultClient.Get("http://sd.360.cn/downloadoffline.html") //大文件
@@ -24,10 +25,13 @@ func TestParseATag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	fmt.Println("BBBBBBBBBBBBBBBBB----", resp.Header.Get("content-length"))
-	fmt.Println("AAAAAAAAAAAAAAAAAAAAA--", len(body))
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	fmt.Println("Content-Type----", resp.Header.Get("content-type"))
+	fmt.Println("Status-Code----", resp.StatusCode)
+	fmt.Println("Content-Length--", len(body))
+
 	httpResp := basic.NewResponse(
 		body,
 		0,
@@ -57,7 +61,7 @@ func TestParseATag(t *testing.T) {
 	for _, item := range items {
 		t.Log((*item)["url"])
 		t.Log((*item)["charset"])
-		//t.Log((*item)["body"])
+		t.Log((*item)["body"])
 	}
 
 	t.Log("分析出的Error列表:", len(errors))
