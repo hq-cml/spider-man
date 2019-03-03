@@ -17,12 +17,12 @@ import (
  * 每一个响应再交给独立的goroutine完成分析工作，但是goroutine并不一定能够立刻开始分析工作
  * 同时能够进行分析工作的goroutine数量, 受到分析器池容量的的制约
  *
- * 对于池子的使用，analyzer和downloader略有不同:
+ * 对于池子的使用，Analyzer和Downloader略有不同:
  * Downloader将取令牌操作，放在新建goroutine之外，原因是大概率下，Request数都非常大，如果如果放在里面会导致产生大量的等待的goroutine
  *      （因为Request Chan有Request Cache保护，所以不会出现全局阻塞，所以这么处理大面积降低了goroutine数量
  *
  * Analizer则不同，Response Chan没有特殊的保护，所以不能让其满了进而阻塞全局。并且由于通常Analyze程序是CPU型（DownLoader是IO型）
- *      很快都能够结束，所以直接将取令牌操作放在了
+ *      很快都能够结束，所以直接将取令牌操作放在了goroutine内部，只控制同时可执行Analyzer数量，而非同时运行Analyzer数量
  */
 func (schdl *Scheduler) activateAnalyzers() {
     go func() {

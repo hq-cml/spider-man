@@ -30,7 +30,6 @@ func NewDownloader(client *http.Client) *Downloader {
 	id := downloaderIdGenerator.GetId()
 
 	if client == nil {
-		fmt.Println("BBBBBBBBBBBBBBBBBB----------")
 		client = &http.Client{}
 	}
 
@@ -51,7 +50,6 @@ func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, strin
 	if basic.Conf.SkipBinFile {
 		skip, msg, err := dl.skipBinFile(req)
 		if err != nil {
-			log.Info("AAAAAAAAAAAAAAAAA----", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error()))
 			if strings.Contains(strings.ToLower(err.Error()), "timeout") {
 				return nil, false, "head timeout", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 			}

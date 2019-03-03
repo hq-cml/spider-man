@@ -13,6 +13,14 @@ import (
  * 激活下载器，开始下载，下载器是一个独立的的goroutine无限循环，从请求通道中获取请求
  * 每个请求都扔给独立的goroutine去处理，但是goroutine并不一定能够立刻开始下载工作
  * 同时能够执行下载的goroutine数量,受到下载器池容量的制约, 其他goroutine会阻塞
+ *
+ *
+ * 对于池子的使用，Analyzer和Downloader略有不同:
+ * Downloader将取令牌操作，放在新建goroutine之外，原因是大概率下，Request数都非常大，如果如果放在里面会导致产生大量的等待的goroutine
+ *      （因为Request Chan有Request Cache保护，所以不会出现全局阻塞，所以这么处理大面积降低了goroutine数量
+ *
+ * Analizer则不同，Response Chan没有特殊的保护，所以不能让其满了进而阻塞全局。并且由于通常Analyze程序是CPU型（DownLoader是IO型）
+ *      很快都能够结束，所以直接将取令牌操作放在了goroutine内部，只控制同时可执行Analyzer数量，而非同时运行Analyzer数量
  */
 func (schdl *Scheduler) activateDownloaders() {
     //downloader是异步独立的goroutine

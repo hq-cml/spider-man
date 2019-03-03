@@ -154,7 +154,7 @@ func (schdl *Scheduler)activateRecordSummary() {
 }
 
 // 记录摘要信息。
-func (schdl *Scheduler)GetUrlMap() string {
+func (schdl *Scheduler)GetRuntimeInfo(detail string) string {
 	var result bytes.Buffer
 	var bufDownloading bytes.Buffer
 	var bufDone bytes.Buffer
@@ -204,13 +204,41 @@ func (schdl *Scheduler)GetUrlMap() string {
 
 		return true
 	})
-	result.WriteString("出错(" + strconv.FormatInt(errCount, 10) + ")：\n" + bufError.String())
-	result.WriteString("GET请求超时(" + strconv.FormatInt(getCount, 10) + ")：\n" + bufGetTimeout.String())
-	result.WriteString("HEAD请求超时(" + strconv.FormatInt(headCount, 10) + ")：\n" + bufHeadTimeout.String())
-	result.WriteString("READ超时(" + strconv.FormatInt(readCount, 10) + ")：\n" + bufReadTimeout.String())
-	result.WriteString("跳过(" + strconv.FormatInt(skipCount, 10) + ")：\n" + bufSkip.String())
-	result.WriteString("下载中(" + strconv.FormatInt(downloadCount, 10) + ")：\n" + bufDownloading.String())
-	result.WriteString("完成(" + strconv.FormatInt(doneCount, 10) + ")：\n" + bufDone.String())
+
+
+	summary := NewSchedSummary(schdl, "    ", false)
+	result.WriteString("整体情况：\n\n")
+	result.WriteString(summary.GetSummary(false));
+
+	result.WriteString("\nURL概况(" +
+		strconv.FormatInt(errCount + getCount + headCount + readCount + skipCount + downloadCount + doneCount, 10)+
+		")：\n\n")
+
+	result.WriteString("    出错         = " + strconv.FormatInt(errCount, 10) + "\n" )
+	result.WriteString("    GET请求超时  = " + strconv.FormatInt(getCount, 10) + "\n" )
+	result.WriteString("    HEAD请求超时 = " + strconv.FormatInt(headCount, 10) + "\n" )
+	result.WriteString("    READBody超时 = " + strconv.FormatInt(readCount, 10) + "\n" )
+	result.WriteString("    跳过         = " + strconv.FormatInt(skipCount, 10) + "\n")
+	result.WriteString("    下载中       = " + strconv.FormatInt(downloadCount, 10) + "\n" )
+	result.WriteString("    完成         = " + strconv.FormatInt(doneCount, 10) + "\n" )
+
+
+
+
+	if detail == "true" {
+		result.WriteString("\n" )
+		result.WriteString("----------------------------------------------------------------------   华丽分割线  " )
+		result.WriteString("---------------------------------------------------------------------- \n" )
+		result.WriteString("\n" )
+
+		result.WriteString("出错(" + strconv.FormatInt(errCount, 10) + ")：\n" + bufError.String() + "\n--------------------\n\n")
+		result.WriteString("GET请求超时(" + strconv.FormatInt(getCount, 10) + ")：\n" + bufGetTimeout.String() + "\n--------------------\n\n")
+		result.WriteString("HEAD请求超时(" + strconv.FormatInt(headCount, 10) + ")：\n" + bufHeadTimeout.String() + "\n--------------------\n\n")
+		result.WriteString("READ超时(" + strconv.FormatInt(readCount, 10) + ")：\n" + bufReadTimeout.String() + "\n--------------------\n\n")
+		result.WriteString("跳过(" + strconv.FormatInt(skipCount, 10) + ")：\n" + bufSkip.String() + "\n--------------------\n\n")
+		result.WriteString("下载中(" + strconv.FormatInt(downloadCount, 10) + ")：\n" + bufDownloading.String() + "\n--------------------\n\n")
+		result.WriteString("完成(" + strconv.FormatInt(doneCount, 10) + ")：\n" + bufDone.String() + "\n--------------------\n\n")
+	}
 
 	return result.String()
 }
