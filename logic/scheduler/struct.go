@@ -8,6 +8,7 @@ import (
 	"github.com/hq-cml/spider-go/middleware/pool"
 	"sync"
 	"github.com/hq-cml/spider-go/basic"
+	"time"
 )
 
 /*
@@ -15,6 +16,7 @@ import (
  */
 // *Scheduler实现调度器的实现类型。
 type Scheduler struct {
+	startTime      time.Time                      // 开始时间
 	grabMaxDepth   int                            // 爬取的最大深度。首次请求的深度为0。
 	primaryDomain  string                         // 起始域名。
 	channelManager *chanman.ChannelManager        // 通道管理器。
@@ -22,7 +24,7 @@ type Scheduler struct {
 	stopSign       *stopsign.StopSign             // 停止信号。
 	processChain   *processchain.ProcessChain     // Item处理链条。
 	requestCache   *requestcache.RequestCache     // Request缓存
-	analyzeFuncs   []basic.AnalyzeResponseFunc    //处理器
+	analyzeFuncs   []basic.AnalyzeResponseFunc    // Item处理器
 	urlMap         sync.Map              		  // 已请求的URL的字典。
 	urlCnt         uint64                         // sync.Map长度
 	running        uint32                         // 运行标记。0表示未运行，1表示已运行，2表示已停止。

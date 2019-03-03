@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"strconv"
 )
 
 /***********************************下载器**********************************/
@@ -39,11 +40,15 @@ func NewDownloader(client *http.Client) *Downloader {
 	}
 }
 
+func (dl *Downloader) Identifier() string {
+	return "Downloader[" + strconv.FormatInt(int64(dl.Id()), 10)+ "]"
+}
+
 //实际下载的工作，将http的返回结果，封装到basic.Response中
 //bool返回值表示请求是否被skip
 func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, string, error) {
 	httpReq := req.HttpReq()
-	log.Infof("Start to Download the request (reqUrl=%s)... Depth: (%d) \n",
+	log.Infof(dl.Identifier() + " Check request Head ext. (reqUrl=%s)... Depth: (%d) \n",
 		httpReq.URL.String(), req.Depth())
 
 	//跳过二进制文件下载
@@ -51,28 +56,29 @@ func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, strin
 		skip, msg, err := dl.skipBinFile(req)
 		if err != nil {
 			if strings.Contains(strings.ToLower(err.Error()), "timeout") {
-				return nil, false, "head timeout", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
+				return nil, false, "head timeout", errors.New(dl.Identifier() + "SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 			}
-			return nil, false, "", errors.New("SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
+			return nil, false, "", errors.New(dl.Identifier() + "SkipBinFile("+ httpReq.URL.String() +") Error:" + err.Error())
 		}
-
 		if skip {
 			return nil, true, msg, nil
 		}
 	}
 
+	log.Infof(dl.Identifier() + " Start to Download the request (reqUrl=%s)... Depth: (%d) \n",
+		httpReq.URL.String(), req.Depth())
 	httpResp, err := dl.httpClient.Do(httpReq)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "timeout") {
-			return nil, false, "get timeout", errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
+			return nil, false, "get timeout", errors.New(dl.Identifier() + " Download("+ httpReq.URL.String() +") Error:" + err.Error())
 		}
-		return nil, false, "", errors.New("Download("+ httpReq.URL.String() +") Error:" + err.Error())
+		return nil, false, "", errors.New(dl.Identifier() + " Download("+ httpReq.URL.String() +") Error:" + err.Error())
 	}
 	defer httpResp.Body.Close()
 
 	//仅支持返回码200的响应
 	if httpResp.StatusCode != 200 {
-		err := errors.New(fmt.Sprintf("Unsupported status code %d. (ReqUrl=%s)",
+		err := errors.New(fmt.Sprintf(dl.Identifier() +"Unsupported status code %d. (ReqUrl=%s)",
 			httpResp.StatusCode, httpReq.URL.String()))
 		return nil, false, "", err
 	}
@@ -84,12 +90,13 @@ func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, strin
 	//p, _ := ioutil.ReadAll(httpResp.Body)
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
-
-	body, ok := getBodyTimeout(httpResp, 30 * time.Second)
+	log.Infof(dl.Identifier() + "Read the Body (reqUrl=%s)... Depth: (%d) \n",
+		httpReq.URL.String(), req.Depth())
+	body, ok := dl.getBodyTimeout(httpResp, 30 * time.Second)
 	if !ok {
 		//TODO 其实，这是一种有损策略，为了保证服务不被全部卡死，只能牺牲
 		//后续考虑将这些请求重新扔回队列中去
-		err := errors.New("Time out：("+ httpReq.URL.String() +")")
+		err := errors.New(dl.Identifier() + "Time out：("+ httpReq.URL.String() +"). Content-Length: " + httpResp.Header.Get("Content-Length"))
 		return nil, false, "read timeout", err
 	}
 
@@ -112,7 +119,7 @@ func (dl *Downloader)skipBinFile(req *basic.Request) (bool, string, error) {
 	tmp := strings.Split(url, ".")
 	ext := tmp[len(tmp)-1]
 	if _, ok := basic.SkipBinFileExt[ext]; ok {
-		log.Infof("Skip Request(%s)... Depth:(%d). Reason: Ext Invalid \n", url, req.Depth())
+		log.Infof(dl.Identifier() + "Skip Request(%s)... Depth:(%d). Reason: Ext Invalid \n", url, req.Depth())
 		return true, "Ext Invalid", nil
 	}
 
@@ -131,7 +138,7 @@ func (dl *Downloader)skipBinFile(req *basic.Request) (bool, string, error) {
 	contentType := resp.Header.Get("Content-Type")
 	contentLength := resp.Header.Get("Content-Length")
 	if !strings.Contains(contentType, "text/html") {
-		log.Infof("Skip Request(%s)... Depth:(%d). Reason: Content-Type Invalid \n", url, req.Depth())
+		log.Infof(dl.Identifier() + "Skip Request(%s)... Depth:(%d). Reason: Content-Type Invalid \n", url, req.Depth())
 		return true,
 			   "Content-Type Invalid:" + contentType + ". Content-Length:" + contentLength,
 			   nil
@@ -143,11 +150,20 @@ func (dl *Downloader)skipBinFile(req *basic.Request) (bool, string, error) {
 //由于服务器端实现的差异，在高并发情况下，ioutil.ReadAll常会出现迷之超时（官方解释ReadAll必须遇到EOF或者error才能结束）
 //所以必须设置超时时间，防止downloader全部给卡死了
 //返回true表示正常取值，返回false表示出现超时
-func getBodyTimeout(resp *http.Response, timeout time.Duration) ([]byte, bool){
+func (dl *Downloader)getBodyTimeout(resp *http.Response, timeout time.Duration) ([]byte, bool){
 	var body []byte
 	c := make(chan []byte)
+	defer close(c)        //修复一个重要bug，如果不close，会造成大量gorutine泄露在 c <- b
 	go func() {
-		b, _ := ioutil.ReadAll(resp.Body)
+		var b []byte
+		defer func(url string) {
+			if p := recover(); p != nil {
+				log.Infoln(dl.Identifier(), "GetBodyTimeout go routine recover: ", url, ". Len:", len(b), ". Error:", p)
+				return
+			}
+		}(resp.Request.URL.String())
+
+		b, _ = ioutil.ReadAll(resp.Body)
 		c <- b
 	}()
 

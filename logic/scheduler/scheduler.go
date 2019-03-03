@@ -104,6 +104,8 @@ func (schdl *Scheduler) initScheduler(
 	}
 	defer atomic.StoreUint32(&schdl.running, RUNNING_STATUS_RUNNING)
 
+	schdl.startTime = time.Now()
+
 	//GrabDepth赋值
 	schdl.grabMaxDepth = basic.Conf.GrabMaxDepth
 

@@ -31,6 +31,7 @@
     目前的办法是先通过uri扩展名快速判断, 如果没有则通过发送HEAD方法的请求判断
 2. 有一些url不支持http的HEAD方法，比如：
     http://bang.360.cn
-3. 细化详情http接口
-4. Dns超时偏多
+3. RequestCache长度大于urlMap长度？
+4. ReadBody超时，是否有办法直接避免？
+5. Dns超时偏多,这与网络有关
 https://studygolang.com/resources/7740
