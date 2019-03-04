@@ -1,0 +1,15 @@
+//TODO
+1. Dns超时偏多，需要本地搭代理或者程序内部缓存
+https://studygolang.com/resources/7740
+1. RequestCache为什么长度大于urlMap长度？
+2. ReadBody超时多，为什么client.do返回了，但是readall会超时，是否有办法直接避免？
+3. 状态有点混乱，最终态和中间态应分离
+
+
+//TODO 改进
+1. 暂时不支持文件的下载，比如
+    http://sd.360.cn/downloadoffline.html
+    http://sd.360.cn/download.html?type=full
+    目前的办法是先通过uri扩展名快速判断, 如果没有则通过发送HEAD方法的请求判断
+2. 有一些url不支持http的HEAD方法，比如：
+    http://bang.360.cn
