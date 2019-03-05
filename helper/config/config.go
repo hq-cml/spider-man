@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/Unknwon/goconfig"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 )
 
 //解析配置文件

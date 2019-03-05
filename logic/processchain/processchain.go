@@ -3,7 +3,7 @@ package processchain
 import (
 	"errors"
 	"fmt"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 	"sync/atomic"
 )
 

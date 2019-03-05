@@ -1,6 +1,6 @@
 .idea/
-spider-go.iml
+spider-man.iml
 test.go
-spider-go
+spider-man
 log/spider.log
 s.log

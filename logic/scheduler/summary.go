@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 	"runtime"
-	"github.com/hq-cml/spider-go/helper/log"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/helper/log"
+	"github.com/hq-cml/spider-man/basic"
 	"sync/atomic"
 	"strconv"
 )

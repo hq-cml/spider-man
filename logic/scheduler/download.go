@@ -3,9 +3,9 @@ package scheduler
 import (
     "fmt"
     "errors"
-    "github.com/hq-cml/spider-go/basic"
-    "github.com/hq-cml/spider-go/helper/log"
-    "github.com/hq-cml/spider-go/logic/downloader"
+    "github.com/hq-cml/spider-man/basic"
+    "github.com/hq-cml/spider-man/helper/log"
+    "github.com/hq-cml/spider-man/logic/downloader"
     "sync/atomic"
 )
 

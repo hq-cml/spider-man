@@ -2,9 +2,9 @@ package analyzer
 
 import (
 	"errors"
-	"github.com/hq-cml/spider-go/basic"
-	"github.com/hq-cml/spider-go/helper/idgen"
-	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-man/basic"
+	"github.com/hq-cml/spider-man/helper/idgen"
+	"github.com/hq-cml/spider-man/helper/log"
 )
 
 /***********************************分析器**********************************/

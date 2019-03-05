@@ -1,13 +1,13 @@
 package scheduler
 
 import (
-	"github.com/hq-cml/spider-go/logic/processchain"
-	chanman "github.com/hq-cml/spider-go/middleware/channel"
-	"github.com/hq-cml/spider-go/middleware/requestcache"
-	"github.com/hq-cml/spider-go/middleware/stopsign"
-	"github.com/hq-cml/spider-go/middleware/pool"
+	"github.com/hq-cml/spider-man/logic/processchain"
+	chanman "github.com/hq-cml/spider-man/middleware/channel"
+	"github.com/hq-cml/spider-man/middleware/requestcache"
+	"github.com/hq-cml/spider-man/middleware/stopsign"
+	"github.com/hq-cml/spider-man/middleware/pool"
 	"sync"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 	"time"
 )
 

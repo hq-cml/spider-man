@@ -9,10 +9,14 @@ t
 4. 目前只实现了一个基本插件, 支持比较简单的关键字匹配功能, 比如从360主站开始搜索全部"老周"的网页
 
 #### 安装运行：
-1. go get github.com/hq-cml/spider-go
+1. go get github.com/hq-cml/spider-man
 2. cd 项目目录
 3. go build ./
-4. ./spider-go -c "conf/spider.conf" -f "https://www.360.cn" -u "老周"
+4. 运行：
+    -    ./spider-man -c "conf/spider.conf" -f "https://www.360.cn" -u "老周"
+    -    ./spider-man -c "conf/spider.conf" -f 'http://www.sohu.com' -u "张朝阳"
+5. 查看运行状态
+    -  curl http://ip:8080/runInfo
 
 #### 目录说明：
 1. basic：基本数据类型定义

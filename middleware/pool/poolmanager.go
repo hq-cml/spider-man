@@ -9,7 +9,7 @@ import (
     "errors"
     "fmt"
     "sync"
-    "github.com/hq-cml/spider-go/basic"
+    "github.com/hq-cml/spider-man/basic"
 )
 
 //通道管理器的状态的类型。

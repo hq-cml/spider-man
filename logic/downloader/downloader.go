@@ -1,11 +1,11 @@
 package downloader
 
 import (
-	"github.com/hq-cml/spider-go/basic"
-	"github.com/hq-cml/spider-go/helper/idgen"
+	"github.com/hq-cml/spider-man/basic"
+	"github.com/hq-cml/spider-man/helper/idgen"
 	"net/http"
 	"io/ioutil"
-	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-man/helper/log"
 	"errors"
 	"fmt"
 	"strings"

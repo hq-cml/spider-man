@@ -3,8 +3,8 @@ package downloader
 import (
 	"net/http"
 	"testing"
-	"github.com/hq-cml/spider-go/basic"
-	"github.com/hq-cml/spider-go/helper/log"
+	"github.com/hq-cml/spider-man/basic"
+	"github.com/hq-cml/spider-man/helper/log"
 )
 
 func TestSkipUrl(t *testing.T) {

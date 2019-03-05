@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 )
 
 //实体池类型，*CommonPool实现SpiderPool接口

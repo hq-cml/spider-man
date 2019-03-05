@@ -1,7 +1,7 @@
 package channel
 
 import (
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 )
 
 /*************************** 通用通道, 实现SpiderChannel接口 ***************************/

@@ -7,7 +7,7 @@ package requestcache
  */
 import (
 	"fmt"
-	"github.com/hq-cml/spider-go/basic"
+	"github.com/hq-cml/spider-man/basic"
 	"sync"
 )
 
