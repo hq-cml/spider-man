@@ -111,7 +111,6 @@ func Warn(v ...interface{}) {
 	spiderLog.Print(v1...)
 }
 
-
 func Errf(format string, v ...interface{}) {
 	if spiderLog.level > SPIDER_LOG_LEVEL_ERR {return}
 	spiderLog.Printf("[ERROR] "+format, v...)
@@ -132,17 +131,17 @@ func Err(v ...interface{}) {
 }
 
 func Fatalf(format string, v ...interface{}) {
-	spiderLog.Fatalf("[FATAL] "+format, v...)
+	spiderLog.Printf("[FATAL] "+format, v...)
 }
 
 func Fatalln(v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
-	spiderLog.Fatalln(v1...)
+	spiderLog.Println(v1...)
 }
 
 func Fatal(v ...interface{}) {
 	v1 := []interface{}{"[FATAL]"}
 	v1 = append(v1, v...)
-	spiderLog.Fatal(v1...)
+	spiderLog.Print(v1...)
 }
