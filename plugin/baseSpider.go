@@ -58,7 +58,7 @@ func (b *BaseSpider) GenResponseAnalysers() []basic.AnalyzeResponseFunc {
 // 获得条目处理链的序列。
 func (b *BaseSpider) GenItemProcessors() []basic.ProcessItemFunc {
 	itemProcessors := []basic.ProcessItemFunc{
-		processItem,
+		processBaseItem,
 	}
 	return itemProcessors
 }
@@ -206,7 +206,7 @@ func convertCharset(httpResp *basic.Response) (httpRespBody io.Reader, orgCharse
 }
 
 // 条目处理器。
-func processItem(item basic.Item) (result basic.Item, err error) {
+func processBaseItem(item basic.Item) (result basic.Item, err error) {
 	if item == nil {
 		return nil, errors.New("Invalid item!")
 	}

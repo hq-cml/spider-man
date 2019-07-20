@@ -33,20 +33,40 @@ func (b *EngineSpider) GenHttpClient() *http.Client {
 
 //获得响应解析函数的序列
 func (b *EngineSpider) GenResponseAnalysers() []basic.AnalyzeResponseFunc {
-	analyzers := []basic.AnalyzeResponseFunc {
-		//闭包
-		func(httpResp *basic.Response) ([]*basic.Item, []*basic.Request, []error) {
-			items, reqs, errs :=  parseForATag(httpResp, b.userData)
-			return items, reqs, errs
-		},
+	return []basic.AnalyzeResponseFunc {
+		parse360NewsPage,
 	}
-	return analyzers
 }
 
 // 获得条目处理链的序列。
 func (b *EngineSpider) GenItemProcessors() []basic.ProcessItemFunc {
-	itemProcessors := []basic.ProcessItemFunc{
-		processItem,
+	return []basic.ProcessItemFunc{
+		//闭包
+		func(item basic.Item) (basic.Item, error) {
+			addr, ok := b.userData.(string)
+			if !ok {
+				panic("Wrong type")
+			}
+			return processEngineItem(item, addr)
+		},
+
 	}
-	return itemProcessors
+}
+
+// 页面分析
+// 针对360的新闻页面进行分析
+// 360新闻首页：http://www.360.cn/news.html
+// 常规新闻URL：http://www.360.cn/n/10758.html
+func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request, []error) {
+
+
+	return nil, nil, nil
+}
+
+// 条目处理函数
+// 发送到Spider-Engine
+func processEngineItem(item basic.Item, engineAddr string) (result basic.Item, err error) {
+
+
+	return nil, nil
 }

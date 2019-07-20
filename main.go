@@ -44,6 +44,7 @@ func main() {
 	//插件列表, 加载所有的支持插件
 	var plugins = map[string]basic.SpiderPlugin{
 		"base": plugin.NewBaseSpider(*userData),
+		"engine": plugin.NewEngineSpider(*userData),
 		//....
 	}
 
