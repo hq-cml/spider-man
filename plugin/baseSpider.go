@@ -18,6 +18,7 @@ import (
 )
 
 //*BaseSpider实现SpiderPlugin接口
+//一个最基础的插件，爬虫爬取季过后，直接进行关键字搜索出结果打印
 type BaseSpider struct {
 	userData interface{}
 }

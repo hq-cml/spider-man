@@ -52,9 +52,13 @@ func main() {
 	log.Infof("------------Spider Begin To Run------------")
 
 	//插件指定加载
-	spiderPlugin, ok := plugins[conf.PluginKey]
+	pluginKey := *pluginName
+	if pluginKey == "" {
+		pluginKey = conf.PluginKey
+	}
+	spiderPlugin, ok := plugins[pluginKey]
 	if !ok {
-		panic("Not found plugin:" + conf.PluginKey)
+		panic("Not found plugin:" + pluginKey)
 	}
 
 	//创建首个请求
@@ -91,7 +95,7 @@ func main() {
 		}()
 	}
 
-	//主协程同步阻塞轮训，检查空闲状态或第三方信号
+	//主协程同步阻塞轮询，检查空闲状态或第三方信号
 	intervalNs := time.Duration(conf.IntervalNs) * time.Millisecond
 	if intervalNs < 10 * time.Millisecond { //防止过小的参数值对爬取流程的影响
 		intervalNs = 10 * time.Millisecond
