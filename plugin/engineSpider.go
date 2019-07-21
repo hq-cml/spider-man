@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"io"
 	"github.com/PuerkitoBio/goquery"
+	"strings"
 )
 
 /*
@@ -56,7 +57,7 @@ func (b *EngineSpider) GenItemProcessors() []basic.ProcessItemFunc {
 	}
 }
 
-// 页面分析
+// 页面分析, 通过分析360新闻页面的Dom元素，爬取规则自然也就完成了
 // 针对360的新闻页面进行分析
 // 360新闻首页：http://www.360.cn/news.html
 // 常规新闻URL：http://www.360.cn/n/10758.html
@@ -95,8 +96,9 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 	imap["url"] = reqUrl.String()
 	imap["charset"] = contentType
 	imap["depth"] = httpResp.Depth
-	body := doc.Find("body").Text()
-	imap["body"] = body
+	imap["title"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find("h1").Text(), " \n"), " \n")
+	imap["time"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find(".article-info").Find("ul").Find("li").First().Text(), " \n"), " \n")
+	imap["content"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find(".content-text").Text(), " \n"), " \n")
 	item := basic.Item(imap)
 	itemList = append(itemList, &item)
 
