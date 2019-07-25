@@ -88,7 +88,7 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 	}
 
 	//查找“A”标签并提取链接地址
-	findATagFromDoc(httpResp, reqUrl, doc, &requestList, errs)
+	requestList, errs = findATagFromDoc(httpResp, reqUrl, doc)
 
 	//关键字查找, 记录符合条件的body作为item
 	//如果用户数据非空，则进行匹配校验，否则直接入item队列

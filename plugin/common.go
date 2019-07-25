@@ -49,10 +49,11 @@ func convertCharset(httpResp *basic.Response) (httpRespBody io.Reader, orgCharse
 }
 
 //从document当中扫出全部的链接Tag，然后拼成新请求
-func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL, doc *goquery.Document,
-	requestList *[]*basic.Request, errs []error) {
+func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL,  doc *goquery.Document) ([]*basic.Request, []error) {
 
+	errs := make([]error, 0)
 	uniqUrl := map[string]bool{}
+	requestList := []*basic.Request{}
 	//查找“A”标签并提取链接地址
 	doc.Find("a").Each(func(index int, sel *goquery.Selection) {
 		href, exists := sel.Attr("href")
@@ -91,7 +92,7 @@ func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL, doc *goquery.Doc
 		} else {
 			//将新分析出来的请求，深度+1，放入dataList
 			req := basic.NewRequest(httpReq, httpResp.Depth + 1)
-			*requestList = append(*requestList, req)
+			requestList = append(requestList, req)
 		}
 	})
 }
