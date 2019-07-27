@@ -72,6 +72,7 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 
 	itemList := []*basic.Item{}
 	requestList := []*basic.Request{}
+	requests := []*basic.Request{}
 	errs := make([]error, 0)
 
 	//网页编码智能判断, 非utf8 => utf8
@@ -90,19 +91,35 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 	//查找“A”标签并提取链接地址
 	requestList, errs = findATagFromDoc(httpResp, reqUrl, doc)
 
+
+	//过滤掉不是新闻业的url
+	for _, u := range requestList {
+		if strings.Index(u.HttpReq().URL.String(), "http://www.360.cn/n/") == 0 {
+			requests = append(requests, u)
+		}
+	}
+
+	//根据360新闻业的Dom结构，抽取出关键数据
+	content := strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find(".content-text").Text(), " \n"), " \n")
+	timeStr := strings.TrimRight(strings.TrimLeft(
+		doc.Find(".article-content").Find(".article-info").Find("ul").Find("li").First().Text(), " \n"), " \n")
+	title := strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find("h1").Text(), " \n"), " \n")
+
 	//关键字查找, 记录符合条件的body作为item
 	//如果用户数据非空，则进行匹配校验，否则直接入item队列
-	imap := make(map[string]interface{})
-	imap["url"] = reqUrl.String()
-	imap["charset"] = contentType
-	imap["depth"] = httpResp.Depth
-	imap["title"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find("h1").Text(), " \n"), " \n")
-	imap["time"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find(".article-info").Find("ul").Find("li").First().Text(), " \n"), " \n")
-	imap["content"] = strings.TrimRight(strings.TrimLeft(doc.Find(".article-content").Find(".content-text").Text(), " \n"), " \n")
-	item := basic.Item(imap)
-	itemList = append(itemList, &item)
+	if content != "" {
+		imap := make(map[string]interface{})
+		imap["url"] = reqUrl.String()
+		imap["charset"] = contentType
+		imap["depth"] = httpResp.Depth
+		imap["title"] = title
+		imap["time"] = timeStr
+		imap["content"] = content
+		item := basic.Item(imap)
+		itemList = append(itemList, &item)
+	}
 
-	return itemList, requestList, errs
+	return itemList, requests, errs
 }
 
 // 条目处理函数

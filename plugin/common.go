@@ -49,7 +49,8 @@ func convertCharset(httpResp *basic.Response) (httpRespBody io.Reader, orgCharse
 }
 
 //从document当中扫出全部的链接Tag，然后拼成新请求
-func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL,  doc *goquery.Document) ([]*basic.Request, []error) {
+func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL,
+	doc *goquery.Document) ([]*basic.Request, []error) {
 
 	errs := make([]error, 0)
 	uniqUrl := map[string]bool{}
@@ -95,4 +96,6 @@ func findATagFromDoc(httpResp *basic.Response, reqUrl *url.URL,  doc *goquery.Do
 			requestList = append(requestList, req)
 		}
 	})
+
+	return requestList, errs
 }
