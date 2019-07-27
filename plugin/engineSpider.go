@@ -10,6 +10,9 @@ import (
 	"strings"
 	"errors"
 	"fmt"
+	"encoding/json"
+	"bytes"
+	"io/ioutil"
 )
 
 /*
@@ -145,4 +148,52 @@ func processEngineItem(item basic.Item, engineAddr string) (result basic.Item, e
 	fmt.Println("深度: ", result["depth"], "结果：", result["url"], "标题：", result["title"])
 
 	return nil, nil
+}
+
+type EngineResult struct {
+	Code int       `json: "code"`
+	Data string    `json: "data"`
+}
+
+//向Spider-Engine发送一条新闻
+func postOneNews(item basic.Item, engineAddr string) error {
+	bytesData, err := json.Marshal(item)
+	if err != nil {
+		return err
+	}
+	reader := bytes.NewReader(bytesData)
+
+	//新建request
+	request, err := http.NewRequest("POST", engineAddr, reader)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
+
+	//发送
+	client := http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+
+	//等待响应
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	r := EngineResult{}
+	err = json.Unmarshal(respBytes, &r)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(r)
+	fmt.Println(string(respBytes))
+	if r.Code != 0 {
+		return errors.New(r.Data)
+	}
+
+	return nil
 }

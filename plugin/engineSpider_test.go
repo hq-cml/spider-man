@@ -60,5 +60,11 @@ func TestParse360NewsPage(t *testing.T) {
 	for _, err := range errors {
 		t.Log(err)
 	}
+
+	if len(items) > 0 {
+		item := items[0]
+		t.Log("数据发送：", postOneNews(*item, "http://192.168.110.133:9528/sp_db/360news/10759"))
+	}
+
 }
 
