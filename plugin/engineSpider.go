@@ -8,6 +8,8 @@ import (
 	"io"
 	"github.com/PuerkitoBio/goquery"
 	"strings"
+	"errors"
+	"fmt"
 )
 
 /*
@@ -108,8 +110,11 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 	//关键字查找, 记录符合条件的body作为item
 	//如果用户数据非空，则进行匹配校验，否则直接入item队列
 	if content != "" {
+		urlStr := reqUrl.String()
+		id := strings.TrimSuffix(strings.TrimPrefix(urlStr, "http://www.360.cn/n/"), ".html")
 		imap := make(map[string]interface{})
-		imap["url"] = reqUrl.String()
+		imap["id"] = id
+		imap["url"] = urlStr
 		imap["charset"] = contentType
 		imap["depth"] = httpResp.Depth
 		imap["title"] = title
@@ -125,7 +130,19 @@ func parse360NewsPage(httpResp *basic.Response) ([]*basic.Item, []*basic.Request
 // 条目处理函数
 // 发送到Spider-Engine
 func processEngineItem(item basic.Item, engineAddr string) (result basic.Item, err error) {
+	if item == nil {
+		return nil, errors.New("Invalid item!")
+	}
 
+	//生成结果
+	result = make(map[string]interface{})
+	for k, v := range item {
+		result[k] = v
+	}
+
+	//将结果灌入spider-engine引擎
+
+	fmt.Println("深度: ", result["depth"], "结果：", result["url"], "标题：", result["title"])
 
 	return nil, nil
 }

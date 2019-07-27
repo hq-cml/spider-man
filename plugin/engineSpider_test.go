@@ -15,8 +15,8 @@ func TestParse360NewsPage(t *testing.T) {
 	log.InitLog("", "debug")
 
 	//resp, err := http.DefaultClient.Get("http://www.360.cn/n/10758.html")
-	//resp, err := http.DefaultClient.Get("http://www.360.cn/n/10759.html")
-	resp, err := http.DefaultClient.Get("http://www.360.cn/news.html")
+	resp, err := http.DefaultClient.Get("http://www.360.cn/n/10759.html")
+	//resp, err := http.DefaultClient.Get("http://www.360.cn/news.html")
 
 	if err != nil {
 		t.Fatal(err)
