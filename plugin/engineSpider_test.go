@@ -15,8 +15,8 @@ func TestParse360NewsPage(t *testing.T) {
 	log.InitLog("", "debug")
 
 	//resp, err := http.DefaultClient.Get("http://www.360.cn/n/10758.html")
-	resp, err := http.DefaultClient.Get("http://www.360.cn/n/10759.html")
-	//resp, err := http.DefaultClient.Get("http://www.360.cn/news.html")
+	//resp, err := http.DefaultClient.Get("http://www.360.cn/n/10759.html")
+	resp, err := http.DefaultClient.Get("http://www.360.cn/news.html")
 
 	if err != nil {
 		t.Fatal(err)
@@ -61,10 +61,11 @@ func TestParse360NewsPage(t *testing.T) {
 		t.Log(err)
 	}
 
-	if len(items) > 0 {
-		item := items[0]
-		t.Log("数据发送：", postOneNews(*item, "http://192.168.110.133:9528/sp_db/360news/10759"))
-	}
+	//发送数据到spider-engine
+	//if len(items) > 0 {
+	//	item := items[0]
+	//	t.Log("数据发送：", postOneNews(*item, "http://192.168.110.133:9528/sp_db/360news/10759"))
+	//}
 
 }
 

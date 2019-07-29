@@ -144,7 +144,11 @@ func processEngineItem(item basic.Item, engineAddr string) (result basic.Item, e
 	}
 
 	//将结果灌入spider-engine引擎
-
+	key, ok := result["id"].(string)
+	if !ok {
+		return nil, errors.New("Need primary key!")
+	}
+	postOneNews(result, engineAddr, "sp_db", "360news", key)
 	fmt.Println("深度: ", result["depth"], "结果：", result["url"], "标题：", result["title"])
 
 	return nil, nil
@@ -156,7 +160,7 @@ type EngineResult struct {
 }
 
 //向Spider-Engine发送一条新闻
-func postOneNews(item basic.Item, engineAddr string) error {
+func postOneNews(item basic.Item, engineAddr, db, table, key string) error {
 	bytesData, err := json.Marshal(item)
 	if err != nil {
 		return err
@@ -164,7 +168,8 @@ func postOneNews(item basic.Item, engineAddr string) error {
 	reader := bytes.NewReader(bytesData)
 
 	//新建request
-	request, err := http.NewRequest("POST", engineAddr, reader)
+	addr := fmt.Sprintf("http://%s/%s/%s/%s", engineAddr, db, table, key)
+	request, err := http.NewRequest("POST", addr, reader)
 	if err != nil {
 		return err
 	}
@@ -189,7 +194,6 @@ func postOneNews(item basic.Item, engineAddr string) error {
 		return err
 	}
 
-	fmt.Println(r)
 	fmt.Println(string(respBytes))
 	if r.Code != 0 {
 		return errors.New(r.Data)
