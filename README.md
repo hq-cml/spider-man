@@ -18,7 +18,7 @@ Spider-Man是一款基于Go实现的小型爬虫框架，支持从一个给定UR
 
 #### 插件说明：
 目前提供了两个插件Demo：
-- baseSpider：支持比较简单的关键字匹配功能, 比如从360主站https://www.360.cn开始搜索，打印出全部包含"老周"的网页  
+- baseSpider：支持比较简单的关键字匹配功能, 比如从360主站https://www.360.cn 开始搜索，打印出全部包含"老周"的网页  
 
 ```
 运行：
@@ -26,7 +26,8 @@ Spider-Man是一款基于Go实现的小型爬虫框架，支持从一个给定UR
 ./spider-man -c "conf/spider.conf" -f 'http://www.sohu.com' -u "张朝阳"
 ```
 
-- engineSpider：实现了和搜索引擎Spider-Engine打通，爬取到的结果直接导入搜索引擎
+- engineSpider：实现了和搜索引擎Spider-Engine打通，爬取到的结果直接导入搜索引擎。  
+这个插件实现了360新闻页面的Dom分析，并将分析结果结构化成json，导入SE。
 ```
 运行：
 ./spider-man -c "conf/spider.conf" -p engine -f 'http://www.360.cn/news.html' -u '127.0.0.1:9528'
@@ -60,7 +61,7 @@ curl http://ip:8080/runInfo
 6. 中间件主要负责各个模块之间的缓冲
 
 #### TODO：
-1. 爬虫插件的逻辑丰富，能适应更多的页面风格
+1. 爬虫插件的逻辑丰富，能够自适应更多的页面Dom风格
 2. Cookie等带登陆的功能
 3. 分布式爬虫
 4. 防封禁
