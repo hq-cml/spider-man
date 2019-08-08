@@ -2,7 +2,12 @@
 
 ## 一个简单的爬虫框架
 Spider-Man是一款基于Go实现的小型爬虫框架，支持从一个给定URL开始，递归爬取页面内容。  
-目前已经和小型搜索引擎[Spider-Engine](https://github.com/hq-cml/spider-engine)打通，支持爬取内容灌入搜索引擎进一步分析。
+
+**Tips:**  
+    目前Spider-Man已经和 [Spider-Engine](https://github.com/hq-cml/spider-engine)（一个Go的小型搜索引擎）打通，支持爬取内容灌入搜索引擎进一步分析。。  
+    并且由 [Spider-Face](https://github.com/hq-cml/spider-man)（一个Go的web框架项目）配了一套简单的搜索引擎页面。  
+    当然，这并非必须的，您也可以将爬取的数据导入您熟悉的SE比如ElasticSearch，并选择自己熟悉的web框架。
+
 
 #### 特点说明：
 - 1. 利用了Go的高并发的特性, 高效控制单机的爬取并发度
