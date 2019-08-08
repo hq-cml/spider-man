@@ -8,7 +8,7 @@ import (
 	"github.com/hq-cml/spider-man/basic"
 	"io/ioutil"
 	"fmt"
-	"github.com/hq-cml/spider-face/utils/helper"
+	"github.com/hq-cml/spider-man/helper/util"
 )
 
 func TestParse360NewsPage(t *testing.T) {
@@ -54,7 +54,7 @@ func TestParse360NewsPage(t *testing.T) {
 	}
 
 	t.Log("分析出的Item列表:", len(items))
-	t.Log(helper.JsonEncode(items))
+	t.Log(util.JsonEncode(items))
 
 	t.Log("分析出的Error列表:", len(errors))
 	for _, err := range errors {
