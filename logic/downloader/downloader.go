@@ -90,6 +90,7 @@ func (dl *Downloader) Download(req *basic.Request) (*basic.Response, bool, strin
 	//p, _ := ioutil.ReadAll(httpResp.Body)
 	//httpResp.Body.Close()
 	//httpResp.Body = ioutil.NopCloser(bytes.NewBuffer(p))
+
 	log.Infof(dl.Identifier() + "Read the Body (reqUrl=%s)... Depth: (%d) \n",
 		httpReq.URL.String(), req.Depth())
 	body, ok := dl.getBodyTimeout(httpResp, 30 * time.Second)

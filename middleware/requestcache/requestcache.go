@@ -78,6 +78,7 @@ func (rc *RequestCache) Capacity() int {
 func (rc *RequestCache) Length() int {
 	rc.mutex.Lock()
 	defer rc.mutex.Unlock()
+	fmt.Println("K--------", len(rc.cache))
 	return len(rc.cache)
 }
 

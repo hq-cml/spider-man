@@ -10,19 +10,21 @@ import (
 func TestSkipUrl(t *testing.T) {
 	log.InitLog("", "debug")
 
+	dl := NewDownloader(nil)
+
 	u, err := http.NewRequest(http.MethodGet, "https://www.360.cn/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	req := basic.NewRequest(u, 0)
-	t.Log(skipBinFile(req))
+	t.Log(dl.skipBinFile(req))
 
 	u, err = http.NewRequest(http.MethodGet, "https://dl.360safe.com/inst.exe", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	req = basic.NewRequest(u, 0)
-	t.Log(skipBinFile(req))
+	t.Log(dl.skipBinFile(req))
 
 
 	u, err = http.NewRequest(http.MethodGet, "http://sd.360.cn/downloadoffline.html", nil) //伪静态大文件
@@ -30,17 +32,17 @@ func TestSkipUrl(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = basic.NewRequest(u, 0)
-	t.Log(skipBinFile(req))
+	t.Log(dl.skipBinFile(req))
 }
 
 func TestSkipUrl2(t *testing.T) {
 	log.InitLog("", "debug")
-
+	dl := NewDownloader(nil)
 	u, err := http.NewRequest(http.MethodGet, "http://bang.360.cn", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	req := basic.NewRequest(u, 0)
-	t.Log(skipBinFile(req))
+	t.Log(dl.skipBinFile(req))
 }
 
